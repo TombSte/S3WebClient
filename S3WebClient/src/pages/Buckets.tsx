@@ -171,7 +171,7 @@ const Buckets: React.FC = () => {
         alignItems: "flex-start",
       }}
     >
-      <Box sx={{ width: "100%", p: 2 }}>
+      <Box sx={{ width: "100%" }}>
         {/* Header Section */}
         <Box sx={{ mb: 3 }}>
           <Typography

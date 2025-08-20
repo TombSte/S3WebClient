@@ -102,7 +102,7 @@ export default function Profile() {
         alignItems: "flex-start",
       }}
     >
-      <Box sx={{ width: "100%", p: 2 }}>
+      <Box sx={{ width: "100%" }}>
         {/* Profile Header */}
         <Box sx={{ mb: 3 }}>
           <Typography
