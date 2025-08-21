@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { IconButton, Box, Typography } from "@mui/material";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import { Box, Typography } from "@mui/material";
+import InboxIcon from "@mui/icons-material/Inbox";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository } from "../repositories";
@@ -12,7 +19,12 @@ interface Props {
   connection: S3Connection;
 }
 
-export default function ObjectBrowser({ connection }: Props) {
+export interface ObjectBrowserHandle {
+  refresh: () => Promise<void>;
+}
+
+const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
+  ({ connection }, ref) => {
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
@@ -168,13 +180,10 @@ export default function ObjectBrowser({ connection }: Props) {
     }
   };
 
+  useImperativeHandle(ref, () => ({ refresh: handleRefresh }));
+
   return (
     <div>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        <IconButton aria-label="refresh" onClick={handleRefresh}>
-          <RefreshIcon />
-        </IconButton>
-      </Box>
       <SearchBar
         value={search}
         onChange={setSearch}
@@ -191,9 +200,12 @@ export default function ObjectBrowser({ connection }: Props) {
           <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
         )
       ) : rootItems.length === 0 ? (
-        <Typography>
-          Questo bucket è vuoto. Carica qualche file per iniziare!
-        </Typography>
+        <Box sx={{ textAlign: "center", mt: 4 }}>
+          <InboxIcon sx={{ fontSize: 64, color: "text.secondary", mb: 1 }} />
+          <Typography>
+            Questo bucket è vuoto. Carica qualche file per iniziare!
+          </Typography>
+        </Box>
       ) : (
         <ObjectTreeView
           key={refreshTick}
@@ -203,4 +215,6 @@ export default function ObjectBrowser({ connection }: Props) {
       )}
     </div>
   );
-}
+});
+
+export default ObjectBrowser;
