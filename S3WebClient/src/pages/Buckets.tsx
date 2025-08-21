@@ -29,11 +29,11 @@ import {
   Settings,
   CheckCircle,
   Error,
-  Info,
   FolderOpen,
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
+import TestStatusChip from "../components/TestStatusChip";
 import type {
   S3Connection,
   S3ConnectionForm,
@@ -143,17 +143,6 @@ const Buckets: React.FC = () => {
     formData: S3ConnectionForm
   ): Promise<ConnectionTestResult> => {
     return await testConnectionConfig(formData);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "success";
-      case "failed":
-        return "error";
-      default:
-        return "default";
-    }
   };
 
   if (loading) {
@@ -357,26 +346,7 @@ const Buckets: React.FC = () => {
                             )
                           }
                         />
-                        <Chip
-                          label={
-                            connection.testStatus === "success"
-                              ? "Connesso"
-                              : connection.testStatus === "failed"
-                              ? "Errore"
-                              : "Non testato"
-                          }
-                          color={getStatusColor(connection.testStatus)}
-                          size="small"
-                          icon={
-                            connection.testStatus === "success" ? (
-                              <CheckCircle />
-                            ) : connection.testStatus === "failed" ? (
-                              <Error />
-                            ) : (
-                              <Info />
-                            )
-                          }
-                        />
+                        <TestStatusChip status={connection.testStatus} />
                       </Box>
                     </Box>
 
