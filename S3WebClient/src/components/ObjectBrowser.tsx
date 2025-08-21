@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  Breadcrumbs,
-  Link,
   List,
   ListItemButton,
   ListItemIcon,
@@ -9,10 +7,13 @@ import {
   Typography,
   IconButton,
   Box,
+  Collapse,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FolderIcon from "@mui/icons-material/Folder";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository } from "../repositories";
@@ -22,8 +23,7 @@ interface Props {
 }
 
 export default function ObjectBrowser({ connection }: Props) {
-  const [currentPrefix, setCurrentPrefix] = useState("");
-  const [items, setItems] = useState<S3ObjectEntity[]>([]);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const client = useMemo(
@@ -40,15 +40,52 @@ export default function ObjectBrowser({ connection }: Props) {
     [connection]
   );
 
-  useEffect(() => {
-    (async () => {
-      const cached = await objectRepository.getChildren(
-        connection.id,
-        currentPrefix
+  const fetchChildrenFromS3 = async (prefix: string) => {
+    const folders: S3ObjectEntity[] = [];
+    const files: S3ObjectEntity[] = [];
+    let token: string | undefined;
+    do {
+      const res = await client.send(
+        new ListObjectsV2Command({
+          Bucket: connection.bucketName,
+          Prefix: prefix,
+          Delimiter: "/",
+          ContinuationToken: token,
+        })
       );
-      setItems(cached);
-    })();
-  }, [connection.id, currentPrefix]);
+      (res.CommonPrefixes ?? []).forEach((p) => {
+        if (!p.Prefix) return;
+        folders.push({
+          connectionId: connection.id,
+          key: p.Prefix,
+          parent: prefix,
+          isFolder: 1,
+          size: 0,
+        });
+      });
+      (res.Contents ?? []).forEach((o) => {
+        if (!o.Key || o.Key === prefix) return;
+        files.push({
+          connectionId: connection.id,
+          key: o.Key,
+          parent: prefix,
+          isFolder: 0,
+          size: o.Size ?? 0,
+          lastModified: o.LastModified,
+        });
+      });
+      token = res.IsTruncated ? res.NextContinuationToken : undefined;
+    } while (token);
+    const all = [...folders, ...files];
+    await objectRepository.save(all);
+    return all;
+  };
+
+  const loadChildren = async (prefix: string) => {
+    const cached = await objectRepository.getChildren(connection.id, prefix);
+    if (cached.length > 0) return cached;
+    return await fetchChildrenFromS3(prefix);
+  };
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -94,11 +131,8 @@ export default function ObjectBrowser({ connection }: Props) {
         });
         token = res.IsTruncated ? res.NextContinuationToken : undefined;
       } while (token);
-
       await objectRepository.replaceAll(connection.id, [...folders, ...files]);
-      setCurrentPrefix("");
-      const rootItems = await objectRepository.getChildren(connection.id, "");
-      setItems(rootItems);
+      setRefreshTick((t) => t + 1);
     } catch (err) {
       console.error("Error refreshing objects", err);
     } finally {
@@ -106,34 +140,77 @@ export default function ObjectBrowser({ connection }: Props) {
     }
   };
 
-  const handleFolderClick = (item: S3ObjectEntity) => {
-    if (item.isFolder === 1) {
-      setCurrentPrefix(item.key);
-    }
+  interface NodeProps {
+    item: S3ObjectEntity;
+    depth: number;
+  }
+
+  const Node = ({ item, depth }: NodeProps) => {
+    const [open, setOpen] = useState(false);
+    const [children, setChildren] = useState<S3ObjectEntity[]>([]);
+    const [childLoading, setChildLoading] = useState(false);
+
+    const toggle = async () => {
+      if (item.isFolder !== 1) return;
+      if (!open && children.length === 0) {
+        setChildLoading(true);
+        const loaded = await loadChildren(item.key);
+        setChildren(loaded);
+        setChildLoading(false);
+      }
+      setOpen(!open);
+    };
+
+    const name = item.key
+      .slice(item.parent.length)
+      .replace(/\/$/, "") || "Root";
+
+    return (
+      <>
+        <ListItemButton onClick={toggle} sx={{ pl: depth * 2 }}>
+          <ListItemIcon>
+            {item.isFolder ? <FolderIcon /> : <InsertDriveFileIcon />}
+          </ListItemIcon>
+          <ListItemText primary={name} />
+          {item.isFolder === 1 && (open ? <ExpandLess /> : <ExpandMore />)}
+        </ListItemButton>
+        {item.isFolder === 1 && (
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {childLoading ? (
+                <ListItemText
+                  sx={{ pl: (depth + 1) * 2 }}
+                  primary="Caricamento..."
+                />
+              ) : (
+                children
+                  .sort(
+                    (a, b) =>
+                      b.isFolder - a.isFolder || a.key.localeCompare(b.key)
+                  )
+                  .map((child) => (
+                    <Node key={child.key} item={child} depth={depth + 1} />
+                  ))
+              )}
+            </List>
+          </Collapse>
+        )}
+      </>
+    );
   };
 
-  const pathSegments = currentPrefix.split("/").filter(Boolean);
-  const breadcrumbPaths = pathSegments.map(
-    (_, idx) => pathSegments.slice(0, idx + 1).join("/") + "/"
-  );
+  const root: S3ObjectEntity = {
+    connectionId: connection.id,
+    key: "",
+    parent: "",
+    isFolder: 1,
+    size: 0,
+  };
 
   return (
     <div>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <Breadcrumbs sx={{ flexGrow: 1 }}>
-          <Link sx={{ cursor: "pointer" }} onClick={() => setCurrentPrefix("")}>
-            Root
-          </Link>
-          {pathSegments.map((seg, idx) => (
-            <Link
-              key={idx}
-              sx={{ cursor: "pointer" }}
-              onClick={() => setCurrentPrefix(breadcrumbPaths[idx])}
-            >
-              {seg}
-            </Link>
-          ))}
-        </Breadcrumbs>
+        <Typography sx={{ flexGrow: 1 }}>Oggetti</Typography>
         <IconButton aria-label="refresh" onClick={handleRefresh}>
           <RefreshIcon />
         </IconButton>
@@ -141,25 +218,8 @@ export default function ObjectBrowser({ connection }: Props) {
       {loading ? (
         <Typography>Caricamento...</Typography>
       ) : (
-        <List>
-          {items
-            .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
-            .map((item) => {
-              const name = item.key
-                .slice(currentPrefix.length)
-                .replace(/\/$/, "");
-              return (
-                <ListItemButton
-                  key={item.key}
-                  onClick={() => handleFolderClick(item)}
-                >
-                  <ListItemIcon>
-                    {item.isFolder ? <FolderIcon /> : <InsertDriveFileIcon />}
-                  </ListItemIcon>
-                  <ListItemText primary={name} />
-                </ListItemButton>
-              );
-            })}
+        <List key={refreshTick} disablePadding>
+          <Node item={root} depth={0} />
         </List>
       )}
     </div>
