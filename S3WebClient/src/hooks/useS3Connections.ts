@@ -5,11 +5,7 @@ import type {
   S3ConnectionForm,
   ConnectionTestResult,
 } from "../types/s3";
-import {
-  S3Client,
-  HeadBucketCommand,
-  CreateBucketCommand,
-} from "@aws-sdk/client-s3";
+import { S3Client, HeadBucketCommand } from "@aws-sdk/client-s3";
 
 export const useS3Connections = () => {
   const [connections, setConnections] = useState<S3Connection[]>([]);
@@ -169,29 +165,13 @@ export const useS3Connections = () => {
             name?: string;
             message?: string;
           };
+          let message = "Errore nel test della connessione";
           if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") {
-            try {
-              await client.send(
-                new CreateBucketCommand({ Bucket: config.bucketName })
-              );
-              return {
-                success: true,
-                message: "Bucket creato e connessione testata con successo",
-                timestamp: new Date(),
-              };
-            } catch (createErr) {
-              const c = createErr as { message?: string };
-              return {
-                success: false,
-                message: "Errore nel test della connessione",
-                timestamp: new Date(),
-                error: c.message ?? "Errore sconosciuto",
-              };
-            }
+            message = "Bucket non trovato";
           }
           return {
             success: false,
-            message: "Errore nel test della connessione",
+            message,
             timestamp: new Date(),
             error: e.message ?? "Errore sconosciuto",
           };
