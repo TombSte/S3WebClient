@@ -3,6 +3,7 @@ import type { S3WebClientDatabase } from "../database/database";
 
 export interface ObjectRepository {
   getChildren(connectionId: string, parent: string): Promise<S3ObjectEntity[]>;
+  search(connectionId: string, term: string): Promise<S3ObjectEntity[]>;
   save(objects: S3ObjectEntity[]): Promise<void>;
   replaceAll(
     connectionId: string,
@@ -21,6 +22,20 @@ export class DexieObjectRepository implements ObjectRepository {
       .where("connectionId")
       .equals(connectionId)
       .and((obj) => obj.parent === parent)
+      .toArray();
+  }
+
+  async search(
+    connectionId: string,
+    term: string
+  ): Promise<S3ObjectEntity[]> {
+    const q = term.toLowerCase();
+    return await this.db.objects
+      .where("connectionId")
+      .equals(connectionId)
+      .and(
+        (obj) => obj.isFolder === 0 && obj.key.toLowerCase().includes(q)
+      )
       .toArray();
   }
 

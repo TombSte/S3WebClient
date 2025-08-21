@@ -1,25 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  IconButton,
-  Box,
-  Collapse,
-  TextField,
-} from "@mui/material";
+import { Typography, IconButton, Box, TextField } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import FolderIcon from "@mui/icons-material/Folder";
-import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import ImageIcon from "@mui/icons-material/Image";
-import ExpandLess from "@mui/icons-material/ExpandLess";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository } from "../repositories";
+import ObjectTreeView from "./ObjectTreeView";
+import ObjectFlatList from "./ObjectFlatList";
 
 interface Props {
   connection: S3Connection;
@@ -30,6 +16,7 @@ export default function ObjectBrowser({ connection }: Props) {
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
   const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<S3ObjectEntity[]>([]);
 
   const client = useMemo(
     () =>
@@ -106,6 +93,20 @@ export default function ObjectBrowser({ connection }: Props) {
     })();
   }, [loadChildren, refreshTick]);
 
+  useEffect(() => {
+    (async () => {
+      if (search.trim() === "") {
+        setSearchResults([]);
+        return;
+      }
+      const results = await objectRepository.search(
+        connection.id,
+        search.trim()
+      );
+      setSearchResults(results);
+    })();
+  }, [search, connection.id, refreshTick]);
+
   const handleRefresh = async () => {
     setLoading(true);
     try {
@@ -159,85 +160,6 @@ export default function ObjectBrowser({ connection }: Props) {
     }
   };
 
-  interface NodeProps {
-    item: S3ObjectEntity;
-    depth: number;
-  }
-
-  const getFileIcon = (key: string) => {
-    const ext = key.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "pdf":
-        return <PictureAsPdfIcon sx={{ color: "error.main" }} />;
-      case "png":
-      case "jpg":
-      case "jpeg":
-      case "gif":
-      case "bmp":
-      case "svg":
-      case "webp":
-        return <ImageIcon sx={{ color: "success.main" }} />;
-      default:
-        return <InsertDriveFileIcon sx={{ color: "text.secondary" }} />;
-    }
-  };
-
-  const Node = ({ item, depth }: NodeProps) => {
-    const [open, setOpen] = useState(false);
-    const [children, setChildren] = useState<S3ObjectEntity[]>([]);
-    const [childLoading, setChildLoading] = useState(false);
-
-    const toggle = async () => {
-      if (item.isFolder !== 1) return;
-      if (!open && children.length === 0) {
-        setChildLoading(true);
-        const loaded = await loadChildren(item.key);
-        setChildren(loaded);
-        setChildLoading(false);
-      }
-      setOpen(!open);
-    };
-
-    const name = item.key.slice(item.parent.length).replace(/\/$/, "");
-
-    return (
-      <>
-        <ListItemButton onClick={toggle} sx={{ pl: depth * 2 }}>
-          <ListItemIcon>
-            {item.isFolder ? (
-              <FolderIcon sx={{ color: "warning.main" }} />
-            ) : (
-              getFileIcon(item.key)
-            )}
-          </ListItemIcon>
-          <ListItemText primary={name} />
-          {item.isFolder === 1 && (open ? <ExpandLess /> : <ExpandMore />)}
-        </ListItemButton>
-        {item.isFolder === 1 && (
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {childLoading ? (
-                <ListItemText
-                  sx={{ pl: (depth + 1) * 2 }}
-                  primary="Caricamento..."
-                />
-              ) : (
-                children
-                  .sort(
-                    (a, b) =>
-                      b.isFolder - a.isFolder || a.key.localeCompare(b.key)
-                  )
-                  .map((child) => (
-                    <Node key={child.key} item={child} depth={depth + 1} />
-                  ))
-              )}
-            </List>
-          </Collapse>
-        )}
-      </>
-    );
-  };
-
   return (
     <div>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -255,14 +177,14 @@ export default function ObjectBrowser({ connection }: Props) {
       </Box>
       {loading ? (
         <Typography>Caricamento...</Typography>
+      ) : search.trim() ? (
+        <ObjectFlatList items={searchResults} />
       ) : (
-        <List key={refreshTick} disablePadding>
-          {rootItems
-            .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
-            .map((item) => (
-              <Node key={item.key} item={item} depth={0} />
-            ))}
-        </List>
+        <ObjectTreeView
+          key={refreshTick}
+          rootItems={rootItems}
+          loadChildren={loadChildren}
+        />
       )}
     </div>
   );
