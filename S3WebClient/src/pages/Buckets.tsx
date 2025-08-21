@@ -56,7 +56,7 @@ const Buckets: React.FC = () => {
   }>({ open: false, message: "", severity: "success" });
 
   const connectionNames = React.useMemo(
-    () => connections.map((c) => c.name),
+    () => Array.from(new Set(connections.map((c) => c.displayName))),
     [connections]
   );
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Typography, IconButton, Box } from "@mui/material";
+import { IconButton, Box, Typography } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
@@ -170,8 +170,7 @@ export default function ObjectBrowser({ connection }: Props) {
 
   return (
     <div>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <Typography sx={{ flexGrow: 1 }}>Oggetti</Typography>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <IconButton aria-label="refresh" onClick={handleRefresh}>
           <RefreshIcon />
         </IconButton>

@@ -43,7 +43,7 @@ export default function ObjectItemRow({
     <ListItemButton onClick={onClick} sx={{ pl: depth * 2 }}>
       <ListItemIcon>
         {item.isFolder ? (
-          <FolderIcon sx={{ color: "warning.main" }} />
+          <FolderIcon sx={{ color: "primary.main" }} />
         ) : (
           getFileIcon(item.key)
         )}
