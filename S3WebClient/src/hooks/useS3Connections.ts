@@ -44,6 +44,10 @@ export const useS3Connections = () => {
         };
 
         const id = await db.connections.add(newConnection);
+        await db.addActivity(
+          "success",
+          `Aggiunto bucket ${newConnection.displayName}`
+        );
         await loadConnections();
         return id as string;
       } catch (err) {
@@ -59,10 +63,13 @@ export const useS3Connections = () => {
   const updateConnection = useCallback(
     async (id: string, updates: Partial<S3Connection>): Promise<void> => {
       try {
+        const existing = await db.connections.get(id);
         await db.connections.update(id, {
           ...updates,
           updatedAt: new Date(),
         });
+        const name = updates.displayName ?? existing?.displayName ?? id;
+        await db.addActivity("info", `Modificato bucket ${name}`);
         await loadConnections();
       } catch (err) {
         setError("Errore nell'aggiornamento della connessione");
@@ -77,7 +84,12 @@ export const useS3Connections = () => {
   const deleteConnection = useCallback(
     async (id: string): Promise<void> => {
       try {
+        const existing = await db.connections.get(id);
         await db.connections.delete(id);
+        await db.addActivity(
+          "error",
+          `Eliminato bucket ${existing?.displayName ?? id}`
+        );
         await loadConnections();
       } catch (err) {
         setError("Errore nell'eliminazione della connessione");

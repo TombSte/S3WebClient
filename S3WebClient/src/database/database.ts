@@ -17,10 +17,18 @@ export interface RecentLocation {
   timestamp: Date;
 }
 
+export interface ActivityLog {
+  id?: number;
+  type: "success" | "info" | "warning" | "error";
+  message: string;
+  timestamp: Date;
+}
+
 export class S3WebClientDatabase extends Dexie {
   connections!: Dexie.Table<S3Connection>;
   preferences!: Dexie.Table<Preferences>;
   recentLocations!: Dexie.Table<RecentLocation>;
+  activities!: Dexie.Table<ActivityLog>;
 
   constructor() {
     super("S3WebClientDatabase");
@@ -38,6 +46,14 @@ export class S3WebClientDatabase extends Dexie {
         "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
       preferences: "++id, theme, language, encryptionEnabled",
       recentLocations: "++id, connectionId, prefix, timestamp",
+    });
+
+    this.version(3).stores({
+      connections:
+        "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+      preferences: "++id, theme, language, encryptionEnabled",
+      recentLocations: "++id, connectionId, prefix, timestamp",
+      activities: "++id, type, message, timestamp",
     });
   }
 
@@ -123,12 +139,16 @@ export class S3WebClientDatabase extends Dexie {
       .toArray();
 
     if (allLocations.length > 50) {
-      const sortedLocations = allLocations.sort((a, b) => 
+      const sortedLocations = allLocations.sort((a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
       const toDelete = sortedLocations.slice(50);
       await this.recentLocations.bulkDelete(toDelete.map((l) => l.id!));
     }
+
+    const connection = await this.connections.get(connectionId);
+    const message = `Aperto ${prefix || "/"} (${connection?.displayName ?? connectionId})`;
+    await this.addActivity("info", message);
   }
 
   async getRecentLocations(connectionId: string): Promise<RecentLocation[]> {
@@ -140,6 +160,19 @@ export class S3WebClientDatabase extends Dexie {
     return locations
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 10);
+  }
+
+  async addActivity(type: ActivityLog["type"], message: string): Promise<void> {
+    await this.activities.add({ type, message, timestamp: new Date() });
+
+    const total = await this.activities.count();
+    if (total > 50) {
+      const oldest = await this.activities
+        .orderBy("timestamp")
+        .limit(total - 50)
+        .toArray();
+      await this.activities.bulkDelete(oldest.map((a) => a.id!));
+    }
   }
 }
 

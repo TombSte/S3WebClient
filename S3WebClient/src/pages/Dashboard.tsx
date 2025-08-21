@@ -56,9 +56,9 @@ export default function Dashboard() {
       const inactiveConnections = totalConnections - activeConnections;
       const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
 
-      const lastLocation = await db.recentLocations.orderBy("timestamp").last();
-      const lastActivity = lastLocation
-        ? formatTimeAgo(lastLocation.timestamp)
+      const lastEntry = await db.activities.orderBy("timestamp").last();
+      const lastActivity = lastEntry
+        ? formatTimeAgo(lastEntry.timestamp)
         : "Nessuna attività";
 
       setStats({
@@ -69,26 +69,19 @@ export default function Dashboard() {
         lastActivity,
       });
 
-      const activities = await db.recentLocations
+      const activities = await db.activities
         .orderBy("timestamp")
         .reverse()
         .limit(5)
         .toArray();
 
-      const activityWithNames: Activity[] = await Promise.all(
-        activities.map(async (act) => {
-          const connection = await db.connections.get(act.connectionId);
-          const message = `Aperto ${act.prefix || "/"} (${connection?.displayName ??
-            act.connectionId})`;
-          return {
-            type: "info",
-            message,
-            time: formatTimeAgo(act.timestamp),
-          };
-        })
-      );
+      const formatted: Activity[] = activities.map((act) => ({
+        type: act.type,
+        message: act.message,
+        time: formatTimeAgo(act.timestamp),
+      }));
 
-      setRecentActivity(activityWithNames);
+      setRecentActivity(formatted);
     };
 
     loadDashboardData();
