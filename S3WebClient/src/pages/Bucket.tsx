@@ -6,7 +6,7 @@ import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
 import { connectionRepository } from "../repositories";
-import ObjectBrowser, { ObjectBrowserHandle } from "../components/ObjectBrowser";
+import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
 
 export default function Bucket() {
   const { id } = useParams();
