@@ -46,6 +46,16 @@ export interface S3Object {
   tags?: Record<string, string>;
 }
 
+export interface S3ObjectEntity {
+  id?: number;
+  connectionId: string;
+  key: string;
+  parent: string;
+  isFolder: number; // 1 for folder, 0 for file
+  size?: number;
+  lastModified?: Date;
+}
+
 export interface S3Bucket {
   name: string;
   creationDate: Date;

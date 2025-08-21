@@ -6,6 +6,7 @@ import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
 import { connectionRepository } from "../repositories";
+import ObjectBrowser from "../components/ObjectBrowser";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -91,15 +92,13 @@ export default function Bucket() {
         {/* Bucket Info */}
         <ConnectionDetails connection={connection} />
 
-        {/* Placeholder for file navigation */}
-        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}>
+        {/* File navigation */}
+        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 1 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
               Contenuti del bucket
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              La navigazione dei file e delle cartelle sarà disponibile prossimamente.
-            </Typography>
+            <ObjectBrowser connection={connection} />
           </CardContent>
         </Card>
       </Box>
