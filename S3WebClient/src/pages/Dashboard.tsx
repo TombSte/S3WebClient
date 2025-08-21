@@ -18,7 +18,7 @@ import {
   Info,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { db } from "../database/database";
+import { connectionRepository, activityRepository } from "../repositories";
 
 interface Activity {
   type: string;
@@ -50,13 +50,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      const connections = await db.connections.toArray();
+      const connections = await connectionRepository.getAll();
       const totalConnections = connections.length;
       const activeConnections = connections.filter((c) => c.isActive === 1).length;
       const inactiveConnections = totalConnections - activeConnections;
       const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
 
-      const lastEntry = await db.activities.orderBy("timestamp").last();
+      const lastEntry = await activityRepository.getLast();
       const lastActivity = lastEntry
         ? formatTimeAgo(lastEntry.timestamp)
         : "Nessuna attività";
@@ -69,11 +69,7 @@ export default function Dashboard() {
         lastActivity,
       });
 
-      const activities = await db.activities
-        .orderBy("timestamp")
-        .reverse()
-        .limit(5)
-        .toArray();
+      const activities = await activityRepository.getRecent(5);
 
       const formatted: Activity[] = activities.map((act) => ({
         type: act.type,
