@@ -11,7 +11,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  CardActionArea,
   Tooltip,
   Snackbar,
   Alert,
@@ -285,6 +284,7 @@ const Buckets: React.FC = () => {
             {filteredConnections.map((connection) => (
               <Box key={connection.id}>
                 <Card
+                  onClick={() => navigate(`/bucket/${connection.id}`)}
                   sx={{
                     height: "100%",
                     display: "flex",
@@ -299,16 +299,7 @@ const Buckets: React.FC = () => {
                     },
                   }}
                 >
-                  <CardActionArea
-                    disableRipple
-                    onClick={() => navigate(`/bucket/${connection.id}`)}
-                    sx={{
-                      flexGrow: 1,
-                      "&:hover": { bgcolor: "transparent" },
-                      "& .MuiCardActionArea-focusHighlight": { opacity: 0 },
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+                  <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
                     {/* Connection Header */}
                     <Box
                       sx={{
@@ -427,14 +418,16 @@ const Buckets: React.FC = () => {
                       <EnvironmentChip environment={connection.environment} />
                     </Box>
                   </CardContent>
-                  </CardActionArea>
 
                   {/* Action Buttons */}
                   <CardActions sx={{ p: 1.5, pt: 0, gap: 0.5 }}>
                     <Tooltip title="Apri">
                       <IconButton
                         size="small"
-                        onClick={() => navigate(`/bucket/${connection.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/bucket/${connection.id}`);
+                        }}
                         sx={{
                           color: "secondary.main",
                           "&:hover": { bgcolor: "secondary.50" },
@@ -447,7 +440,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Testa Connessione">
                       <IconButton
                         size="small"
-                        onClick={() => handleTest(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTest(connection.id);
+                        }}
                         sx={{
                           color: "success.main",
                           "&:hover": { bgcolor: "success.50" },
@@ -460,7 +456,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Duplica">
                       <IconButton
                         size="small"
-                        onClick={() => handleDuplicate(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicate(connection.id);
+                        }}
                         sx={{
                           color: "info.main",
                           "&:hover": { bgcolor: "info.50" },
@@ -473,7 +472,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Modifica">
                       <IconButton
                         size="small"
-                        onClick={() => handleOpenDialog(connection)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(connection);
+                        }}
                         sx={{
                           color: "primary.main",
                           "&:hover": { bgcolor: "primary.50" },
@@ -486,7 +488,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Elimina">
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(connection.id);
+                        }}
                         sx={{
                           color: "error.main",
                           "&:hover": { bgcolor: "error.50" },
