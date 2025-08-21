@@ -6,12 +6,12 @@ import {
   Box,
   Typography,
   IconButton,
-  Chip,
   Fab,
   InputAdornment,
   Card,
   CardContent,
   CardActions,
+  CardActionArea,
   Tooltip,
   Snackbar,
   Alert,
@@ -34,6 +34,7 @@ import {
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
 import TestStatusChip from "../components/TestStatusChip";
+import EnvironmentChip from "../components/EnvironmentChip";
 import type {
   S3Connection,
   S3ConnectionForm,
@@ -195,18 +196,18 @@ const Buckets: React.FC = () => {
         </Box>
 
         {/* Search and Actions Bar */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            p: 1.5,
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              p: 1.5,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+          >
           <TextField
             placeholder="Cerca connessioni..."
             value={searchTerm}
@@ -261,7 +262,7 @@ const Buckets: React.FC = () => {
                 sx={{
                   background:
                     "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-                  boxShadow: "0 3px 5px 2px rgba(33, 203, 243, .3)",
+                  boxShadow: 3,
                   "&:hover": {
                     background:
                       "linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)",
@@ -287,14 +288,20 @@ const Buckets: React.FC = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
+                    boxShadow: 3,
                     transition: "all 0.3s ease",
+                    cursor: "pointer",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+                      boxShadow: 6,
                     },
                   }}
                 >
-                  <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+                  <CardActionArea
+                    onClick={() => navigate(`/bucket/${connection.id}`)}
+                    sx={{ flexGrow: 1 }}
+                  >
+                    <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
                     {/* Connection Header */}
                     <Box
                       sx={{
@@ -410,22 +417,10 @@ const Buckets: React.FC = () => {
 
                     {/* Environment Badge */}
                     <Box sx={{ mb: 1.5 }}>
-                      <Chip
-                        label={connection.environment.toUpperCase()}
-                        color={
-                          connection.environment === "prod"
-                            ? "error"
-                            : connection.environment === "test"
-                            ? "warning"
-                            : connection.environment === "dev"
-                            ? "success"
-                            : "info"
-                        }
-                        size="small"
-                        variant="outlined"
-                      />
+                      <EnvironmentChip environment={connection.environment} />
                     </Box>
                   </CardContent>
+                  </CardActionArea>
 
                   {/* Action Buttons */}
                   <CardActions sx={{ p: 1.5, pt: 0, gap: 0.5 }}>
@@ -510,7 +505,7 @@ const Buckets: React.FC = () => {
             bottom: 24,
             right: 24,
             background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-            boxShadow: "0 4px 20px rgba(33, 150, 243, 0.4)",
+            boxShadow: 6,
             "&:hover": {
               background: "linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)",
               transform: "scale(1.1)",

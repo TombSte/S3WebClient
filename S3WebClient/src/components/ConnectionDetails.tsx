@@ -3,6 +3,7 @@ import { CheckCircle, Error as ErrorIcon } from "@mui/icons-material";
 import React from "react";
 import type { S3Connection } from "../types/s3";
 import TestStatusChip from "./TestStatusChip";
+import EnvironmentChip from "./EnvironmentChip";
 
 interface Props {
   connection: S3Connection;
@@ -10,7 +11,7 @@ interface Props {
 
 const ConnectionDetails: React.FC<Props> = ({ connection }) => {
   return (
-    <Card sx={{ mb: 3 }}>
+    <Card sx={{ mb: 3, boxShadow: 3 }}>
       <CardContent>
         <Typography
           variant="h6"
@@ -52,9 +53,7 @@ const ConnectionDetails: React.FC<Props> = ({ connection }) => {
             <Typography variant="body2" color="text.secondary">
               Environment
             </Typography>
-            <Typography variant="body1">
-              {connection.environment.toUpperCase()}
-            </Typography>
+            <EnvironmentChip environment={connection.environment} />
           </Box>
 
           <Box>

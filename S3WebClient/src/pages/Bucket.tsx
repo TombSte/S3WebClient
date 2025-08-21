@@ -3,6 +3,7 @@ import { useS3Connections } from "../hooks/useS3Connections";
 import { Box, Typography, Card, CardContent } from "@mui/material";
 import { Storage as StorageIcon } from "@mui/icons-material";
 import ConnectionDetails from "../components/ConnectionDetails";
+import EnvironmentChip from "../components/EnvironmentChip";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -40,24 +41,27 @@ export default function Bucket() {
       <Box sx={{ width: "100%" }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="h5"
-            component="h1"
-            sx={{
-              mb: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
-          >
-            <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
-            {connection.displayName}
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{
+                mb: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: "bold",
+              }}
+            >
+              <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
+              {connection.displayName}
+            </Typography>
+            <EnvironmentChip environment={connection.environment} />
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
             Dettagli del bucket e contenuti
           </Typography>
@@ -67,7 +71,7 @@ export default function Bucket() {
         <ConnectionDetails connection={connection} />
 
         {/* Placeholder for file navigation */}
-        <Card>
+        <Card sx={{ boxShadow: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Contenuti del bucket
