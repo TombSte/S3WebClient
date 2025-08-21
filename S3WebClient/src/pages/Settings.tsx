@@ -4,12 +4,10 @@ import {
   Card,
   CardContent,
   Switch,
-  FormControlLabel,
   Divider,
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
   Chip,
   Button,
 } from "@mui/material";
@@ -19,10 +17,7 @@ import {
   Notifications,
   Storage,
   Palette,
-  Language,
   Cloud,
-  CheckCircle,
-  Warning,
   Info,
 } from "@mui/icons-material";
 import { useState } from "react";

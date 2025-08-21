@@ -17,6 +17,8 @@ import {
   IconButton,
   Chip,
   Divider,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   Cloud,
@@ -27,12 +29,17 @@ import {
   Settings,
   Close,
 } from "@mui/icons-material";
-import type { S3Connection, S3ConnectionForm } from "../types/s3";
+import type {
+  S3Connection,
+  S3ConnectionForm,
+  ConnectionTestResult,
+} from "../types/s3";
 
 interface ConnectionFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (formData: S3ConnectionForm) => Promise<void>;
+  onTest: (formData: S3ConnectionForm) => Promise<ConnectionTestResult>;
   editingConnection: S3Connection | null;
 }
 
@@ -40,6 +47,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   open,
   onClose,
   onSubmit,
+  onTest,
   editingConnection,
 }) => {
   const [formData, setFormData] = React.useState<S3ConnectionForm>({
@@ -55,6 +63,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [testing, setTesting] = React.useState(false);
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   // Initialize form when editing
   React.useEffect(() => {
@@ -84,6 +98,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       });
     }
     setErrors({});
+    setSnackbar({ open: false, message: "", severity: "success" });
   }, [editingConnection, open]);
 
   const validateForm = (): boolean => {
@@ -129,12 +144,39 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     }
   };
 
+  const handleTest = async () => {
+    if (validateForm()) {
+      try {
+        setTesting(true);
+        const result = await onTest(formData);
+        setSnackbar({
+          open: true,
+          message: result.success
+            ? result.message
+            : `${result.message}${result.error ? `: ${result.error}` : ""}`,
+          severity: result.success ? "success" : "error",
+        });
+      } catch (err) {
+        console.error("Error testing connection:", err);
+        setSnackbar({
+          open: true,
+          message: "Errore nel test della connessione",
+          severity: "error",
+        });
+      } finally {
+        setTesting(false);
+      }
+    }
+  };
+
   const handleClose = () => {
     setErrors({});
+    setSnackbar({ open: false, message: "", severity: "success" });
     onClose();
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -224,12 +266,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                   <InputLabel>Environment</InputLabel>
                   <Select
                     value={formData.environment}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        environment: e.target.value as any,
-                      })
-                    }
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          environment: e.target.value as S3ConnectionForm["environment"],
+                        })
+                      }
                     label="Environment"
                   >
                     <MenuItem value="dev">
@@ -502,6 +544,14 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
             Annulla
           </Button>
           <Button
+            onClick={handleTest}
+            variant="outlined"
+            disabled={testing}
+            sx={{ px: 2.5, py: 1, borderRadius: 2 }}
+          >
+            {testing ? "Test in corso..." : "Test Connessione"}
+          </Button>
+          <Button
             type="submit"
             variant="contained"
             sx={{
@@ -520,6 +570,20 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         </DialogActions>
       </form>
     </Dialog>
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={6000}
+      onClose={() => setSnackbar({ ...snackbar, open: false })}
+    >
+      <Alert
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        severity={snackbar.severity}
+        sx={{ width: "100%" }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+  </>
   );
 };
 

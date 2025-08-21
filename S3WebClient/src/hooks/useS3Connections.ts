@@ -5,6 +5,7 @@ import type {
   S3ConnectionForm,
   ConnectionTestResult,
 } from "../types/s3";
+import { S3Client, HeadBucketCommand } from "@aws-sdk/client-s3";
 
 export const useS3Connections = () => {
   const [connections, setConnections] = useState<S3Connection[]>([]);
@@ -134,42 +135,87 @@ export const useS3Connections = () => {
     [connections, addConnection]
   );
 
-  // Test connection
-  const testConnection = useCallback(
-    async (id: string): Promise<ConnectionTestResult> => {
+  const performTest = useCallback(
+    async (
+      config: S3ConnectionForm | S3Connection
+    ): Promise<ConnectionTestResult> => {
       try {
-        const connection = connections.find((c) => c.id === id);
-        if (!connection) {
-          throw new Error("Connessione non trovata");
+        const client = new S3Client({
+          endpoint: config.endpoint,
+          region: config.region || "us-east-1",
+          forcePathStyle: config.pathStyle === 1,
+          credentials: {
+            accessKeyId: config.accessKeyId,
+            secretAccessKey: config.secretAccessKey,
+          },
+        });
+
+        try {
+          await client.send(
+            new HeadBucketCommand({ Bucket: config.bucketName })
+          );
+          return {
+            success: true,
+            message: "Connessione testata con successo",
+            timestamp: new Date(),
+          };
+        } catch (err) {
+          const e = err as {
+            $metadata?: { httpStatusCode?: number };
+            name?: string;
+            message?: string;
+          };
+          let message = "Errore nel test della connessione";
+          if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") {
+            message = "Bucket non trovato";
+          }
+          return {
+            success: false,
+            message,
+            timestamp: new Date(),
+            error: e.message ?? "Errore sconosciuto",
+          };
         }
-
-        // TODO: Implement actual S3 connection test
-        // For now, simulate a test
-        const testResult: ConnectionTestResult = {
-          success: true,
-          message: "Connessione testata con successo",
-          timestamp: new Date(),
-        };
-
-        await connectionRepository.test(id, testResult);
-        await loadConnections();
-
-        return testResult;
       } catch (err) {
-        const testResult: ConnectionTestResult = {
+        return {
           success: false,
           message: "Errore nel test della connessione",
           timestamp: new Date(),
           error: err instanceof Error ? err.message : "Errore sconosciuto",
         };
-
-        await connectionRepository.test(id, testResult);
-        await loadConnections();
-
-        return testResult;
       }
     },
-    [connections, loadConnections]
+    []
+  );
+
+  // Test connection by id and store result
+  const testConnection = useCallback(
+    async (id: string): Promise<ConnectionTestResult> => {
+      const connection = connections.find((c) => c.id === id);
+      if (!connection) {
+        const result: ConnectionTestResult = {
+          success: false,
+          message: "Errore nel test della connessione",
+          timestamp: new Date(),
+          error: "Connessione non trovata",
+        };
+        return result;
+      }
+
+      const result = await performTest(connection);
+      await connectionRepository.test(id, result);
+      await loadConnections();
+      return result;
+    },
+    [connections, performTest, loadConnections]
+  );
+
+  // Test connection for arbitrary configuration (without saving)
+  const testConnectionConfig = useCallback(
+    async (config: S3ConnectionForm): Promise<ConnectionTestResult> => {
+      return await performTest(config);
+    },
+    [performTest]
   );
 
   // Search connections
@@ -218,6 +264,7 @@ export const useS3Connections = () => {
     toggleConnectionStatus,
     duplicateConnection,
     testConnection,
+    testConnectionConfig,
     searchConnections,
     getConnectionsByEnvironment,
     loadConnections,
