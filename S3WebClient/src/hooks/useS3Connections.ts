@@ -218,20 +218,6 @@ export const useS3Connections = () => {
     [performTest]
   );
 
-  // Test connection using provided config and store result for an existing id
-  const testConnectionWithConfig = useCallback(
-    async (
-      id: string,
-      config: S3ConnectionForm
-    ): Promise<ConnectionTestResult> => {
-      const result = await performTest(config);
-      await connectionRepository.test(id, result);
-      await loadConnections();
-      return result;
-    },
-    [performTest, loadConnections]
-  );
-
   // Search connections
   const searchConnections = useCallback(
     async (query: string): Promise<S3Connection[]> => {
@@ -279,7 +265,6 @@ export const useS3Connections = () => {
     duplicateConnection,
     testConnection,
     testConnectionConfig,
-    testConnectionWithConfig,
     searchConnections,
     getConnectionsByEnvironment,
     loadConnections,

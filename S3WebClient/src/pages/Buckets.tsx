@@ -48,7 +48,6 @@ const Buckets: React.FC = () => {
     duplicateConnection,
     testConnection,
     testConnectionConfig,
-    testConnectionWithConfig,
     searchConnections,
     clearError,
   } = useS3Connections();
@@ -139,9 +138,6 @@ const Buckets: React.FC = () => {
   const handleFormTest = async (
     formData: S3ConnectionForm
   ): Promise<ConnectionTestResult> => {
-    if (editingConnection) {
-      return await testConnectionWithConfig(editingConnection.id, formData);
-    }
     return await testConnectionConfig(formData);
   };
 
