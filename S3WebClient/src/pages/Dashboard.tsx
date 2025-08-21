@@ -17,39 +17,82 @@ import {
   Error,
   Info,
 } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { db } from "../database/database";
+
+interface Activity {
+  type: string;
+  message: string;
+  time: string;
+}
 
 export default function Dashboard() {
-  // Mock data for demonstration
-  const stats = {
-    totalConnections: 12,
-    activeConnections: 8,
-    inactiveConnections: 4,
-    totalBuckets: 24,
-    lastActivity: "2 ore fa",
+  const [stats, setStats] = useState({
+    totalConnections: 0,
+    activeConnections: 0,
+    inactiveConnections: 0,
+    totalBuckets: 0,
+    lastActivity: "Nessuna attività",
+  });
+
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+
+  const formatTimeAgo = (date: Date): string => {
+    const diff = Date.now() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return "Adesso";
+    if (minutes < 60) return `${minutes} min fa`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ore fa`;
+    const days = Math.floor(hours / 24);
+    return `${days} giorni fa`;
   };
 
-  const recentActivity = [
-    {
-      type: "success",
-      message: "Connessione a MinIO testata con successo",
-      time: "5 min fa",
-    },
-    {
-      type: "info",
-      message: "Nuova connessione AWS S3 creata",
-      time: "1 ora fa",
-    },
-    {
-      type: "warning",
-      message: "Connessione Ceph in timeout",
-      time: "3 ore fa",
-    },
-    {
-      type: "error",
-      message: "Errore di autenticazione per bucket 'backup'",
-      time: "1 giorno fa",
-    },
-  ];
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      const connections = await db.connections.toArray();
+      const totalConnections = connections.length;
+      const activeConnections = connections.filter((c) => c.isActive === 1).length;
+      const inactiveConnections = totalConnections - activeConnections;
+      const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
+
+      const lastLocation = await db.recentLocations.orderBy("timestamp").last();
+      const lastActivity = lastLocation
+        ? formatTimeAgo(lastLocation.timestamp)
+        : "Nessuna attività";
+
+      setStats({
+        totalConnections,
+        activeConnections,
+        inactiveConnections,
+        totalBuckets,
+        lastActivity,
+      });
+
+      const activities = await db.recentLocations
+        .orderBy("timestamp")
+        .reverse()
+        .limit(5)
+        .toArray();
+
+      const activityWithNames: Activity[] = await Promise.all(
+        activities.map(async (act) => {
+          const connection = await db.connections.get(act.connectionId);
+          const message = `Aperto ${act.prefix || "/"} (${connection?.displayName ??
+            act.connectionId})`;
+          return {
+            type: "info",
+            message,
+            time: formatTimeAgo(act.timestamp),
+          };
+        })
+      );
+
+      setRecentActivity(activityWithNames);
+    };
+
+    loadDashboardData();
+  }, []);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
