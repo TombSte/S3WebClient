@@ -5,13 +5,32 @@ import {
   Typography,
   Card,
   CardContent,
+  Chip,
 } from "@mui/material";
-import { Storage as StorageIcon } from "@mui/icons-material";
+import {
+  Storage as StorageIcon,
+  CheckCircle,
+  Error as ErrorIcon,
+  Info as InfoIcon,
+} from "@mui/icons-material";
 
 export default function Bucket() {
   const { id } = useParams();
   const { connections, loading } = useS3Connections();
   const connection = connections.find((c) => c.id === id);
+
+  const getStatus = (
+    status: string
+  ): { label: string; color: "default" | "success" | "error"; icon: JSX.Element } => {
+    switch (status) {
+      case "success":
+        return { label: "Connesso", color: "success", icon: <CheckCircle /> };
+      case "failed":
+        return { label: "Errore", color: "error", icon: <ErrorIcon /> };
+      default:
+        return { label: "Non testato", color: "default", icon: <InfoIcon /> };
+    }
+  };
 
   if (loading) {
     return (
@@ -89,12 +108,14 @@ export default function Bucket() {
                 </Typography>
                 <Typography variant="body1">{connection.endpoint}</Typography>
               </Box>
+
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Bucket
                 </Typography>
                 <Typography variant="body1">{connection.bucketName}</Typography>
               </Box>
+
               {connection.region && (
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -103,12 +124,59 @@ export default function Bucket() {
                   <Typography variant="body1">{connection.region}</Typography>
                 </Box>
               )}
+
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Environment
                 </Typography>
                 <Typography variant="body1">
                   {connection.environment.toUpperCase()}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Stato
+                </Typography>
+                <Chip
+                  label={connection.isActive === 1 ? "Attiva" : "Inattiva"}
+                  color={connection.isActive === 1 ? "success" : "default"}
+                  size="small"
+                  icon={
+                    connection.isActive === 1 ? <CheckCircle /> : <ErrorIcon />
+                  }
+                />
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Test
+                </Typography>
+                {(() => {
+                  const s = getStatus(connection.testStatus);
+                  return (
+                    <Chip label={s.label} color={s.color} size="small" icon={s.icon} />
+                  );
+                })()}
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Ultimo test
+                </Typography>
+                <Typography variant="body1">
+                  {connection.lastTested
+                    ? new Date(connection.lastTested).toLocaleString()
+                    : "Mai"}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Modalità URL
+                </Typography>
+                <Typography variant="body1">
+                  {connection.pathStyle === 1 ? "Path-style" : "Virtual-hosted"}
                 </Typography>
               </Box>
             </Box>
