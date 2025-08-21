@@ -11,7 +11,7 @@ interface Props {
 
 const ConnectionDetails: React.FC<Props> = ({ connection }) => {
   return (
-    <Card sx={{ mb: 3, boxShadow: 3 }}>
+    <Card sx={{ mb: 3, boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}>
       <CardContent>
         <Typography
           variant="h6"

@@ -92,7 +92,7 @@ export default function Bucket() {
         <ConnectionDetails connection={connection} />
 
         {/* Placeholder for file navigation */}
-        <Card sx={{ boxShadow: 3 }}>
+        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Contenuti del bucket

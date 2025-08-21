@@ -206,7 +206,7 @@ const Buckets: React.FC = () => {
               p: 1.5,
               bgcolor: "background.paper",
               borderRadius: 2,
-              boxShadow: 3,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
             }}
           >
           <TextField
@@ -289,18 +289,24 @@ const Buckets: React.FC = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    boxShadow: 3,
+                    bgcolor: "primary.50",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
                     transition: "all 0.3s ease",
                     cursor: "pointer",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: 6,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                     },
                   }}
                 >
                   <CardActionArea
+                    disableRipple
                     onClick={() => navigate(`/bucket/${connection.id}`)}
-                    sx={{ flexGrow: 1 }}
+                    sx={{
+                      flexGrow: 1,
+                      "&:hover": { bgcolor: "transparent" },
+                      "& .MuiCardActionArea-focusHighlight": { opacity: 0 },
+                    }}
                   >
                     <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
                     {/* Connection Header */}
