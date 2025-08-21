@@ -1,11 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TextField,
   Button,
   Box,
   Typography,
   IconButton,
-  Chip,
   Fab,
   InputAdornment,
   Card,
@@ -14,6 +14,7 @@ import {
   Tooltip,
   Snackbar,
   Alert,
+  Chip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -28,10 +29,12 @@ import {
   Settings,
   CheckCircle,
   Error,
-  Info,
+  FolderOpen,
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
+import TestStatusChip from "../components/TestStatusChip";
+import EnvironmentChip from "../components/EnvironmentChip";
 import type {
   S3Connection,
   S3ConnectionForm,
@@ -51,6 +54,8 @@ const Buckets: React.FC = () => {
     searchConnections,
     clearError,
   } = useS3Connections();
+
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredConnections, setFilteredConnections] = useState<
@@ -141,17 +146,6 @@ const Buckets: React.FC = () => {
     return await testConnectionConfig(formData);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "success";
-      case "failed":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   if (loading) {
     return (
       <Box sx={{ width: "100%", minWidth: "100%" }}>
@@ -202,18 +196,18 @@ const Buckets: React.FC = () => {
         </Box>
 
         {/* Search and Actions Bar */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            p: 1.5,
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              p: 1.5,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+            }}
+          >
           <TextField
             placeholder="Cerca connessioni..."
             value={searchTerm}
@@ -268,7 +262,7 @@ const Buckets: React.FC = () => {
                 sx={{
                   background:
                     "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-                  boxShadow: "0 3px 5px 2px rgba(33, 203, 243, .3)",
+                  boxShadow: 3,
                   "&:hover": {
                     background:
                       "linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)",
@@ -290,14 +284,18 @@ const Buckets: React.FC = () => {
             {filteredConnections.map((connection) => (
               <Box key={connection.id}>
                 <Card
+                  onClick={() => navigate(`/bucket/${connection.id}`)}
                   sx={{
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
+                    bgcolor: "primary.50",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
                     transition: "all 0.3s ease",
+                    cursor: "pointer",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                     },
                   }}
                 >
@@ -353,26 +351,7 @@ const Buckets: React.FC = () => {
                             )
                           }
                         />
-                        <Chip
-                          label={
-                            connection.testStatus === "success"
-                              ? "Connesso"
-                              : connection.testStatus === "failed"
-                              ? "Errore"
-                              : "Non testato"
-                          }
-                          color={getStatusColor(connection.testStatus)}
-                          size="small"
-                          icon={
-                            connection.testStatus === "success" ? (
-                              <CheckCircle />
-                            ) : connection.testStatus === "failed" ? (
-                              <Error />
-                            ) : (
-                              <Info />
-                            )
-                          }
-                        />
+                        <TestStatusChip status={connection.testStatus} />
                       </Box>
                     </Box>
 
@@ -436,29 +415,35 @@ const Buckets: React.FC = () => {
 
                     {/* Environment Badge */}
                     <Box sx={{ mb: 1.5 }}>
-                      <Chip
-                        label={connection.environment.toUpperCase()}
-                        color={
-                          connection.environment === "prod"
-                            ? "error"
-                            : connection.environment === "test"
-                            ? "warning"
-                            : connection.environment === "dev"
-                            ? "success"
-                            : "info"
-                        }
-                        size="small"
-                        variant="outlined"
-                      />
+                      <EnvironmentChip environment={connection.environment} />
                     </Box>
                   </CardContent>
 
                   {/* Action Buttons */}
                   <CardActions sx={{ p: 1.5, pt: 0, gap: 0.5 }}>
+                    <Tooltip title="Apri">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/bucket/${connection.id}`);
+                        }}
+                        sx={{
+                          color: "secondary.main",
+                          "&:hover": { bgcolor: "secondary.50" },
+                        }}
+                      >
+                        <FolderOpen />
+                      </IconButton>
+                    </Tooltip>
+
                     <Tooltip title="Testa Connessione">
                       <IconButton
                         size="small"
-                        onClick={() => handleTest(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTest(connection.id);
+                        }}
                         sx={{
                           color: "success.main",
                           "&:hover": { bgcolor: "success.50" },
@@ -471,7 +456,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Duplica">
                       <IconButton
                         size="small"
-                        onClick={() => handleDuplicate(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicate(connection.id);
+                        }}
                         sx={{
                           color: "info.main",
                           "&:hover": { bgcolor: "info.50" },
@@ -484,7 +472,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Modifica">
                       <IconButton
                         size="small"
-                        onClick={() => handleOpenDialog(connection)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenDialog(connection);
+                        }}
                         sx={{
                           color: "primary.main",
                           "&:hover": { bgcolor: "primary.50" },
@@ -497,7 +488,10 @@ const Buckets: React.FC = () => {
                     <Tooltip title="Elimina">
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(connection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(connection.id);
+                        }}
                         sx={{
                           color: "error.main",
                           "&:hover": { bgcolor: "error.50" },
@@ -523,7 +517,7 @@ const Buckets: React.FC = () => {
             bottom: 24,
             right: 24,
             background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-            boxShadow: "0 4px 20px rgba(33, 150, 243, 0.4)",
+            boxShadow: 6,
             "&:hover": {
               background: "linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)",
               transform: "scale(1.1)",

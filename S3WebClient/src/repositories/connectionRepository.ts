@@ -21,13 +21,18 @@ export class DexieConnectionRepository implements ConnectionRepository {
 
   async getAll(): Promise<S3Connection[]> {
     const all = await this.db.connections.toArray();
-    return all.sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+    return all
+      .map((c) => ({ ...c, id: String(c.id) }))
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
   }
 
   async get(id: string): Promise<S3Connection | undefined> {
-    return await this.db.connections.get(id);
+    const numericId = Number(id);
+    const connection = await this.db.connections.get(numericId);
+    return connection ? { ...connection, id: String(connection.id) } : undefined;
   }
 
   async add(data: S3ConnectionForm): Promise<string> {
@@ -39,26 +44,31 @@ export class DexieConnectionRepository implements ConnectionRepository {
       updatedAt: new Date(),
     };
     const id = await this.db.connections.add(newConnection);
-    return id as string;
+    return String(id);
   }
 
   async update(id: string, updates: Partial<S3Connection>): Promise<void> {
-    await this.db.connections.update(id, { ...updates, updatedAt: new Date() });
+    await this.db.connections.update(Number(id), {
+      ...updates,
+      updatedAt: new Date(),
+    });
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.connections.delete(id);
+    await this.db.connections.delete(Number(id));
   }
 
   async search(query: string): Promise<S3Connection[]> {
     const lowerQuery = query.toLowerCase();
     const all = await this.db.connections.toArray();
-    return all.filter(
-      (c) =>
-        c.displayName.toLowerCase().includes(lowerQuery) ||
-        c.bucketName.toLowerCase().includes(lowerQuery) ||
-        c.endpoint.toLowerCase().includes(lowerQuery)
-    );
+    return all
+      .filter(
+        (c) =>
+          c.displayName.toLowerCase().includes(lowerQuery) ||
+          c.bucketName.toLowerCase().includes(lowerQuery) ||
+          c.endpoint.toLowerCase().includes(lowerQuery)
+      )
+      .map((c) => ({ ...c, id: String(c.id) }));
   }
 
   async getByEnvironment(environment: string): Promise<S3Connection[]> {
@@ -66,13 +76,16 @@ export class DexieConnectionRepository implements ConnectionRepository {
       .where("environment")
       .equals(environment)
       .toArray();
-    return connections.sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+    return connections
+      .map((c) => ({ ...c, id: String(c.id) }))
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
   }
 
   async test(id: string, result: ConnectionTestResult): Promise<void> {
-    await this.db.connections.update(id, {
+    await this.db.connections.update(Number(id), {
       testStatus: result.success ? "success" : "failed",
       lastTested: result.timestamp,
     });
