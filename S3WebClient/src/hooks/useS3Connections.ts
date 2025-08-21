@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { db } from "../database/database";
+import { connectionRepository, activityRepository } from "../repositories";
 import type {
   S3Connection,
   S3ConnectionForm,
@@ -15,13 +15,8 @@ export const useS3Connections = () => {
   const loadConnections = useCallback(async () => {
     try {
       setLoading(true);
-      const allConnections = await db.connections.toArray();
-      setConnections(
-        allConnections.sort(
-          (a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        )
-      );
+      const allConnections = await connectionRepository.getAll();
+      setConnections(allConnections);
       setError(null);
     } catch (err) {
       setError("Errore nel caricamento delle connessioni");
@@ -35,17 +30,13 @@ export const useS3Connections = () => {
   const addConnection = useCallback(
     async (connectionData: S3ConnectionForm): Promise<string> => {
       try {
-        const newConnection = {
-          ...connectionData,
-          isActive: 1,
-          testStatus: "untested" as const,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-
-        const id = await db.connections.add(newConnection);
+        const id = await connectionRepository.add(connectionData);
+        await activityRepository.add(
+          "success",
+          `Aggiunto bucket ${connectionData.displayName}`
+        );
         await loadConnections();
-        return id as string;
+        return id;
       } catch (err) {
         setError("Errore nell'aggiunta della connessione");
         console.error("Error adding connection:", err);
@@ -59,10 +50,10 @@ export const useS3Connections = () => {
   const updateConnection = useCallback(
     async (id: string, updates: Partial<S3Connection>): Promise<void> => {
       try {
-        await db.connections.update(id, {
-          ...updates,
-          updatedAt: new Date(),
-        });
+        const existing = await connectionRepository.get(id);
+        await connectionRepository.update(id, updates);
+        const name = updates.displayName ?? existing?.displayName ?? id;
+        await activityRepository.add("info", `Modificato bucket ${name}`);
         await loadConnections();
       } catch (err) {
         setError("Errore nell'aggiornamento della connessione");
@@ -77,7 +68,12 @@ export const useS3Connections = () => {
   const deleteConnection = useCallback(
     async (id: string): Promise<void> => {
       try {
-        await db.connections.delete(id);
+        const existing = await connectionRepository.get(id);
+        await connectionRepository.delete(id);
+        await activityRepository.add(
+          "error",
+          `Eliminato bucket ${existing?.displayName ?? id}`
+        );
         await loadConnections();
       } catch (err) {
         setError("Errore nell'eliminazione della connessione");
@@ -155,7 +151,7 @@ export const useS3Connections = () => {
           timestamp: new Date(),
         };
 
-        await db.testConnection(id, testResult);
+        await connectionRepository.test(id, testResult);
         await loadConnections();
 
         return testResult;
@@ -167,7 +163,7 @@ export const useS3Connections = () => {
           error: err instanceof Error ? err.message : "Errore sconosciuto",
         };
 
-        await db.testConnection(id, testResult);
+        await connectionRepository.test(id, testResult);
         await loadConnections();
 
         return testResult;
@@ -183,7 +179,7 @@ export const useS3Connections = () => {
         if (!query.trim()) {
           return connections;
         }
-        return await db.searchConnections(query);
+        return await connectionRepository.search(query);
       } catch (err) {
         setError("Errore nella ricerca delle connessioni");
         console.error("Error searching connections:", err);
@@ -197,7 +193,7 @@ export const useS3Connections = () => {
   const getConnectionsByEnvironment = useCallback(
     async (environment: string): Promise<S3Connection[]> => {
       try {
-        return await db.getConnectionsByEnvironment(environment);
+        return await connectionRepository.getByEnvironment(environment);
       } catch (err) {
         setError("Errore nel filtraggio per environment");
         console.error("Error filtering by environment:", err);
