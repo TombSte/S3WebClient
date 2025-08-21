@@ -31,7 +31,8 @@ export default function ObjectBrowser({ connection }: Props) {
     () =>
       new S3Client({
         endpoint: connection.endpoint,
-        region: connection.region,
+        // Provide a default region for S3-compatible providers that may omit it
+        region: connection.region || "us-east-1",
         forcePathStyle: connection.pathStyle === 1,
         credentials: {
           accessKeyId: connection.accessKeyId,
