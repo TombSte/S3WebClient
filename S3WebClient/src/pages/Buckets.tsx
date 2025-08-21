@@ -12,6 +12,8 @@ import {
   CardContent,
   CardActions,
   Tooltip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -58,6 +60,11 @@ const Buckets: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   // Search and filter connections
   React.useEffect(() => {
@@ -111,9 +118,21 @@ const Buckets: React.FC = () => {
 
   const handleTest = async (id: string) => {
     try {
-      await testConnection(id);
+      const result = await testConnection(id);
+      setSnackbar({
+        open: true,
+        message: result.success
+          ? result.message
+          : `${result.message}${result.error ? `: ${result.error}` : ""}`,
+        severity: result.success ? "success" : "error",
+      });
     } catch (err) {
       console.error("Error testing connection:", err);
+      setSnackbar({
+        open: true,
+        message: "Errore nel test della connessione",
+        severity: "error",
+      });
     }
   };
 
@@ -527,6 +546,19 @@ const Buckets: React.FC = () => {
           onTest={handleFormTest}
           editingConnection={editingConnection}
         />
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: "100%" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );

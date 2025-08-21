@@ -18,6 +18,7 @@ import {
   Chip,
   Divider,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   Cloud,
@@ -63,9 +64,11 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [testing, setTesting] = React.useState(false);
-  const [testResult, setTestResult] = React.useState<ConnectionTestResult | null>(
-    null
-  );
+  const [snackbar, setSnackbar] = React.useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error";
+  }>({ open: false, message: "", severity: "success" });
 
   // Initialize form when editing
   React.useEffect(() => {
@@ -95,7 +98,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       });
     }
     setErrors({});
-    setTestResult(null);
+    setSnackbar({ open: false, message: "", severity: "success" });
   }, [editingConnection, open]);
 
   const validateForm = (): boolean => {
@@ -146,9 +149,20 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       try {
         setTesting(true);
         const result = await onTest(formData);
-        setTestResult(result);
+        setSnackbar({
+          open: true,
+          message: result.success
+            ? result.message
+            : `${result.message}${result.error ? `: ${result.error}` : ""}`,
+          severity: result.success ? "success" : "error",
+        });
       } catch (err) {
         console.error("Error testing connection:", err);
+        setSnackbar({
+          open: true,
+          message: "Errore nel test della connessione",
+          severity: "error",
+        });
       } finally {
         setTesting(false);
       }
@@ -157,11 +171,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
 
   const handleClose = () => {
     setErrors({});
-    setTestResult(null);
+    setSnackbar({ open: false, message: "", severity: "success" });
     onClose();
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -212,18 +227,6 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         }}
       >
         <DialogContent sx={{ p: 3, overflow: "auto", flex: 1 }}>
-          {testResult && (
-            <Alert
-              severity={testResult.success ? "success" : "error"}
-              sx={{ mb: 2 }}
-            >
-              {testResult.success
-                ? testResult.message
-                : `${testResult.message}${
-                    testResult.error ? `: ${testResult.error}` : ""
-                  }`}
-            </Alert>
-          )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {/* Basic Information Section */}
             <Box>
@@ -567,6 +570,20 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         </DialogActions>
       </form>
     </Dialog>
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={6000}
+      onClose={() => setSnackbar({ ...snackbar, open: false })}
+    >
+      <Alert
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        severity={snackbar.severity}
+        sx={{ width: "100%" }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+  </>
   );
 };
 

@@ -74,7 +74,8 @@ export class DexieConnectionRepository implements ConnectionRepository {
   async test(id: string, result: ConnectionTestResult): Promise<void> {
     await this.db.connections.update(id, {
       testStatus: result.success ? "success" : "failed",
-      lastTested: new Date(),
+      lastTested: result.timestamp,
+      updatedAt: new Date(),
     });
   }
 }
