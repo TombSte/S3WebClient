@@ -54,6 +54,7 @@ const Buckets: React.FC = () => {
     deleteConnection,
     duplicateConnection,
     testConnection,
+    testConnectionConfig,
     searchConnections,
     clearError,
   } = useS3Connections();
@@ -513,6 +514,7 @@ const Buckets: React.FC = () => {
           open={openDialog}
           onClose={handleCloseDialog}
           onSubmit={handleSubmit}
+          onTest={testConnectionConfig}
           editingConnection={editingConnection}
         />
       </Box>

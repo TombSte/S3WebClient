@@ -17,6 +17,7 @@ import {
   IconButton,
   Chip,
   Divider,
+  Alert,
 } from "@mui/material";
 import {
   Cloud,
@@ -27,12 +28,17 @@ import {
   Settings,
   Close,
 } from "@mui/icons-material";
-import type { S3Connection, S3ConnectionForm } from "../types/s3";
+import type {
+  S3Connection,
+  S3ConnectionForm,
+  ConnectionTestResult,
+} from "../types/s3";
 
 interface ConnectionFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (formData: S3ConnectionForm) => Promise<void>;
+  onTest: (formData: S3ConnectionForm) => Promise<ConnectionTestResult>;
   editingConnection: S3Connection | null;
 }
 
@@ -40,6 +46,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   open,
   onClose,
   onSubmit,
+  onTest,
   editingConnection,
 }) => {
   const [formData, setFormData] = React.useState<S3ConnectionForm>({
@@ -55,6 +62,10 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [testing, setTesting] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<ConnectionTestResult | null>(
+    null
+  );
 
   // Initialize form when editing
   React.useEffect(() => {
@@ -84,6 +95,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       });
     }
     setErrors({});
+    setTestResult(null);
   }, [editingConnection, open]);
 
   const validateForm = (): boolean => {
@@ -129,8 +141,23 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     }
   };
 
+  const handleTest = async () => {
+    if (validateForm()) {
+      try {
+        setTesting(true);
+        const result = await onTest(formData);
+        setTestResult(result);
+      } catch (err) {
+        console.error("Error testing connection:", err);
+      } finally {
+        setTesting(false);
+      }
+    }
+  };
+
   const handleClose = () => {
     setErrors({});
+    setTestResult(null);
     onClose();
   };
 
@@ -185,6 +212,18 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         }}
       >
         <DialogContent sx={{ p: 3, overflow: "auto", flex: 1 }}>
+          {testResult && (
+            <Alert
+              severity={testResult.success ? "success" : "error"}
+              sx={{ mb: 2 }}
+            >
+              {testResult.success
+                ? testResult.message
+                : `${testResult.message}${
+                    testResult.error ? `: ${testResult.error}` : ""
+                  }`}
+            </Alert>
+          )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {/* Basic Information Section */}
             <Box>
@@ -500,6 +539,14 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
             sx={{ px: 2.5, py: 1, borderRadius: 2 }}
           >
             Annulla
+          </Button>
+          <Button
+            onClick={handleTest}
+            variant="outlined"
+            disabled={testing}
+            sx={{ px: 2.5, py: 1, borderRadius: 2 }}
+          >
+            {testing ? "Test in corso..." : "Test Connessione"}
           </Button>
           <Button
             type="submit"
