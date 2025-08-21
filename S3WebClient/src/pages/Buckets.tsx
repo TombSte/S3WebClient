@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   TextField,
   Button,
@@ -29,6 +30,7 @@ import {
   CheckCircle,
   Error,
   Info,
+  FolderOpen,
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
@@ -51,6 +53,8 @@ const Buckets: React.FC = () => {
     searchConnections,
     clearError,
   } = useS3Connections();
+
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredConnections, setFilteredConnections] = useState<
@@ -455,6 +459,19 @@ const Buckets: React.FC = () => {
 
                   {/* Action Buttons */}
                   <CardActions sx={{ p: 1.5, pt: 0, gap: 0.5 }}>
+                    <Tooltip title="Apri">
+                      <IconButton
+                        size="small"
+                        onClick={() => navigate(`/bucket/${connection.id}`)}
+                        sx={{
+                          color: "secondary.main",
+                          "&:hover": { bgcolor: "secondary.50" },
+                        }}
+                      >
+                        <FolderOpen />
+                      </IconButton>
+                    </Tooltip>
+
                     <Tooltip title="Testa Connessione">
                       <IconButton
                         size="small"
