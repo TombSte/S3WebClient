@@ -5,7 +5,11 @@ import type {
   S3ConnectionForm,
   ConnectionTestResult,
 } from "../types/s3";
-import { S3Client, HeadBucketCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  HeadBucketCommand,
+  CreateBucketCommand,
+} from "@aws-sdk/client-s3";
 
 export const useS3Connections = () => {
   const [connections, setConnections] = useState<S3Connection[]>([]);
@@ -149,12 +153,49 @@ export const useS3Connections = () => {
             secretAccessKey: config.secretAccessKey,
           },
         });
-        await client.send(new HeadBucketCommand({ Bucket: config.bucketName }));
-        return {
-          success: true,
-          message: "Connessione testata con successo",
-          timestamp: new Date(),
-        };
+
+        try {
+          await client.send(
+            new HeadBucketCommand({ Bucket: config.bucketName })
+          );
+          return {
+            success: true,
+            message: "Connessione testata con successo",
+            timestamp: new Date(),
+          };
+        } catch (err) {
+          const e = err as {
+            $metadata?: { httpStatusCode?: number };
+            name?: string;
+            message?: string;
+          };
+          if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") {
+            try {
+              await client.send(
+                new CreateBucketCommand({ Bucket: config.bucketName })
+              );
+              return {
+                success: true,
+                message: "Bucket creato e connessione testata con successo",
+                timestamp: new Date(),
+              };
+            } catch (createErr) {
+              const c = createErr as { message?: string };
+              return {
+                success: false,
+                message: "Errore nel test della connessione",
+                timestamp: new Date(),
+                error: c.message ?? "Errore sconosciuto",
+              };
+            }
+          }
+          return {
+            success: false,
+            message: "Errore nel test della connessione",
+            timestamp: new Date(),
+            error: e.message ?? "Errore sconosciuto",
+          };
+        }
       } catch (err) {
         return {
           success: false,
@@ -195,6 +236,20 @@ export const useS3Connections = () => {
       return await performTest(config);
     },
     [performTest]
+  );
+
+  // Test connection using provided config and store result for an existing id
+  const testConnectionWithConfig = useCallback(
+    async (
+      id: string,
+      config: S3ConnectionForm
+    ): Promise<ConnectionTestResult> => {
+      const result = await performTest(config);
+      await connectionRepository.test(id, result);
+      await loadConnections();
+      return result;
+    },
+    [performTest, loadConnections]
   );
 
   // Search connections
@@ -244,6 +299,7 @@ export const useS3Connections = () => {
     duplicateConnection,
     testConnection,
     testConnectionConfig,
+    testConnectionWithConfig,
     searchConnections,
     getConnectionsByEnvironment,
     loadConnections,

@@ -263,12 +263,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                   <InputLabel>Environment</InputLabel>
                   <Select
                     value={formData.environment}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        environment: e.target.value as any,
-                      })
-                    }
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          environment: e.target.value as S3ConnectionForm["environment"],
+                        })
+                      }
                     label="Environment"
                   >
                     <MenuItem value="dev">

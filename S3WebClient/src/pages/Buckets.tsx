@@ -1,16 +1,7 @@
 import React, { useState } from "react";
 import {
-  List,
-  ListItem,
-  Dialog,
   TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
   Box,
   Typography,
   IconButton,
@@ -21,8 +12,6 @@ import {
   CardContent,
   CardActions,
   Tooltip,
-  Alert,
-  Skeleton,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -37,24 +26,27 @@ import {
   Settings,
   CheckCircle,
   Error,
-  Warning,
   Info,
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
-import type { S3Connection, S3ConnectionForm } from "../types/s3";
+import type {
+  S3Connection,
+  S3ConnectionForm,
+  ConnectionTestResult,
+} from "../types/s3";
 
 const Buckets: React.FC = () => {
   const {
     connections,
     loading,
-    error,
     addConnection,
     updateConnection,
     deleteConnection,
     duplicateConnection,
     testConnection,
     testConnectionConfig,
+    testConnectionWithConfig,
     searchConnections,
     clearError,
   } = useS3Connections();
@@ -125,25 +117,21 @@ const Buckets: React.FC = () => {
     }
   };
 
+  const handleFormTest = async (
+    formData: S3ConnectionForm
+  ): Promise<ConnectionTestResult> => {
+    if (editingConnection) {
+      return await testConnectionWithConfig(editingConnection.id, formData);
+    }
+    return await testConnectionConfig(formData);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "success":
         return "success";
       case "failed":
         return "error";
-      default:
-        return "default";
-    }
-  };
-
-  const getEnvironmentColor = (environment: string) => {
-    switch (environment) {
-      case "prod":
-        return "error";
-      case "test":
-        return "warning";
-      case "dev":
-        return "info";
       default:
         return "default";
     }
@@ -332,23 +320,45 @@ const Buckets: React.FC = () => {
                         </Typography>
                       </Box>
 
-                      {/* Status Chip */}
-                      <Chip
-                        label={
-                          connection.isActive === 1 ? "Attiva" : "Inattiva"
-                        }
-                        color={
-                          connection.isActive === 1 ? "success" : "default"
-                        }
-                        size="small"
-                        icon={
-                          connection.isActive === 1 ? (
-                            <CheckCircle />
-                          ) : (
-                            <Error />
-                          )
-                        }
-                      />
+                      {/* Status Chips */}
+                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                        <Chip
+                          label={
+                            connection.isActive === 1 ? "Attiva" : "Inattiva"
+                          }
+                          color={
+                            connection.isActive === 1 ? "success" : "default"
+                          }
+                          size="small"
+                          icon={
+                            connection.isActive === 1 ? (
+                              <CheckCircle />
+                            ) : (
+                              <Error />
+                            )
+                          }
+                        />
+                        <Chip
+                          label={
+                            connection.testStatus === "success"
+                              ? "Connesso"
+                              : connection.testStatus === "failed"
+                              ? "Errore"
+                              : "Non testato"
+                          }
+                          color={getStatusColor(connection.testStatus)}
+                          size="small"
+                          icon={
+                            connection.testStatus === "success" ? (
+                              <CheckCircle />
+                            ) : connection.testStatus === "failed" ? (
+                              <Error />
+                            ) : (
+                              <Info />
+                            )
+                          }
+                        />
+                      </Box>
                     </Box>
 
                     {/* Connection Details */}
@@ -514,7 +524,7 @@ const Buckets: React.FC = () => {
           open={openDialog}
           onClose={handleCloseDialog}
           onSubmit={handleSubmit}
-          onTest={testConnectionConfig}
+          onTest={handleFormTest}
           editingConnection={editingConnection}
         />
       </Box>

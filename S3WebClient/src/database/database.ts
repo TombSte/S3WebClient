@@ -5,7 +5,7 @@ export interface Preferences {
   id?: number;
   theme: "light" | "dark";
   language: "it" | "en";
-  uiPreferences: Record<string, any>;
+  uiPreferences: Record<string, unknown>;
   encryptionEnabled: boolean;
   encryptionPassphrase?: string;
 }
