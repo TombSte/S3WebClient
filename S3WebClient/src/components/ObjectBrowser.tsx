@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Typography, IconButton, Box, TextField } from "@mui/material";
+import { Typography, IconButton, Box } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository } from "../repositories";
 import ObjectTreeView from "./ObjectTreeView";
 import ObjectFlatList from "./ObjectFlatList";
+import SearchBar from "./SearchBar";
 
 interface Props {
   connection: S3Connection;
@@ -17,6 +18,7 @@ export default function ObjectBrowser({ connection }: Props) {
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<S3ObjectEntity[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const client = useMemo(
     () =>
@@ -97,6 +99,7 @@ export default function ObjectBrowser({ connection }: Props) {
     (async () => {
       if (search.trim() === "") {
         setSearchResults([]);
+        setSuggestions([]);
         return;
       }
       const results = await objectRepository.search(
@@ -104,6 +107,11 @@ export default function ObjectBrowser({ connection }: Props) {
         search.trim()
       );
       setSearchResults(results);
+      const names = results.map((r) => {
+        const parts = r.key.split("/");
+        return parts[parts.length - 1] || r.key;
+      });
+      setSuggestions(Array.from(new Set(names)).slice(0, 5));
     })();
   }, [search, connection.id, refreshTick]);
 
@@ -162,23 +170,31 @@ export default function ObjectBrowser({ connection }: Props) {
 
   return (
     <div>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
         <Typography sx={{ flexGrow: 1 }}>Oggetti</Typography>
-        <TextField
-          placeholder="Cerca..."
-          size="small"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ mr: 1, width: 200 }}
-        />
         <IconButton aria-label="refresh" onClick={handleRefresh}>
           <RefreshIcon />
         </IconButton>
       </Box>
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        suggestions={suggestions}
+        placeholder="Cerca..."
+        sx={{ mb: 2 }}
+      />
       {loading ? (
         <Typography>Caricamento...</Typography>
       ) : search.trim() ? (
-        <ObjectFlatList items={searchResults} />
+        searchResults.length > 0 ? (
+          <ObjectFlatList items={searchResults} />
+        ) : (
+          <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
+        )
+      ) : rootItems.length === 0 ? (
+        <Typography>
+          Questo bucket è vuoto. Carica qualche file per iniziare!
+        </Typography>
       ) : (
         <ObjectTreeView
           key={refreshTick}
