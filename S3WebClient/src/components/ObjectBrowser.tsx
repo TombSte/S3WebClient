@@ -8,10 +8,13 @@ import {
   IconButton,
   Box,
   Collapse,
+  TextField,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FolderIcon from "@mui/icons-material/Folder";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ImageIcon from "@mui/icons-material/Image";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
@@ -26,6 +29,7 @@ export default function ObjectBrowser({ connection }: Props) {
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
+  const [search, setSearch] = useState("");
 
   const client = useMemo(
     () =>
@@ -160,6 +164,24 @@ export default function ObjectBrowser({ connection }: Props) {
     depth: number;
   }
 
+  const getFileIcon = (key: string) => {
+    const ext = key.split(".").pop()?.toLowerCase();
+    switch (ext) {
+      case "pdf":
+        return <PictureAsPdfIcon sx={{ color: "error.main" }} />;
+      case "png":
+      case "jpg":
+      case "jpeg":
+      case "gif":
+      case "bmp":
+      case "svg":
+      case "webp":
+        return <ImageIcon sx={{ color: "success.main" }} />;
+      default:
+        return <InsertDriveFileIcon sx={{ color: "text.secondary" }} />;
+    }
+  };
+
   const Node = ({ item, depth }: NodeProps) => {
     const [open, setOpen] = useState(false);
     const [children, setChildren] = useState<S3ObjectEntity[]>([]);
@@ -182,7 +204,11 @@ export default function ObjectBrowser({ connection }: Props) {
       <>
         <ListItemButton onClick={toggle} sx={{ pl: depth * 2 }}>
           <ListItemIcon>
-            {item.isFolder ? <FolderIcon /> : <InsertDriveFileIcon />}
+            {item.isFolder ? (
+              <FolderIcon sx={{ color: "warning.main" }} />
+            ) : (
+              getFileIcon(item.key)
+            )}
           </ListItemIcon>
           <ListItemText primary={name} />
           {item.isFolder === 1 && (open ? <ExpandLess /> : <ExpandMore />)}
@@ -216,6 +242,13 @@ export default function ObjectBrowser({ connection }: Props) {
     <div>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Typography sx={{ flexGrow: 1 }}>Oggetti</Typography>
+        <TextField
+          placeholder="Cerca..."
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mr: 1, width: 200 }}
+        />
         <IconButton aria-label="refresh" onClick={handleRefresh}>
           <RefreshIcon />
         </IconButton>
