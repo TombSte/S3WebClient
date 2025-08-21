@@ -1,14 +1,35 @@
 import { useParams } from "react-router-dom";
-import { useS3Connections } from "../hooks/useS3Connections";
+import { useEffect, useState } from "react";
 import { Box, Typography, Card, CardContent } from "@mui/material";
 import { Storage as StorageIcon } from "@mui/icons-material";
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
+import type { S3Connection } from "../types/s3";
+import { connectionRepository } from "../repositories";
 
 export default function Bucket() {
   const { id } = useParams();
-  const { connections, loading } = useS3Connections();
-  const connection = connections.find((c) => c.id === id);
+  const [connection, setConnection] = useState<S3Connection | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      const conn = await connectionRepository.get(id);
+      if (active) {
+        setConnection(conn ?? null);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   if (loading) {
     return (
