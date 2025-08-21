@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   List,
   ListItemButton,
@@ -25,6 +25,7 @@ interface Props {
 export default function ObjectBrowser({ connection }: Props) {
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
 
   const client = useMemo(
     () =>
@@ -40,52 +41,65 @@ export default function ObjectBrowser({ connection }: Props) {
     [connection]
   );
 
-  const fetchChildrenFromS3 = async (prefix: string) => {
-    const folders: S3ObjectEntity[] = [];
-    const files: S3ObjectEntity[] = [];
-    let token: string | undefined;
-    do {
-      const res = await client.send(
-        new ListObjectsV2Command({
-          Bucket: connection.bucketName,
-          Prefix: prefix,
-          Delimiter: "/",
-          ContinuationToken: token,
-        })
-      );
-      (res.CommonPrefixes ?? []).forEach((p) => {
-        if (!p.Prefix) return;
-        folders.push({
-          connectionId: connection.id,
-          key: p.Prefix,
-          parent: prefix,
-          isFolder: 1,
-          size: 0,
+  const fetchChildrenFromS3 = useCallback(
+    async (prefix: string) => {
+      const folders: S3ObjectEntity[] = [];
+      const files: S3ObjectEntity[] = [];
+      let token: string | undefined;
+      do {
+        const res = await client.send(
+          new ListObjectsV2Command({
+            Bucket: connection.bucketName,
+            Prefix: prefix,
+            Delimiter: "/",
+            ContinuationToken: token,
+          })
+        );
+        (res.CommonPrefixes ?? []).forEach((p) => {
+          if (!p.Prefix) return;
+          folders.push({
+            connectionId: connection.id,
+            key: p.Prefix,
+            parent: prefix,
+            isFolder: 1,
+            size: 0,
+          });
         });
-      });
-      (res.Contents ?? []).forEach((o) => {
-        if (!o.Key || o.Key === prefix) return;
-        files.push({
-          connectionId: connection.id,
-          key: o.Key,
-          parent: prefix,
-          isFolder: 0,
-          size: o.Size ?? 0,
-          lastModified: o.LastModified,
+        (res.Contents ?? []).forEach((o) => {
+          if (!o.Key || o.Key === prefix) return;
+          files.push({
+            connectionId: connection.id,
+            key: o.Key,
+            parent: prefix,
+            isFolder: 0,
+            size: o.Size ?? 0,
+            lastModified: o.LastModified,
+          });
         });
-      });
-      token = res.IsTruncated ? res.NextContinuationToken : undefined;
-    } while (token);
-    const all = [...folders, ...files];
-    await objectRepository.save(all);
-    return all;
-  };
+        token = res.IsTruncated ? res.NextContinuationToken : undefined;
+      } while (token);
+      const all = [...folders, ...files];
+      await objectRepository.save(all);
+      return all;
+    },
+    [client, connection.bucketName, connection.id]
+  );
 
-  const loadChildren = async (prefix: string) => {
-    const cached = await objectRepository.getChildren(connection.id, prefix);
-    if (cached.length > 0) return cached;
-    return await fetchChildrenFromS3(prefix);
-  };
+  const loadChildren = useCallback(
+    async (prefix: string) => {
+      const cached = await objectRepository.getChildren(connection.id, prefix);
+      if (cached.length > 0) return cached;
+      return await fetchChildrenFromS3(prefix);
+    },
+    [connection.id, fetchChildrenFromS3]
+  );
+
+  useEffect(() => {
+    (async () => {
+      const children = await loadChildren("");
+      setRootItems(children);
+    })();
+  }, [loadChildren, refreshTick]);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -161,9 +175,7 @@ export default function ObjectBrowser({ connection }: Props) {
       setOpen(!open);
     };
 
-    const name = item.key
-      .slice(item.parent.length)
-      .replace(/\/$/, "") || "Root";
+    const name = item.key.slice(item.parent.length).replace(/\/$/, "");
 
     return (
       <>
@@ -199,14 +211,6 @@ export default function ObjectBrowser({ connection }: Props) {
     );
   };
 
-  const root: S3ObjectEntity = {
-    connectionId: connection.id,
-    key: "",
-    parent: "",
-    isFolder: 1,
-    size: 0,
-  };
-
   return (
     <div>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -219,7 +223,11 @@ export default function ObjectBrowser({ connection }: Props) {
         <Typography>Caricamento...</Typography>
       ) : (
         <List key={refreshTick} disablePadding>
-          <Node item={root} depth={0} />
+          {rootItems
+            .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
+            .map((item) => (
+              <Node key={item.key} item={item} depth={0} />
+            ))}
         </List>
       )}
     </div>
