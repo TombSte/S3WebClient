@@ -42,10 +42,9 @@ const Buckets: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredConnections, setFilteredConnections] = useState<
-    S3Connection[]
-  >([]);
+  const [filteredConnections, setFilteredConnections] = useState<S3Connection[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
@@ -197,8 +196,9 @@ const Buckets: React.FC = () => {
           >
           <SearchBar
             placeholder="Cerca connessioni..."
-            value={searchTerm}
-            onChange={setSearchTerm}
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={setSearchTerm}
             suggestions={connectionNames}
             sx={{ mb: 1 }}
           />

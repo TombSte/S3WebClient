@@ -28,7 +28,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<S3ObjectEntity[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -109,23 +110,32 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   useEffect(() => {
     (async () => {
-      if (search.trim() === "") {
-        setSearchResults([]);
+      if (searchInput.trim() === "") {
         setSuggestions([]);
         return;
       }
       const results = await objectRepository.search(
         connection.id,
-        search.trim()
+        searchInput.trim()
       );
-      setSearchResults(results);
       const names = results.map((r) => {
         const parts = r.key.split("/");
         return parts[parts.length - 1] || r.key;
       });
       setSuggestions(Array.from(new Set(names)).slice(0, 5));
     })();
-  }, [search, connection.id, refreshTick]);
+  }, [searchInput, connection.id, refreshTick]);
+
+  const handleSearch = async (term: string) => {
+    const q = term.trim();
+    setQuery(q);
+    if (q === "") {
+      setSearchResults([]);
+      return;
+    }
+    const results = await objectRepository.search(connection.id, q);
+    setSearchResults(results);
+  };
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -185,15 +195,16 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   return (
     <div>
       <SearchBar
-        value={search}
-        onChange={setSearch}
+        value={searchInput}
+        onChange={setSearchInput}
+        onSearch={handleSearch}
         suggestions={suggestions}
         placeholder="Cerca..."
         sx={{ mb: 2 }}
       />
       {loading ? (
         <Typography>Caricamento...</Typography>
-      ) : search.trim() ? (
+      ) : query ? (
         searchResults.length > 0 ? (
           <ObjectFlatList items={searchResults} />
         ) : (

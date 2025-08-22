@@ -5,6 +5,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onSearch: (value: string) => void;
   suggestions?: string[];
   placeholder?: string;
   sx?: SxProps<Theme>;
@@ -13,6 +14,7 @@ interface SearchBarProps {
 export default function SearchBar({
   value,
   onChange,
+  onSearch,
   suggestions = [],
   placeholder = "Cerca...",
   sx,
@@ -24,6 +26,7 @@ export default function SearchBar({
       options={suggestions.filter(Boolean)}
       inputValue={value}
       onInputChange={(_, newInput) => onChange(newInput)}
+      onChange={(_, newValue) => onSearch(newValue ?? "")}
       sx={{
         width: "100%",
         "& .MuiOutlinedInput-root": {
@@ -73,7 +76,10 @@ export default function SearchBar({
                 {value && (
                   <IconButton
                     size="small"
-                    onClick={() => onChange("")}
+                    onClick={() => {
+                      onChange("");
+                      onSearch("");
+                    }}
                     sx={{ mr: -1 }}
                   >
                     <ClearIcon fontSize="small" />
