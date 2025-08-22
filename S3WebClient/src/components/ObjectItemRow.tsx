@@ -5,6 +5,8 @@ import {
   Menu,
   MenuItem,
   IconButton,
+  Typography,
+  Box,
 } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -73,17 +75,39 @@ export default function ObjectItemRow({
       <ListItemButton
         onClick={onClick}
         selected={selected}
-        sx={{ pl: depth * 2 }}
+        sx={{ pl: depth * 2 + 2, borderBottom: "1px solid", borderColor: "divider" }}
       >
-        <ListItemIcon>
+        <ListItemIcon sx={{ minWidth: 32 }}>
           {item.isFolder ? (
             <FolderIcon sx={{ color: "primary.main" }} />
           ) : (
             getFileIcon(item.key)
           )}
         </ListItemIcon>
-        <ListItemText primary={name} />
-        {endIcon}
+        <ListItemText primary={name} sx={{ flex: 1 }} />
+        {!item.isFolder && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              color: "text.secondary",
+              mr: endIcon || hasActions ? 1 : 0,
+            }}
+          >
+            {item.size !== undefined && (
+              <Typography variant="body2">
+                {(item.size / 1024).toFixed(1)} KB
+              </Typography>
+            )}
+            {item.lastModified && (
+              <Typography variant="body2">
+                {item.lastModified.toLocaleDateString()}
+              </Typography>
+            )}
+          </Box>
+        )}
+        {endIcon && <Box sx={{ mr: hasActions ? 1 : 0 }}>{endIcon}</Box>}
         {hasActions && (
           <IconButton
             edge="end"

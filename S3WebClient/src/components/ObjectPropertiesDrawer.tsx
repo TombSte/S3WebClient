@@ -35,7 +35,7 @@ export default function ObjectPropertiesDrawer({ item, onClose }: Props) {
               <ListItem>
                 <ListItemText
                   primary="Dimensione"
-                  secondary={`${item.size} B`}
+                  secondary={`${(item.size / 1024).toFixed(1)} KB`}
                 />
               </ListItem>
             )}
@@ -43,7 +43,7 @@ export default function ObjectPropertiesDrawer({ item, onClose }: Props) {
               <ListItem>
                 <ListItemText
                   primary="Ultima modifica"
-                  secondary={item.lastModified.toString()}
+                  secondary={item.lastModified.toLocaleString()}
                 />
               </ListItem>
             )}

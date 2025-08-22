@@ -78,9 +78,16 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
           Seleziona cartella di destinazione
         </Typography>
-        <List disablePadding sx={{ maxHeight: 200, overflowY: "auto", mb: 2 }}>
-          <ListItemButton selected={selected === ""} onClick={() => setSelected("")}>
-            <ListItemIcon>
+        <List
+          disablePadding
+          sx={{ maxHeight: 200, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+        >
+          <ListItemButton
+            selected={selected === ""}
+            onClick={() => setSelected("")}
+            sx={{ pl: 2 }}
+          >
+            <ListItemIcon sx={{ minWidth: 32 }}>
               <FolderIcon sx={{ color: "primary.main" }} />
             </ListItemIcon>
             <ListItemText primary="/" />
@@ -156,9 +163,9 @@ function FolderNode({ item, depth, selected, onSelect, loadFolders }: FolderNode
       <ListItemButton
         onClick={toggle}
         selected={selected === item.key}
-        sx={{ pl: depth * 2 }}
+        sx={{ pl: depth * 2 + 2 }}
       >
-        <ListItemIcon>
+        <ListItemIcon sx={{ minWidth: 32 }}>
           <FolderIcon sx={{ color: "primary.main" }} />
         </ListItemIcon>
         <ListItemText primary={name} />

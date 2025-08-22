@@ -71,7 +71,7 @@ function Node({
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {loading ? (
-              <ListItemText sx={{ pl: (depth + 1) * 2 }} primary="Caricamento..." />
+              <ListItemText sx={{ pl: (depth + 1) * 2 + 2 }} primary="Caricamento..." />
             ) : (
               children
                 .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
@@ -106,7 +106,10 @@ export default function ObjectTreeView({
   onSelect,
 }: Props) {
   return (
-    <List disablePadding>
+    <List
+      disablePadding
+      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+    >
       {rootItems
         .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
         .map((item) => (

@@ -16,7 +16,10 @@ export default function ObjectFlatList({
   onProperties,
 }: Props) {
   return (
-    <List disablePadding>
+    <List
+      disablePadding
+      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+    >
       {items
         .sort((a, b) => a.key.localeCompare(b.key))
         .map((item) => (
