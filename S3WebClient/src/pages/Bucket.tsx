@@ -1,7 +1,18 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Card, CardContent, IconButton } from "@mui/material";
-import { Storage as StorageIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  IconButton,
+  Drawer,
+} from "@mui/material";
+import {
+  Storage as StorageIcon,
+  Refresh as RefreshIcon,
+  InfoOutlined,
+} from "@mui/icons-material";
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
@@ -12,6 +23,7 @@ export default function Bucket() {
   const { id } = useParams();
   const [connection, setConnection] = useState<S3Connection | null>(null);
   const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
 
   useEffect(() => {
@@ -84,20 +96,27 @@ export default function Bucket() {
               {connection.displayName}
             </Typography>
             <EnvironmentChip environment={connection.environment} />
+            <IconButton
+              aria-label="info"
+              size="small"
+              onClick={() => setDetailsOpen(true)}
+            >
+              <InfoOutlined />
+            </IconButton>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
             Dettagli del bucket e contenuti
           </Typography>
         </Box>
 
-        {/* Bucket Info */}
-        <ConnectionDetails connection={connection} />
-
         {/* File navigation */}
         <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3 }}>
           <CardContent>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
+              >
                 Contenuti del bucket
               </Typography>
               <IconButton
@@ -110,6 +129,15 @@ export default function Bucket() {
             <ObjectBrowser ref={browserRef} connection={connection} />
           </CardContent>
         </Card>
+        <Drawer
+          anchor="right"
+          open={detailsOpen}
+          onClose={() => setDetailsOpen(false)}
+        >
+          <Box sx={{ width: 320, p: 2 }}>
+            <ConnectionDetails connection={connection} compact />
+          </Box>
+        </Drawer>
       </Box>
     </Box>
   );

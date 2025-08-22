@@ -105,9 +105,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <Box
       sx={{
         display: "flex",
-        width: "100vw",
-        minWidth: "100vw",
-        maxWidth: "100vw",
+        width: "100%",
+        minWidth: "100%",
+        maxWidth: "100%",
         overflow: "hidden",
       }}
     >
@@ -117,9 +117,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100vw - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.text.primary,
@@ -193,9 +193,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100vw - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: "100vh",
           backgroundColor: theme.palette.grey[50],
           display: "flex",

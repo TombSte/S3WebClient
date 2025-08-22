@@ -7,11 +7,17 @@ import EnvironmentChip from "./EnvironmentChip";
 
 interface Props {
   connection: S3Connection;
+  compact?: boolean;
 }
 
-const ConnectionDetails: React.FC<Props> = ({ connection }) => {
+const ConnectionDetails: React.FC<Props> = ({ connection, compact = false }) => {
   return (
-    <Card sx={{ mb: 3, boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}>
+    <Card
+      sx={{
+        mb: compact ? 0 : 3,
+        boxShadow: compact ? "none" : "0 2px 10px rgba(0,0,0,0.08)",
+      }}
+    >
       <CardContent>
         <Typography
           variant="h6"
