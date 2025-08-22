@@ -17,10 +17,10 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    fontSize: 12,
-    htmlFontSize: 13,
+    fontSize: 13,
+    htmlFontSize: 14,
   },
-  spacing: 6,
+  spacing: 7,
 });
 
 createRoot(document.getElementById("root")!).render(

@@ -34,12 +34,7 @@ export default function Settings() {
   });
 
   const handleSettingChange = (
-    setting:
-      | "autoSave"
-      | "notifications"
-      | "darkMode"
-      | "autoConnect"
-      | "debugMode",
+    setting: keyof typeof settings,
     value: boolean
   ) => {
     setSettings((prev) => ({ ...prev, [setting]: value }));
@@ -257,9 +252,12 @@ export default function Settings() {
                         />
                         {setting.type === "switch" && (
                           <Switch
-                            checked={setting.value}
+                            checked={Boolean(setting.value)}
                             onChange={(e) =>
-                              handleSettingChange(setting.key, e.target.checked)
+                              handleSettingChange(
+                                setting.key as keyof typeof settings,
+                                e.target.checked
+                              )
                             }
                             color="secondary"
                           />

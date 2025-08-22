@@ -8,7 +8,11 @@ export interface ActivityRepository {
 }
 
 export class DexieActivityRepository implements ActivityRepository {
-  constructor(private db: S3WebClientDatabase) {}
+  private db: S3WebClientDatabase;
+
+  constructor(db: S3WebClientDatabase) {
+    this.db = db;
+  }
 
   async add(type: ActivityLog["type"], message: string): Promise<void> {
     await this.db.activities.add({ type, message, timestamp: new Date() });

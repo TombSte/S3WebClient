@@ -23,7 +23,7 @@ import {
   AccountCircle,
 } from "@mui/icons-material";
 
-const drawerWidth = 224;
+const drawerWidth = 252;
 
 interface LayoutProps {
   children: React.ReactNode;
