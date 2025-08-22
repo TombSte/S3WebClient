@@ -19,6 +19,17 @@ function ThemedApp() {
       secondary: {
         main: "#dc004e",
       },
+      ...(settings.darkMode && {
+        background: {
+          default: "#1a1a1a",
+          paper: "#1c1c1c",
+        },
+        divider: "#333",
+        text: {
+          primary: "#e0e0e0",
+          secondary: "#b0b0b0",
+        },
+      }),
     },
     typography: {
       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
