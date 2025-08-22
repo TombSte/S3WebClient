@@ -8,12 +8,19 @@ import {
 } from "react";
 import { Box, Typography } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository } from "../repositories";
 import ObjectTreeView from "./ObjectTreeView";
 import ObjectFlatList from "./ObjectFlatList";
 import SearchBar from "./SearchBar";
+import ObjectPropertiesDialog from "./ObjectPropertiesDialog";
 
 interface Props {
   connection: S3Connection;
@@ -32,6 +39,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<S3ObjectEntity[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [propItem, setPropItem] = useState<S3ObjectEntity | null>(null);
 
   const client = useMemo(
     () =>
@@ -197,6 +205,60 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     }
   };
 
+  const handleDownload = async (item: S3ObjectEntity) => {
+    try {
+      const res = await client.send(
+        new GetObjectCommand({
+          Bucket: connection.bucketName,
+          Key: item.key,
+        })
+      );
+      const body = await res.Body?.transformToByteArray();
+      if (!body) return;
+      const blob = new Blob([body]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = item.key.split("/").pop() || item.key;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed", err);
+    }
+  };
+
+  const handleRename = async (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return; // Simplified: rename only files
+    const currentName = item.key.split("/").pop() || item.key;
+    const newName = window.prompt("Nuovo nome", currentName);
+    if (!newName || newName === currentName) return;
+    const newKey = `${item.parent}${newName}`;
+    try {
+      await client.send(
+        new CopyObjectCommand({
+          Bucket: connection.bucketName,
+          CopySource: `${connection.bucketName}/${encodeURIComponent(item.key)}`,
+          Key: newKey,
+        })
+      );
+      await client.send(
+        new DeleteObjectCommand({
+          Bucket: connection.bucketName,
+          Key: item.key,
+        })
+      );
+      await handleRefresh();
+    } catch (err) {
+      console.error("Rename failed", err);
+    }
+  };
+
+  const handleProperties = (item: S3ObjectEntity) => {
+    setPropItem(item);
+  };
+
   useImperativeHandle(ref, () => ({ refresh: handleRefresh }));
 
   return (
@@ -213,7 +275,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         <Typography>Caricamento...</Typography>
       ) : query ? (
         searchResults.length > 0 ? (
-          <ObjectFlatList items={searchResults} />
+          <ObjectFlatList
+            items={searchResults}
+            onDownload={handleDownload}
+            onRename={handleRename}
+            onProperties={handleProperties}
+          />
         ) : (
           <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
         )
@@ -229,8 +296,15 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           key={refreshTick}
           rootItems={rootItems}
           loadChildren={loadChildren}
+          onDownload={handleDownload}
+          onRename={handleRename}
+          onProperties={handleProperties}
         />
       )}
+      <ObjectPropertiesDialog
+        item={propItem}
+        onClose={() => setPropItem(null)}
+      />
     </div>
   );
 });

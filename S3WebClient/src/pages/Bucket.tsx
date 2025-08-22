@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -7,6 +7,7 @@ import {
   CardContent,
   IconButton,
   Drawer,
+  Button,
 } from "@mui/material";
 import {
   Storage as StorageIcon,
@@ -16,8 +17,9 @@ import {
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
-import { connectionRepository } from "../repositories";
+import { connectionRepository, objectRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -25,6 +27,23 @@ export default function Bucket() {
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const client = useMemo(
+    () =>
+      connection
+        ? new S3Client({
+            endpoint: connection.endpoint,
+            region: connection.region || "us-east-1",
+            forcePathStyle: connection.pathStyle === 1,
+            credentials: {
+              accessKeyId: connection.accessKeyId,
+              secretAccessKey: connection.secretAccessKey,
+            },
+          })
+        : undefined,
+    [connection]
+  );
 
   useEffect(() => {
     let active = true;
@@ -113,18 +132,21 @@ export default function Bucket() {
         <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3, width: "100%" }}>
           <CardContent sx={{ width: "100%" }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Typography
-                variant="h6"
-                sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
-              >
-                Contenuti del bucket
-              </Typography>
-              <IconButton
-                aria-label="refresh"
-                onClick={() => browserRef.current?.refresh()}
-              >
-                <RefreshIcon />
-              </IconButton>
+          <Typography
+            variant="h6"
+            sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
+          >
+            Contenuti del bucket
+          </Typography>
+          <Button variant="contained" size="small" onClick={() => fileInputRef.current?.click()} sx={{ mr: 1 }}>
+            Carica
+          </Button>
+          <IconButton
+            aria-label="refresh"
+            onClick={() => browserRef.current?.refresh()}
+          >
+            <RefreshIcon />
+          </IconButton>
             </Box>
             <Box sx={{ width: "100%" }}>
               <ObjectBrowser ref={browserRef} connection={connection} />
@@ -141,6 +163,47 @@ export default function Bucket() {
           </Box>
         </Drawer>
       </Box>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file || !connection || !client) return;
+          const folder = window.prompt(
+            "Cartella destinazione (vuota per radice)",
+            ""
+          );
+          const prefix = folder
+            ? folder.replace(/^\/+/g, "").replace(/\/+$/g, "").replace(/\\/g, "/") + "/"
+            : "";
+          const key = prefix + file.name;
+          try {
+            await client.send(
+              new PutObjectCommand({
+                Bucket: connection.bucketName,
+                Key: key,
+                Body: file,
+              })
+            );
+            await objectRepository.save([
+              {
+                connectionId: connection.id,
+                key,
+                parent: prefix,
+                isFolder: 0,
+                size: file.size,
+                lastModified: new Date(),
+              },
+            ]);
+            await browserRef.current?.refresh();
+          } catch (err) {
+            console.error("Upload failed", err);
+          } finally {
+            e.target.value = "";
+          }
+        }}
+      />
     </Box>
   );
 }

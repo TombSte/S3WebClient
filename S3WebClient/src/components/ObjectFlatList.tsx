@@ -4,15 +4,30 @@ import ObjectItemRow from "./ObjectItemRow";
 
 interface Props {
   items: S3ObjectEntity[];
+  onDownload: (item: S3ObjectEntity) => void;
+  onRename: (item: S3ObjectEntity) => void;
+  onProperties: (item: S3ObjectEntity) => void;
 }
 
-export default function ObjectFlatList({ items }: Props) {
+export default function ObjectFlatList({
+  items,
+  onDownload,
+  onRename,
+  onProperties,
+}: Props) {
   return (
     <List disablePadding>
       {items
         .sort((a, b) => a.key.localeCompare(b.key))
         .map((item) => (
-          <ObjectItemRow key={item.key} item={item} name={item.key} />
+          <ObjectItemRow
+            key={item.key}
+            item={item}
+            name={item.key}
+            onDownload={onDownload}
+            onRename={onRename}
+            onProperties={onProperties}
+          />
         ))}
     </List>
   );

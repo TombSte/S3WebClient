@@ -8,15 +8,28 @@ import ObjectItemRow from "./ObjectItemRow";
 interface Props {
   rootItems: S3ObjectEntity[];
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
+  onDownload: (item: S3ObjectEntity) => void;
+  onRename: (item: S3ObjectEntity) => void;
+  onProperties: (item: S3ObjectEntity) => void;
 }
 
 interface NodeProps {
   item: S3ObjectEntity;
   depth: number;
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
+  onDownload: (item: S3ObjectEntity) => void;
+  onRename: (item: S3ObjectEntity) => void;
+  onProperties: (item: S3ObjectEntity) => void;
 }
 
-function Node({ item, depth, loadChildren }: NodeProps) {
+function Node({
+  item,
+  depth,
+  loadChildren,
+  onDownload,
+  onRename,
+  onProperties,
+}: NodeProps) {
   const [open, setOpen] = useState(false);
   const [children, setChildren] = useState<S3ObjectEntity[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,6 +55,9 @@ function Node({ item, depth, loadChildren }: NodeProps) {
         depth={depth}
         onClick={toggle}
         endIcon={item.isFolder === 1 ? open ? <ExpandLess /> : <ExpandMore /> : undefined}
+        onDownload={onDownload}
+        onRename={onRename}
+        onProperties={onProperties}
       />
       {item.isFolder === 1 && (
         <Collapse in={open} timeout="auto" unmountOnExit>
@@ -57,6 +73,9 @@ function Node({ item, depth, loadChildren }: NodeProps) {
                     item={child}
                     depth={depth + 1}
                     loadChildren={loadChildren}
+                    onDownload={onDownload}
+                    onRename={onRename}
+                    onProperties={onProperties}
                   />
                 ))
             )}
@@ -67,7 +86,13 @@ function Node({ item, depth, loadChildren }: NodeProps) {
   );
 }
 
-export default function ObjectTreeView({ rootItems, loadChildren }: Props) {
+export default function ObjectTreeView({
+  rootItems,
+  loadChildren,
+  onDownload,
+  onRename,
+  onProperties,
+}: Props) {
   return (
     <List disablePadding>
       {rootItems
@@ -78,6 +103,9 @@ export default function ObjectTreeView({ rootItems, loadChildren }: Props) {
             item={item}
             depth={0}
             loadChildren={loadChildren}
+            onDownload={onDownload}
+            onRename={onRename}
+            onProperties={onProperties}
           />
         ))}
     </List>
