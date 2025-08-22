@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import "./index.css";
+import "./index.scss";
 import App from "./App.tsx";
 
 const theme = createTheme({
@@ -17,7 +17,10 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontSize: 13,
+    htmlFontSize: 14,
   },
+  spacing: 7,
 });
 
 createRoot(document.getElementById("root")!).render(

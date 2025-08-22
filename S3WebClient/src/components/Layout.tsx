@@ -23,7 +23,7 @@ import {
   AccountCircle,
 } from "@mui/icons-material";
 
-const drawerWidth = 280;
+const drawerWidth = 252;
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -105,9 +105,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <Box
       sx={{
         display: "flex",
-        width: "100vw",
-        minWidth: "100vw",
-        maxWidth: "100vw",
+        width: "100%",
+        minWidth: "100%",
+        maxWidth: "100%",
         overflow: "hidden",
       }}
     >
@@ -117,14 +117,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100vw - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.text.primary,
           boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
-          zIndex: theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.appBar,
         }}
       >
         <Toolbar>
@@ -193,9 +193,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100vw - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100vw - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: "100vh",
           backgroundColor: theme.palette.grey[50],
           display: "flex",

@@ -12,7 +12,11 @@ export interface ObjectRepository {
 }
 
 export class DexieObjectRepository implements ObjectRepository {
-  constructor(private db: S3WebClientDatabase) {}
+  private db: S3WebClientDatabase;
+
+  constructor(db: S3WebClientDatabase) {
+    this.db = db;
+  }
 
   async getChildren(
     connectionId: string,

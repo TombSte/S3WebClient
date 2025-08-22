@@ -17,7 +17,11 @@ export interface ConnectionRepository {
 }
 
 export class DexieConnectionRepository implements ConnectionRepository {
-  constructor(private db: S3WebClientDatabase) {}
+  private db: S3WebClientDatabase;
+
+  constructor(db: S3WebClientDatabase) {
+    this.db = db;
+  }
 
   async getAll(): Promise<S3Connection[]> {
     const all = await this.db.connections.toArray();
@@ -36,14 +40,14 @@ export class DexieConnectionRepository implements ConnectionRepository {
   }
 
   async add(data: S3ConnectionForm): Promise<string> {
-    const newConnection: S3Connection = {
+    const newConnection: Omit<S3Connection, "id"> = {
       ...data,
       isActive: 1,
       testStatus: "untested",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    const id = await this.db.connections.add(newConnection);
+    const id = await this.db.connections.add(newConnection as S3Connection);
     return String(id);
   }
 

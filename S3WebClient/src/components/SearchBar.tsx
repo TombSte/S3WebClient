@@ -62,13 +62,13 @@ export default function SearchBar({
             boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
           },
         },
-        listbox: {
-          sx: {
-            py: 0,
-            "& .MuiAutocomplete-option": {
-              px: 1.5,
-              py: 1,
-            },
+      }}
+      ListboxProps={{
+        sx: {
+          py: 0,
+          "& .MuiAutocomplete-option": {
+            px: 1.5,
+            py: 1,
           },
         },
       }}

@@ -4,7 +4,7 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import type { S3ObjectEntity } from "../types/s3";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 const getFileIcon = (key: string) => {
   const ext = key.split(".").pop()?.toLowerCase();
