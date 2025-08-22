@@ -124,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.text.primary,
           boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
-          zIndex: theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.appBar,
         }}
       >
         <Toolbar>

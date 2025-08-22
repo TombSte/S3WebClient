@@ -70,7 +70,7 @@ export default function Bucket() {
         flexDirection: "column",
         flex: 1,
         textAlign: "left",
-        alignItems: "flex-start",
+        alignItems: "stretch",
       }}
     >
       <Box sx={{ width: "100%" }}>
@@ -110,8 +110,8 @@ export default function Bucket() {
         </Box>
 
         {/* File navigation */}
-        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3 }}>
-          <CardContent>
+        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3, width: "100%" }}>
+          <CardContent sx={{ width: "100%" }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <Typography
                 variant="h6"
@@ -126,7 +126,9 @@ export default function Bucket() {
                 <RefreshIcon />
               </IconButton>
             </Box>
-            <ObjectBrowser ref={browserRef} connection={connection} />
+            <Box sx={{ width: "100%" }}>
+              <ObjectBrowser ref={browserRef} connection={connection} />
+            </Box>
           </CardContent>
         </Card>
         <Drawer
