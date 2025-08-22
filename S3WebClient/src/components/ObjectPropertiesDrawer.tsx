@@ -1,7 +1,7 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
+  Drawer,
+  Box,
+  Typography,
   List,
   ListItem,
   ListItemText,
@@ -13,11 +13,13 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ObjectPropertiesDialog({ item, onClose }: Props) {
+export default function ObjectPropertiesDrawer({ item, onClose }: Props) {
   return (
-    <Dialog open={!!item} onClose={onClose}>
-      <DialogTitle>Proprietà</DialogTitle>
-      <DialogContent>
+    <Drawer anchor="right" open={!!item} onClose={onClose}>
+      <Box sx={{ width: 320, p: 2 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Proprietà
+        </Typography>
         {item && (
           <List>
             <ListItem>
@@ -47,8 +49,8 @@ export default function ObjectPropertiesDialog({ item, onClose }: Props) {
             )}
           </List>
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </Drawer>
   );
 }
 

@@ -4,6 +4,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -12,6 +13,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import type { S3ObjectEntity } from "../types/s3";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const getFileIcon = (key: string) => {
   const ext = key.split(".").pop()?.toLowerCase();
@@ -40,6 +42,7 @@ interface Props {
   onDownload?: (item: S3ObjectEntity) => void;
   onRename?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
+  selected?: boolean;
 }
 
 export default function ObjectItemRow({
@@ -51,36 +54,24 @@ export default function ObjectItemRow({
   onDownload,
   onRename,
   onProperties,
+  selected = false,
 }: Props) {
-  const [menuPos, setMenuPos] = useState<
-    | {
-        mouseX: number;
-        mouseY: number;
-      }
-    | null
-  >(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleContextMenu = (event: React.MouseEvent) => {
-    event.preventDefault();
-    setMenuPos(
-      menuPos === null
-        ? {
-            mouseX: event.clientX - 2,
-            mouseY: event.clientY - 4,
-          }
-        : null
-    );
+  const handleMenuOpen = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget as HTMLElement);
   };
 
   const handleClose = () => {
-    setMenuPos(null);
+    setAnchorEl(null);
   };
 
   return (
     <>
       <ListItemButton
         onClick={onClick}
-        onContextMenu={handleContextMenu}
+        selected={selected}
         sx={{ pl: depth * 2 }}
       >
         <ListItemIcon>
@@ -92,17 +83,16 @@ export default function ObjectItemRow({
         </ListItemIcon>
         <ListItemText primary={name} />
         {endIcon}
+        <IconButton
+          edge="end"
+          size="small"
+          onClick={handleMenuOpen}
+          sx={{ ml: 1 }}
+        >
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
       </ListItemButton>
-      <Menu
-        open={menuPos !== null}
-        onClose={handleClose}
-        anchorReference="anchorPosition"
-        anchorPosition={
-          menuPos !== null
-            ? { top: menuPos.mouseY, left: menuPos.mouseX }
-            : undefined
-        }
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose} onClick={(e)=>e.stopPropagation()}>
         {item.isFolder === 0 && (
           <MenuItem
             onClick={() => {

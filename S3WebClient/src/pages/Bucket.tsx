@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -17,9 +17,8 @@ import {
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
-import { connectionRepository, objectRepository } from "../repositories";
+import { connectionRepository, objectRepository, s3ObjectRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -28,22 +27,6 @@ export default function Bucket() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const client = useMemo(
-    () =>
-      connection
-        ? new S3Client({
-            endpoint: connection.endpoint,
-            region: connection.region || "us-east-1",
-            forcePathStyle: connection.pathStyle === 1,
-            credentials: {
-              accessKeyId: connection.accessKeyId,
-              secretAccessKey: connection.secretAccessKey,
-            },
-          })
-        : undefined,
-    [connection]
-  );
 
   useEffect(() => {
     let active = true;
@@ -169,23 +152,11 @@ export default function Bucket() {
         style={{ display: "none" }}
         onChange={async (e) => {
           const file = e.target.files?.[0];
-          if (!file || !connection || !client) return;
-          const folder = window.prompt(
-            "Cartella destinazione (vuota per radice)",
-            ""
-          );
-          const prefix = folder
-            ? folder.replace(/^\/+/g, "").replace(/\/+$/g, "").replace(/\\/g, "/") + "/"
-            : "";
+          if (!file || !connection) return;
+          const prefix = browserRef.current?.getSelectedPrefix() ?? "";
           const key = prefix + file.name;
           try {
-            await client.send(
-              new PutObjectCommand({
-                Bucket: connection.bucketName,
-                Key: key,
-                Body: file,
-              })
-            );
+            await s3ObjectRepository.upload(connection, key, file);
             await objectRepository.save([
               {
                 connectionId: connection.id,

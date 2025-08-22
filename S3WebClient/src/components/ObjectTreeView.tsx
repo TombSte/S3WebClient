@@ -11,6 +11,8 @@ interface Props {
   onDownload: (item: S3ObjectEntity) => void;
   onRename: (item: S3ObjectEntity) => void;
   onProperties: (item: S3ObjectEntity) => void;
+  selected: string;
+  onSelect: (prefix: string) => void;
 }
 
 interface NodeProps {
@@ -20,6 +22,8 @@ interface NodeProps {
   onDownload: (item: S3ObjectEntity) => void;
   onRename: (item: S3ObjectEntity) => void;
   onProperties: (item: S3ObjectEntity) => void;
+  selected: string;
+  onSelect: (prefix: string) => void;
 }
 
 function Node({
@@ -29,6 +33,8 @@ function Node({
   onDownload,
   onRename,
   onProperties,
+  selected,
+  onSelect,
 }: NodeProps) {
   const [open, setOpen] = useState(false);
   const [children, setChildren] = useState<S3ObjectEntity[]>([]);
@@ -36,6 +42,7 @@ function Node({
 
   const toggle = async () => {
     if (item.isFolder !== 1) return;
+    onSelect(item.key);
     if (!open && children.length === 0) {
       setLoading(true);
       const loaded = await loadChildren(item.key);
@@ -58,6 +65,7 @@ function Node({
         onDownload={onDownload}
         onRename={onRename}
         onProperties={onProperties}
+        selected={selected === item.key}
       />
       {item.isFolder === 1 && (
         <Collapse in={open} timeout="auto" unmountOnExit>
@@ -76,6 +84,8 @@ function Node({
                     onDownload={onDownload}
                     onRename={onRename}
                     onProperties={onProperties}
+                    selected={selected}
+                    onSelect={onSelect}
                   />
                 ))
             )}
@@ -92,6 +102,8 @@ export default function ObjectTreeView({
   onDownload,
   onRename,
   onProperties,
+  selected,
+  onSelect,
 }: Props) {
   return (
     <List disablePadding>
@@ -106,6 +118,8 @@ export default function ObjectTreeView({
             onDownload={onDownload}
             onRename={onRename}
             onProperties={onProperties}
+            selected={selected}
+            onSelect={onSelect}
           />
         ))}
     </List>
