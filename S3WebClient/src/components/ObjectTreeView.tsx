@@ -8,9 +8,9 @@ import ObjectItemRow from "./ObjectItemRow";
 interface Props {
   rootItems: S3ObjectEntity[];
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
-  onDownload: (item: S3ObjectEntity) => void;
-  onRename: (item: S3ObjectEntity) => void;
-  onProperties: (item: S3ObjectEntity) => void;
+  onDownload?: (item: S3ObjectEntity) => void;
+  onRename?: (item: S3ObjectEntity) => void;
+  onProperties?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
 }
@@ -19,9 +19,9 @@ interface NodeProps {
   item: S3ObjectEntity;
   depth: number;
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
-  onDownload: (item: S3ObjectEntity) => void;
-  onRename: (item: S3ObjectEntity) => void;
-  onProperties: (item: S3ObjectEntity) => void;
+  onDownload?: (item: S3ObjectEntity) => void;
+  onRename?: (item: S3ObjectEntity) => void;
+  onProperties?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
 }

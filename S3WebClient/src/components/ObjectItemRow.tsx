@@ -57,6 +57,7 @@ export default function ObjectItemRow({
   selected = false,
 }: Props) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const hasActions = onDownload || onRename || onProperties;
 
   const handleMenuOpen = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -83,43 +84,56 @@ export default function ObjectItemRow({
         </ListItemIcon>
         <ListItemText primary={name} />
         {endIcon}
-        <IconButton
-          edge="end"
-          size="small"
-          onClick={handleMenuOpen}
-          sx={{ ml: 1 }}
-        >
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-      </ListItemButton>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose} onClick={(e)=>e.stopPropagation()}>
-        {item.isFolder === 0 && (
-          <MenuItem
-            onClick={() => {
-              onDownload?.(item);
-              handleClose();
-            }}
+        {hasActions && (
+          <IconButton
+            edge="end"
+            size="small"
+            onClick={handleMenuOpen}
+            sx={{ ml: 1 }}
           >
-            Scarica
-          </MenuItem>
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
         )}
-        <MenuItem
-          onClick={() => {
-            onRename?.(item);
-            handleClose();
-          }}
+      </ListItemButton>
+      {hasActions && (
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+          onClick={(e) => e.stopPropagation()}
         >
-          Rinomina
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            onProperties?.(item);
-            handleClose();
-          }}
-        >
-          Proprietà
-        </MenuItem>
-      </Menu>
+          {item.isFolder === 0 && onDownload && (
+            <MenuItem
+              onClick={() => {
+                onDownload(item);
+                handleClose();
+              }}
+            >
+              Scarica
+            </MenuItem>
+          )}
+          {onRename && (
+            <MenuItem
+              onClick={() => {
+                onRename(item);
+                handleClose();
+              }}
+            >
+              Rinomina
+            </MenuItem>
+          )}
+          {onProperties && (
+            <MenuItem
+              onClick={() => {
+                onProperties(item);
+                handleClose();
+              }}
+            >
+              Proprietà
+            </MenuItem>
+          )}
+        </Menu>
+      )}
     </>
   );
 }

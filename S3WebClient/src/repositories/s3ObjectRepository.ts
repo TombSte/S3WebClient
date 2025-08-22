@@ -124,11 +124,12 @@ export class S3ObjectRepository {
 
   async upload(connection: S3Connection, key: string, file: File): Promise<void> {
     const client = createClient(connection);
+    const body = new Uint8Array(await file.arrayBuffer());
     await client.send(
       new PutObjectCommand({
         Bucket: connection.bucketName,
         Key: key,
-        Body: file,
+        Body: body,
       })
     );
   }

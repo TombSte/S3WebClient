@@ -17,16 +17,17 @@ import {
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
-import { connectionRepository, objectRepository, s3ObjectRepository } from "../repositories";
+import { connectionRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
+import UploadObjectDialog from "../components/UploadObjectDialog";
 
 export default function Bucket() {
   const { id } = useParams();
   const [connection, setConnection] = useState<S3Connection | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -121,7 +122,12 @@ export default function Bucket() {
           >
             Contenuti del bucket
           </Typography>
-          <Button variant="contained" size="small" onClick={() => fileInputRef.current?.click()} sx={{ mr: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setUploadOpen(true)}
+            sx={{ mr: 1 }}
+          >
             Carica
           </Button>
           <IconButton
@@ -146,33 +152,12 @@ export default function Bucket() {
           </Box>
         </Drawer>
       </Box>
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          if (!file || !connection) return;
-          const prefix = browserRef.current?.getSelectedPrefix() ?? "";
-          const key = prefix + file.name;
-          try {
-            await s3ObjectRepository.upload(connection, key, file);
-            await objectRepository.save([
-              {
-                connectionId: connection.id,
-                key,
-                parent: prefix,
-                isFolder: 0,
-                size: file.size,
-                lastModified: new Date(),
-              },
-            ]);
-            await browserRef.current?.refresh();
-          } catch (err) {
-            console.error("Upload failed", err);
-          } finally {
-            e.target.value = "";
-          }
+      <UploadObjectDialog
+        open={uploadOpen}
+        connection={connection}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={async () => {
+          await browserRef.current?.refresh();
         }}
       />
     </Box>
