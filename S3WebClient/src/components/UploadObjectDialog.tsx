@@ -16,7 +16,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
-import { s3ObjectRepository, objectRepository } from "../repositories";
+import { objectService } from "../repositories";
 
 interface Props {
   open: boolean;
@@ -32,7 +32,7 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
 
   const loadFolders = useCallback(
     async (prefix: string) => {
-      const all = await s3ObjectRepository.list(connection, prefix);
+      const all = await objectService.fetchChildren(connection, prefix);
       return all.filter((i) => i.isFolder === 1);
     },
     [connection]
@@ -53,17 +53,7 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
     if (!file || selected === null) return;
     const key = `${selected}${file.name}`;
     try {
-      await s3ObjectRepository.upload(connection, key, file);
-      await objectRepository.save([
-        {
-          connectionId: connection.id,
-          key,
-          parent: selected,
-          isFolder: 0,
-          size: file.size,
-          lastModified: new Date(),
-        },
-      ]);
+      await objectService.upload(connection, key, file);
       await onUploaded();
       onClose();
     } catch (err) {

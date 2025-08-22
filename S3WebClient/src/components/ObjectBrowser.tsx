@@ -8,7 +8,7 @@ import {
 import { Box, Typography } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
-import { objectRepository, s3ObjectRepository } from "../repositories";
+import { objectRepository, objectService } from "../repositories";
 import ObjectTreeView from "./ObjectTreeView";
 import ObjectFlatList from "./ObjectFlatList";
 import SearchBar from "./SearchBar";
@@ -37,11 +37,9 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [renameItem, setRenameItem] = useState<S3ObjectEntity | null>(null);
   const [selectedPrefix, setSelectedPrefix] = useState("");
 
-  const fetchChildrenFromS3 = useCallback(
+  const fetchChildren = useCallback(
     async (prefix: string) => {
-      const all = await s3ObjectRepository.list(connection, prefix);
-      await objectRepository.save(all);
-      return all;
+      return await objectService.fetchChildren(connection, prefix);
     },
     [connection]
   );
@@ -50,9 +48,9 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     async (prefix: string) => {
       const cached = await objectRepository.getChildren(connection.id, prefix);
       if (cached.length > 0) return cached;
-      return await fetchChildrenFromS3(prefix);
+      return await fetchChildren(prefix);
     },
-    [connection.id, fetchChildrenFromS3]
+    [connection.id, fetchChildren]
   );
 
   useEffect(() => {
@@ -101,8 +99,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      const all = await s3ObjectRepository.listAll(connection);
-      await objectRepository.replaceAll(connection.id, all);
+      await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
     } catch (err) {
       console.error("Error refreshing objects", err);
@@ -113,7 +110,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   const handleDownload = async (item: S3ObjectEntity) => {
     try {
-      const body = await s3ObjectRepository.download(connection, item.key);
+      const body = await objectService.download(connection, item.key);
       if (!body) return;
       const blob = new Blob([body]);
       const url = URL.createObjectURL(blob);
@@ -143,8 +140,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     }
     const newKey = `${renameItem.parent}${newName}`;
     try {
-      await s3ObjectRepository.rename(connection, renameItem.key, newKey);
-      await handleRefresh();
+      await objectService.rename(connection, renameItem.key, newKey);
+      setRefreshTick((t) => t + 1);
     } catch (err) {
       console.error("Rename failed", err);
     } finally {
