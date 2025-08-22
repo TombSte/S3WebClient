@@ -7,6 +7,7 @@ import {
   CardContent,
   IconButton,
   Drawer,
+  Button,
 } from "@mui/material";
 import {
   Storage as StorageIcon,
@@ -18,12 +19,14 @@ import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
 import { connectionRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
+import UploadObjectDialog from "../components/UploadObjectDialog";
 
 export default function Bucket() {
   const { id } = useParams();
   const [connection, setConnection] = useState<S3Connection | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
 
   useEffect(() => {
@@ -113,18 +116,26 @@ export default function Bucket() {
         <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3, width: "100%" }}>
           <CardContent sx={{ width: "100%" }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Typography
-                variant="h6"
-                sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
-              >
-                Contenuti del bucket
-              </Typography>
-              <IconButton
-                aria-label="refresh"
-                onClick={() => browserRef.current?.refresh()}
-              >
-                <RefreshIcon />
-              </IconButton>
+          <Typography
+            variant="h6"
+            sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
+          >
+            Contenuti del bucket
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setUploadOpen(true)}
+            sx={{ mr: 1 }}
+          >
+            Carica
+          </Button>
+          <IconButton
+            aria-label="refresh"
+            onClick={() => browserRef.current?.refresh()}
+          >
+            <RefreshIcon />
+          </IconButton>
             </Box>
             <Box sx={{ width: "100%" }}>
               <ObjectBrowser ref={browserRef} connection={connection} />
@@ -141,6 +152,14 @@ export default function Bucket() {
           </Box>
         </Drawer>
       </Box>
+      <UploadObjectDialog
+        open={uploadOpen}
+        connection={connection}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={async () => {
+          await browserRef.current?.refresh();
+        }}
+      />
     </Box>
   );
 }

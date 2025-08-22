@@ -1,10 +1,21 @@
-import { ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import {
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  IconButton,
+  Typography,
+  Box,
+} from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ImageIcon from "@mui/icons-material/Image";
 import type { S3ObjectEntity } from "../types/s3";
+import { useState } from "react";
 import type { ReactNode } from "react";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 const getFileIcon = (key: string) => {
   const ext = key.split(".").pop()?.toLowerCase();
@@ -30,6 +41,10 @@ interface Props {
   depth?: number;
   onClick?: () => void;
   endIcon?: ReactNode;
+  onDownload?: (item: S3ObjectEntity) => void;
+  onRename?: (item: S3ObjectEntity) => void;
+  onProperties?: (item: S3ObjectEntity) => void;
+  selected?: boolean;
 }
 
 export default function ObjectItemRow({
@@ -38,18 +53,111 @@ export default function ObjectItemRow({
   depth = 0,
   onClick,
   endIcon,
+  onDownload,
+  onRename,
+  onProperties,
+  selected = false,
 }: Props) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const hasActions = onDownload || onRename || onProperties;
+
+  const handleMenuOpen = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget as HTMLElement);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <ListItemButton onClick={onClick} sx={{ pl: depth * 2 }}>
-      <ListItemIcon>
-        {item.isFolder ? (
-          <FolderIcon sx={{ color: "primary.main" }} />
-        ) : (
-          getFileIcon(item.key)
+    <>
+      <ListItemButton
+        onClick={onClick}
+        selected={selected}
+        sx={{ pl: depth * 2 + 2, borderBottom: "1px solid", borderColor: "divider" }}
+      >
+        <ListItemIcon sx={{ minWidth: 32 }}>
+          {item.isFolder ? (
+            <FolderIcon sx={{ color: "primary.main" }} />
+          ) : (
+            getFileIcon(item.key)
+          )}
+        </ListItemIcon>
+        <ListItemText primary={name} sx={{ flex: 1 }} />
+        {!item.isFolder && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              color: "text.secondary",
+              mr: endIcon || hasActions ? 1 : 0,
+            }}
+          >
+            {item.size !== undefined && (
+              <Typography variant="body2">
+                {(item.size / 1024).toFixed(1)} KB
+              </Typography>
+            )}
+            {item.lastModified && (
+              <Typography variant="body2">
+                {item.lastModified.toLocaleDateString()}
+              </Typography>
+            )}
+          </Box>
         )}
-      </ListItemIcon>
-      <ListItemText primary={name} />
-      {endIcon}
-    </ListItemButton>
+        {endIcon && <Box sx={{ mr: hasActions ? 1 : 0 }}>{endIcon}</Box>}
+        {hasActions && (
+          <IconButton
+            edge="end"
+            size="small"
+            onClick={handleMenuOpen}
+            sx={{ ml: 1 }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        )}
+      </ListItemButton>
+      {hasActions && (
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {item.isFolder === 0 && onDownload && (
+            <MenuItem
+              onClick={() => {
+                onDownload(item);
+                handleClose();
+              }}
+            >
+              Scarica
+            </MenuItem>
+          )}
+          {onRename && (
+            <MenuItem
+              onClick={() => {
+                onRename(item);
+                handleClose();
+              }}
+            >
+              Rinomina
+            </MenuItem>
+          )}
+          {onProperties && (
+            <MenuItem
+              onClick={() => {
+                onProperties(item);
+                handleClose();
+              }}
+            >
+              Proprietà
+            </MenuItem>
+          )}
+        </Menu>
+      )}
+    </>
   );
 }

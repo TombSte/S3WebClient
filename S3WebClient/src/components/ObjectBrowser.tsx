@@ -1,19 +1,19 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   forwardRef,
   useImperativeHandle,
 } from "react";
 import { Box, Typography } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
-import { objectRepository } from "../repositories";
+import { objectRepository, objectService } from "../repositories";
 import ObjectTreeView from "./ObjectTreeView";
 import ObjectFlatList from "./ObjectFlatList";
 import SearchBar from "./SearchBar";
+import ObjectPropertiesDrawer from "./ObjectPropertiesDrawer";
+import RenameObjectDialog from "./RenameObjectDialog";
 
 interface Props {
   connection: S3Connection;
@@ -21,6 +21,7 @@ interface Props {
 
 export interface ObjectBrowserHandle {
   refresh: () => Promise<void>;
+  getSelectedPrefix: () => string;
 }
 
 const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
@@ -32,73 +33,24 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<S3ObjectEntity[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [propItem, setPropItem] = useState<S3ObjectEntity | null>(null);
+  const [renameItem, setRenameItem] = useState<S3ObjectEntity | null>(null);
+  const [selectedPrefix, setSelectedPrefix] = useState("");
 
-  const client = useMemo(
-    () =>
-      new S3Client({
-        endpoint: connection.endpoint,
-        // Provide a default region for S3-compatible providers that may omit it
-        region: connection.region || "us-east-1",
-        forcePathStyle: connection.pathStyle === 1,
-        credentials: {
-          accessKeyId: connection.accessKeyId,
-          secretAccessKey: connection.secretAccessKey,
-        },
-      }),
-    [connection]
-  );
-
-  const fetchChildrenFromS3 = useCallback(
+  const fetchChildren = useCallback(
     async (prefix: string) => {
-      const folders: S3ObjectEntity[] = [];
-      const files: S3ObjectEntity[] = [];
-      let token: string | undefined;
-      do {
-        const res = await client.send(
-          new ListObjectsV2Command({
-            Bucket: connection.bucketName,
-            Prefix: prefix,
-            Delimiter: "/",
-            ContinuationToken: token,
-          })
-        );
-        (res.CommonPrefixes ?? []).forEach((p) => {
-          if (!p.Prefix) return;
-          folders.push({
-            connectionId: connection.id,
-            key: p.Prefix,
-            parent: prefix,
-            isFolder: 1,
-            size: 0,
-          });
-        });
-        (res.Contents ?? []).forEach((o) => {
-          if (!o.Key || o.Key === prefix) return;
-          files.push({
-            connectionId: connection.id,
-            key: o.Key,
-            parent: prefix,
-            isFolder: 0,
-            size: o.Size ?? 0,
-            lastModified: o.LastModified,
-          });
-        });
-        token = res.IsTruncated ? res.NextContinuationToken : undefined;
-      } while (token);
-      const all = [...folders, ...files];
-      await objectRepository.save(all);
-      return all;
+      return await objectService.fetchChildren(connection, prefix);
     },
-    [client, connection.bucketName, connection.id]
+    [connection]
   );
 
   const loadChildren = useCallback(
     async (prefix: string) => {
       const cached = await objectRepository.getChildren(connection.id, prefix);
       if (cached.length > 0) return cached;
-      return await fetchChildrenFromS3(prefix);
+      return await fetchChildren(prefix);
     },
-    [connection.id, fetchChildrenFromS3]
+    [connection.id, fetchChildren]
   );
 
   useEffect(() => {
@@ -147,48 +99,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      const folders: S3ObjectEntity[] = [];
-      const files: S3ObjectEntity[] = [];
-      const seenFolders = new Set<string>();
-      let token: string | undefined;
-      do {
-        const res = await client.send(
-          new ListObjectsV2Command({
-            Bucket: connection.bucketName,
-            ContinuationToken: token,
-          })
-        );
-        (res.Contents ?? []).forEach((o) => {
-          if (!o.Key) return;
-          const parts = o.Key.split("/");
-          let prefix = "";
-          for (let i = 0; i < parts.length - 1; i++) {
-            const folderKey = `${prefix}${parts[i]}/`;
-            if (!seenFolders.has(folderKey)) {
-              seenFolders.add(folderKey);
-              folders.push({
-                connectionId: connection.id,
-                key: folderKey,
-                parent: prefix,
-                isFolder: 1,
-                size: 0,
-              });
-            }
-            prefix = folderKey;
-          }
-          if (o.Key.endsWith("/")) return;
-          files.push({
-            connectionId: connection.id,
-            key: o.Key,
-            parent: prefix,
-            isFolder: 0,
-            size: o.Size ?? 0,
-            lastModified: o.LastModified,
-          });
-        });
-        token = res.IsTruncated ? res.NextContinuationToken : undefined;
-      } while (token);
-      await objectRepository.replaceAll(connection.id, [...folders, ...files]);
+      await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
     } catch (err) {
       console.error("Error refreshing objects", err);
@@ -197,7 +108,55 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     }
   };
 
-  useImperativeHandle(ref, () => ({ refresh: handleRefresh }));
+  const handleDownload = async (item: S3ObjectEntity) => {
+    try {
+      const body = await objectService.download(connection, item.key);
+      if (!body) return;
+      const blob = new Blob([body]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = item.key.split("/").pop() || item.key;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed", err);
+    }
+  };
+
+  const handleRename = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    setRenameItem(item);
+  };
+
+  const confirmRename = async (newName: string) => {
+    if (!renameItem) return;
+    const currentName = renameItem.key.split("/").pop() || renameItem.key;
+    if (newName === currentName) {
+      setRenameItem(null);
+      return;
+    }
+    const newKey = `${renameItem.parent}${newName}`;
+    try {
+      await objectService.rename(connection, renameItem.key, newKey);
+      setRefreshTick((t) => t + 1);
+    } catch (err) {
+      console.error("Rename failed", err);
+    } finally {
+      setRenameItem(null);
+    }
+  };
+
+  const handleProperties = (item: S3ObjectEntity) => {
+    setPropItem(item);
+  };
+
+  useImperativeHandle(ref, () => ({
+    refresh: handleRefresh,
+    getSelectedPrefix: () => selectedPrefix,
+  }));
 
   return (
     <div>
@@ -213,7 +172,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         <Typography>Caricamento...</Typography>
       ) : query ? (
         searchResults.length > 0 ? (
-          <ObjectFlatList items={searchResults} />
+          <ObjectFlatList
+            items={searchResults}
+            onDownload={handleDownload}
+            onRename={handleRename}
+            onProperties={handleProperties}
+          />
         ) : (
           <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
         )
@@ -229,8 +193,23 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           key={refreshTick}
           rootItems={rootItems}
           loadChildren={loadChildren}
+          onDownload={handleDownload}
+          onRename={handleRename}
+          onProperties={handleProperties}
+          selected={selectedPrefix}
+          onSelect={(p) => setSelectedPrefix(p)}
         />
       )}
+      <ObjectPropertiesDrawer
+        item={propItem}
+        onClose={() => setPropItem(null)}
+      />
+      <RenameObjectDialog
+        open={!!renameItem}
+        currentName={renameItem?.key.split("/").pop() || ""}
+        onCancel={() => setRenameItem(null)}
+        onConfirm={confirmRename}
+      />
     </div>
   );
 });
