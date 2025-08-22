@@ -10,6 +10,7 @@ import {
   ListItemText,
   Chip,
   Button,
+  TextField,
 } from "@mui/material";
 import {
   Settings as SettingsIcon,
@@ -20,24 +21,16 @@ import {
   Cloud,
   Info,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useSettings } from "../contexts/SettingsContext";
 
 export default function Settings() {
-  const [settings, setSettings] = useState({
-    autoSave: true,
-    notifications: true,
-    darkMode: false,
-    autoConnect: false,
-    debugMode: false,
-    language: "it",
-    theme: "default",
-  });
+  const { settings, setSetting } = useSettings();
 
-  const handleSettingChange = (
-    setting: keyof typeof settings,
-    value: boolean
+  const handleSettingChange = <K extends keyof typeof settings>(
+    setting: K,
+    value: (typeof settings)[K]
   ) => {
-    setSettings((prev) => ({ ...prev, [setting]: value }));
+    setSetting(setting, value);
   };
 
   const settingCategories = [
@@ -46,19 +39,12 @@ export default function Settings() {
       icon: <SettingsIcon />,
       settings: [
         {
-          key: "autoSave",
-          label: "Salvataggio Automatico",
-          description: "Salva automaticamente le modifiche alle connessioni",
-          type: "switch",
-          value: settings.autoSave,
-        },
-        {
-          key: "autoConnect",
-          label: "Connessione Automatica",
+          key: "realtimeCheck",
+          label: "Verifica connessioni in realtime",
           description:
-            "Connetti automaticamente all'ultima connessione utilizzata",
+            "Controlla periodicamente lo stato delle connessioni",
           type: "switch",
-          value: settings.autoConnect,
+          value: settings.realtimeCheck,
         },
       ],
     },
@@ -241,13 +227,31 @@ export default function Settings() {
                             </Box>
                           }
                           secondary={
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ mt: 0.5, fontSize: "0.875rem" }}
-                            >
-                              {setting.description}
-                            </Typography>
+                            <Box sx={{ mt: 0.5 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ fontSize: "0.875rem" }}
+                              >
+                                {setting.description}
+                              </Typography>
+                              {setting.key === "realtimeCheck" && settings.realtimeCheck && (
+                                <TextField
+                                  type="number"
+                                  label="Intervallo (s)"
+                                  size="small"
+                                  value={settings.realtimeInterval}
+                                  onChange={(e) =>
+                                    handleSettingChange(
+                                      "realtimeInterval",
+                                      parseInt(e.target.value, 10) || 0
+                                    )
+                                  }
+                                  sx={{ mt: 1, width: 140 }}
+                                  inputProps={{ min: 1 }}
+                                />
+                              )}
+                            </Box>
                           }
                         />
                         {setting.type === "switch" && (

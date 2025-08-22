@@ -6,8 +6,13 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Bucket from "./pages/Bucket";
 import styles from "./App.module.scss";
+import { useSettings } from "./contexts/SettingsContext";
+import useRealtimeConnectionCheck from "./hooks/useRealtimeConnectionCheck";
 
 function App() {
+  const { settings } = useSettings();
+  useRealtimeConnectionCheck(settings.realtimeCheck, settings.realtimeInterval);
+
   return (
     <div className={styles.app}>
       <Layout>
