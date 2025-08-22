@@ -26,7 +26,15 @@ export default function SearchBar({
       options={suggestions.filter(Boolean)}
       inputValue={value}
       onInputChange={(_, newInput) => onChange(newInput)}
-      onChange={(_, newValue) => onSearch(newValue ?? "")}
+      onChange={(_, newValue) => {
+        const term = (newValue ?? "").trim();
+        if (term === "") {
+          onChange("");
+          onSearch("");
+        } else {
+          onSearch(term);
+        }
+      }}
       sx={{
         width: "100%",
         "& .MuiOutlinedInput-root": {
