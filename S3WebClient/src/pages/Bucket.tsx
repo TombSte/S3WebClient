@@ -1,16 +1,18 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent } from "@mui/material";
-import { Storage as StorageIcon } from "@mui/icons-material";
+import { useEffect, useState, useRef } from "react";
+import { Box, Typography, Card, CardContent, IconButton } from "@mui/material";
+import { Storage as StorageIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
 import { connectionRepository } from "../repositories";
+import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
 
 export default function Bucket() {
   const { id } = useParams();
   const [connection, setConnection] = useState<S3Connection | null>(null);
   const [loading, setLoading] = useState(true);
+  const browserRef = useRef<ObjectBrowserHandle>(null);
 
   useEffect(() => {
     let active = true;
@@ -91,15 +93,21 @@ export default function Bucket() {
         {/* Bucket Info */}
         <ConnectionDetails connection={connection} />
 
-        {/* Placeholder for file navigation */}
-        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}>
+        {/* File navigation */}
+        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Contenuti del bucket
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              La navigazione dei file e delle cartelle sarà disponibile prossimamente.
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                Contenuti del bucket
+              </Typography>
+              <IconButton
+                aria-label="refresh"
+                onClick={() => browserRef.current?.refresh()}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Box>
+            <ObjectBrowser ref={browserRef} connection={connection} />
           </CardContent>
         </Card>
       </Box>

@@ -1,24 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  TextField,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Fab,
-  InputAdornment,
-  Card,
-  CardContent,
-  CardActions,
-  Tooltip,
-  Snackbar,
-  Alert,
-  Chip,
-} from "@mui/material";
+import { Button, Box, Typography, IconButton, Fab, Card, CardContent, CardActions, Tooltip, Snackbar, Alert, Chip } from "@mui/material";
 import {
   Add as AddIcon,
-  Search as SearchIcon,
   Storage as StorageIcon,
   Edit,
   Delete,
@@ -35,6 +19,7 @@ import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
 import TestStatusChip from "../components/TestStatusChip";
 import EnvironmentChip from "../components/EnvironmentChip";
+import SearchBar from "../components/SearchBar";
 import type {
   S3Connection,
   S3ConnectionForm,
@@ -57,10 +42,9 @@ const Buckets: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredConnections, setFilteredConnections] = useState<
-    S3Connection[]
-  >([]);
+  const [filteredConnections, setFilteredConnections] = useState<S3Connection[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
@@ -69,6 +53,11 @@ const Buckets: React.FC = () => {
     message: string;
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
+
+  const connectionNames = React.useMemo(
+    () => Array.from(new Set(connections.map((c) => c.displayName))),
+    [connections]
+  );
 
   // Search and filter connections
   React.useEffect(() => {
@@ -198,9 +187,6 @@ const Buckets: React.FC = () => {
         {/* Search and Actions Bar */}
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
               mb: 2,
               p: 1.5,
               bgcolor: "background.paper",
@@ -208,29 +194,17 @@ const Buckets: React.FC = () => {
               boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
             }}
           >
-          <TextField
+          <SearchBar
             placeholder="Cerca connessioni..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ minWidth: 300 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "text.secondary" }} />
-                </InputAdornment>
-              ),
-            }}
+            value={searchInput}
+            onChange={setSearchInput}
+            onSearch={setSearchTerm}
+            suggestions={connectionNames}
+            sx={{ mb: 1 }}
           />
-
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ alignSelf: "center", mr: 1 }}
-            >
-              {filteredConnections.length} connessioni
-            </Typography>
-          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {filteredConnections.length} connessioni
+          </Typography>
         </Box>
 
         {/* Connections Grid */}
