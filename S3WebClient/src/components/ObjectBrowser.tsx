@@ -126,6 +126,13 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     })();
   }, [searchInput, connection.id, refreshTick]);
 
+  useEffect(() => {
+    if (searchInput.trim() === "" && query) {
+      setQuery("");
+      setSearchResults([]);
+    }
+  }, [searchInput, query]);
+
   const handleSearch = async (term: string) => {
     const q = term.trim();
     setQuery(q);
