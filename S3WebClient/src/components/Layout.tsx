@@ -197,7 +197,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: "100vh",
-          backgroundColor: theme.palette.grey[50],
+          backgroundColor: theme.palette.background.default,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
