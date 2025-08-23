@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { List, Collapse, ListItemText } from "@mui/material";
+import { Box, Collapse, ListItemText } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
+import { FixedSizeList as VirtualList } from "react-window";
+import type { ListChildComponentProps } from "react-window";
 
 interface Props {
   rootItems: S3ObjectEntity[];
@@ -59,6 +61,9 @@ function Node({
   };
 
   const name = item.key.slice(item.parent.length).replace(/\/$/, "");
+  const sortedChildren = [...children].sort(
+    (a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key)
+  );
 
   return (
     <>
@@ -77,13 +82,22 @@ function Node({
       />
       {item.isFolder === 1 && (
         <Collapse in={open} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {loading ? (
-              <ListItemText sx={{ pl: (depth + 1) * 2 + 2 }} primary="Caricamento..." />
-            ) : (
-              children
-                .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
-                .map((child) => (
+          {loading ? (
+            <ListItemText
+              sx={{ pl: (depth + 1) * 2 + 2 }}
+              primary="Caricamento..."
+            />
+          ) : (
+            <VirtualList
+              height={Math.min(400, sortedChildren.length * 48)}
+              itemCount={sortedChildren.length}
+              itemSize={48}
+              width="100%"
+            >
+              {({ index, style }: ListChildComponentProps) => {
+                const child = sortedChildren[index];
+                return (
+                  <div style={style}>
                     <Node
                       key={child.key}
                       item={child}
@@ -97,9 +111,11 @@ function Node({
                       selected={selected}
                       onSelect={onSelect}
                     />
-                ))
-            )}
-          </List>
+                  </div>
+                );
+              }}
+            </VirtualList>
+          )}
         </Collapse>
       )}
     </>
@@ -117,28 +133,38 @@ export default function ObjectTreeView({
   selected,
   onSelect,
 }: Props) {
+  const sorted = [...rootItems].sort(
+    (a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key)
+  );
+  const height = Math.min(600, sorted.length * 48);
   return (
-    <List
-      disablePadding
-      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
-    >
-      {rootItems
-        .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
-        .map((item) => (
-          <Node
-            key={item.key}
-            item={item}
-            depth={0}
-            loadChildren={loadChildren}
-            onDownload={onDownload}
-            onRename={onRename}
-            onDuplicate={onDuplicate}
-            onShare={onShare}
-            onProperties={onProperties}
-            selected={selected}
-            onSelect={onSelect}
-          />
-        ))}
-    </List>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}>
+      <VirtualList
+        height={height}
+        itemCount={sorted.length}
+        itemSize={48}
+        width="100%"
+      >
+        {({ index, style }: ListChildComponentProps) => {
+          const item = sorted[index];
+          return (
+            <div style={style}>
+              <Node
+                item={item}
+                depth={0}
+                loadChildren={loadChildren}
+                onDownload={onDownload}
+                onRename={onRename}
+                onDuplicate={onDuplicate}
+                onShare={onShare}
+                onProperties={onProperties}
+                selected={selected}
+                onSelect={onSelect}
+              />
+            </div>
+          );
+        }}
+      </VirtualList>
+    </Box>
   );
 }

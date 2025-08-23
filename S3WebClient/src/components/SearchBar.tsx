@@ -1,6 +1,7 @@
 import { Autocomplete, TextField, IconButton } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import type { SxProps, Theme } from "@mui/material/styles";
+import type React from "react";
 
 interface SearchBarProps {
   value: string;
@@ -78,7 +79,9 @@ export default function SearchBar({
           placeholder={placeholder}
           size="small"
           onKeyDown={(e) => {
-            params.inputProps.onKeyDown?.(e);
+            params.inputProps.onKeyDown?.(
+              e as unknown as React.KeyboardEvent<HTMLInputElement>
+            );
             if (e.key === "Enter" && value.trim() === "") {
               e.preventDefault();
               onChange("");

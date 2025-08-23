@@ -71,9 +71,17 @@ export class S3ObjectRepository {
   }
 
   async listAll(connection: S3Connection): Promise<S3ObjectEntity[]> {
+    const all: S3ObjectEntity[] = [];
+    for await (const page of this.listAllPaginated(connection)) {
+      all.push(...page);
+    }
+    return all;
+  }
+
+  async *listAllPaginated(
+    connection: S3Connection
+  ): AsyncGenerator<S3ObjectEntity[], void, void> {
     const client = createClient(connection);
-    const folders: S3ObjectEntity[] = [];
-    const files: S3ObjectEntity[] = [];
     const seenFolders = new Set<string>();
     let token: string | undefined;
     do {
@@ -83,6 +91,8 @@ export class S3ObjectRepository {
           ContinuationToken: token,
         })
       );
+      const folders: S3ObjectEntity[] = [];
+      const files: S3ObjectEntity[] = [];
       (res.Contents ?? []).forEach((o) => {
         if (!o.Key) return;
         const parts = o.Key.split("/");
@@ -112,8 +122,8 @@ export class S3ObjectRepository {
         });
       });
       token = res.IsTruncated ? res.NextContinuationToken : undefined;
+      yield [...folders, ...files];
     } while (token);
-    return [...folders, ...files];
   }
 
   async rename(connection: S3Connection, oldKey: string, newKey: string): Promise<void> {
@@ -182,7 +192,8 @@ export class S3ObjectRepository {
       1,
       Math.floor((expires.getTime() - Date.now()) / 1000)
     );
-    return await getSignedUrl(client, command, { expiresIn });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await getSignedUrl(client as any, command as any, { expiresIn });
   }
 }
 

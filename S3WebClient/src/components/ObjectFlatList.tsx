@@ -1,4 +1,6 @@
-import { List } from "@mui/material";
+import { Box } from "@mui/material";
+import { FixedSizeList as VirtualList } from "react-window";
+import type { ListChildComponentProps } from "react-window";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
 
@@ -19,25 +21,34 @@ export default function ObjectFlatList({
   onShare,
   onProperties,
 }: Props) {
+  const sorted = [...items].sort((a, b) => a.key.localeCompare(b.key));
+  const Row = ({ index, style }: ListChildComponentProps) => {
+    const item = sorted[index];
+    return (
+      <div style={style}>
+        <ObjectItemRow
+          item={item}
+          name={item.key}
+          onDownload={onDownload}
+          onRename={item.isFolder ? undefined : onRename}
+          onDuplicate={item.isFolder ? undefined : onDuplicate}
+          onShare={item.isFolder ? undefined : onShare}
+          onProperties={onProperties}
+        />
+      </div>
+    );
+  };
+  const height = Math.min(600, sorted.length * 48);
   return (
-    <List
-      disablePadding
-      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
-    >
-      {items
-        .sort((a, b) => a.key.localeCompare(b.key))
-        .map((item) => (
-          <ObjectItemRow
-            key={item.key}
-            item={item}
-            name={item.key}
-            onDownload={onDownload}
-            onRename={item.isFolder ? undefined : onRename}
-            onDuplicate={item.isFolder ? undefined : onDuplicate}
-            onShare={item.isFolder ? undefined : onShare}
-            onProperties={onProperties}
-          />
-        ))}
-    </List>
+    <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}>
+      <VirtualList
+        height={height}
+        itemCount={sorted.length}
+        itemSize={48}
+        width="100%"
+      >
+        {Row}
+      </VirtualList>
+    </Box>
   );
 }
