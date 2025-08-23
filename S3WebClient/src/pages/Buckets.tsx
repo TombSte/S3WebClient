@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Box, Typography, IconButton, Fab, Card, CardContent, CardActions, Tooltip, Snackbar, Alert, Chip } from "@mui/material";
+import {
+  Button,
+  Box,
+  Typography,
+  IconButton,
+  Fab,
+  Card,
+  CardContent,
+  CardActions,
+  Tooltip,
+  Snackbar,
+  Alert,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import {
   Add as AddIcon,
   Storage as StorageIcon,
@@ -44,7 +61,17 @@ const Buckets: React.FC = () => {
 
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredConnections, setFilteredConnections] = useState<S3Connection[]>([]);
+  const [filteredConnections, setFilteredConnections] =
+    useState<S3Connection[]>([]);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "success" | "failed" | "untested"
+  >("all");
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [environmentFilter, setEnvironmentFilter] = useState<
+    "all" | "dev" | "test" | "prod" | "custom"
+  >("all");
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
@@ -61,12 +88,40 @@ const Buckets: React.FC = () => {
 
   // Search and filter connections
   React.useEffect(() => {
-    if (searchTerm.trim()) {
-      searchConnections(searchTerm).then(setFilteredConnections);
-    } else {
-      setFilteredConnections(connections);
-    }
-  }, [searchTerm, connections, searchConnections]);
+    const fetchAndFilter = async () => {
+      let results: S3Connection[];
+      if (searchTerm.trim()) {
+        results = await searchConnections(searchTerm);
+      } else {
+        results = connections;
+      }
+
+      results = results.filter((conn) => {
+        const statusMatch =
+          statusFilter === "all" || conn.testStatus === statusFilter;
+        const activeMatch =
+          activeFilter === "all" ||
+          (activeFilter === "active"
+            ? conn.isActive === 1
+            : conn.isActive === 0);
+        const environmentMatch =
+          environmentFilter === "all" ||
+          conn.environment === environmentFilter;
+        return statusMatch && activeMatch && environmentMatch;
+      });
+
+      setFilteredConnections(results);
+    };
+
+    fetchAndFilter();
+  }, [
+    searchTerm,
+    connections,
+    searchConnections,
+    statusFilter,
+    activeFilter,
+    environmentFilter,
+  ]);
 
   const handleOpenDialog = (connection?: S3Connection) => {
     setEditingConnection(connection || null);
@@ -160,51 +215,136 @@ const Buckets: React.FC = () => {
     >
       <Box sx={{ width: "100%" }}>
         {/* Header Section */}
-        <Box sx={{ mb: 3 }}>
-          <Typography
-            variant="h5"
-            component="h1"
+        <Box
+          sx={{
+            mb: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              component="h1"
+              sx={{
+                mb: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                background:
+                  "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: "bold",
+              }}
+            >
+              <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
+              Gestione Connessioni S3
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ ml: 1 }}
+            >
+              Configura e gestisci le tue connessioni a storage S3-compatibili
+            </Typography>
+          </Box>
+          <Chip
+            icon={<StorageIcon sx={{ color: "inherit" }} />}
+            label={`${filteredConnections.length} connessioni`}
             sx={{
-              mb: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
               fontWeight: "bold",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              boxShadow: 1,
+              "& .MuiChip-icon": { color: "inherit" },
             }}
-          >
-            <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
-            Gestione Connessioni S3
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Configura e gestisci le tue connessioni a storage S3-compatibili
-          </Typography>
+          />
         </Box>
 
-        {/* Search and Actions Bar */}
+        {/* Search and Filters Bar */}
+        <Box
+          sx={{
+            mb: 2,
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+          }}
+        >
           <Box
             sx={{
-              mb: 2,
-              p: 1.5,
-              bgcolor: "background.paper",
-              borderRadius: 2,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexWrap: "wrap",
             }}
           >
-          <SearchBar
-            placeholder="Cerca connessioni..."
-            value={searchInput}
-            onChange={setSearchInput}
-            onSearch={setSearchTerm}
-            suggestions={connectionNames}
-            sx={{ mb: 1 }}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {filteredConnections.length} connessioni
-          </Typography>
+            <Box sx={{ flexGrow: 1, minWidth: 240 }}>
+              <SearchBar
+                placeholder="Cerca connessioni..."
+                value={searchInput}
+                onChange={setSearchInput}
+                onSearch={setSearchTerm}
+                suggestions={connectionNames}
+                sx={{ mb: 0 }}
+              />
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="status-filter-label">Stato</InputLabel>
+              <Select
+                labelId="status-filter-label"
+                label="Stato"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as typeof statusFilter)
+                }
+              >
+                <MenuItem value="all">Tutti</MenuItem>
+                <MenuItem value="success">OK</MenuItem>
+                <MenuItem value="failed">Errore</MenuItem>
+                <MenuItem value="untested">Non testato</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="active-filter-label">Attivo</InputLabel>
+              <Select
+                labelId="active-filter-label"
+                label="Attivo"
+                value={activeFilter}
+                onChange={(e) =>
+                  setActiveFilter(e.target.value as typeof activeFilter)
+                }
+              >
+                <MenuItem value="all">Tutti</MenuItem>
+                <MenuItem value="active">Attivi</MenuItem>
+                <MenuItem value="inactive">Inattivi</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="env-filter-label">Env</InputLabel>
+              <Select
+                labelId="env-filter-label"
+                label="Env"
+                value={environmentFilter}
+                onChange={(e) =>
+                  setEnvironmentFilter(
+                    e.target.value as typeof environmentFilter
+                  )
+                }
+              >
+                <MenuItem value="all">Tutti</MenuItem>
+                <MenuItem value="dev">Dev</MenuItem>
+                <MenuItem value="test">Test</MenuItem>
+                <MenuItem value="prod">Prod</MenuItem>
+                <MenuItem value="custom">Custom</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
         {/* Connections Grid */}
