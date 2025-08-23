@@ -254,13 +254,14 @@ const Buckets: React.FC = () => {
             </Typography>
           </Box>
           <Chip
-            icon={<StorageIcon />}
+            icon={<StorageIcon sx={{ color: "inherit" }} />}
             label={`${filteredConnections.length} connessioni`}
-            color="primary"
             sx={{
               fontWeight: "bold",
-              bgcolor: "primary.50",
-              color: "primary.main",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              boxShadow: 1,
+              "& .MuiChip-icon": { color: "inherit" },
             }}
           />
         </Box>
