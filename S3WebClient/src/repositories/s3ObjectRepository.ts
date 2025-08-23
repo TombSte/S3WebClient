@@ -133,6 +133,17 @@ export class S3ObjectRepository {
       })
     );
   }
+
+  async createFolder(connection: S3Connection, key: string): Promise<void> {
+    const client = createClient(connection);
+    await client.send(
+      new PutObjectCommand({
+        Bucket: connection.bucketName,
+        Key: key,
+        Body: new Uint8Array(),
+      })
+    );
+  }
 }
 
 export const s3ObjectRepository = new S3ObjectRepository();

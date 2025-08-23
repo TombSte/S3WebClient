@@ -48,4 +48,18 @@ export class ObjectService {
       },
     ]);
   }
+
+  async createFolder(connection: S3Connection, key: string): Promise<void> {
+    await this.remote.createFolder(connection, key);
+    const parent = key.replace(/[^/]+\/$/, "");
+    await this.local.save([
+      {
+        connectionId: connection.id,
+        key,
+        parent,
+        isFolder: 1,
+        size: 0,
+      },
+    ]);
+  }
 }

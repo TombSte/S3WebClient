@@ -17,9 +17,10 @@ import {
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
-import { connectionRepository } from "../repositories";
+import { connectionRepository, objectService } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
 import UploadObjectDialog from "../components/UploadObjectDialog";
+import CreateFolderDialog from "../components/CreateFolderDialog";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -27,6 +28,7 @@ export default function Bucket() {
   const [loading, setLoading] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
   const browserRef = useRef<ObjectBrowserHandle>(null);
 
   useEffect(() => {
@@ -125,6 +127,14 @@ export default function Bucket() {
           <Button
             variant="contained"
             size="small"
+            onClick={() => setNewFolderOpen(true)}
+            sx={{ mr: 1 }}
+          >
+            Nuova cartella
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
             onClick={() => setUploadOpen(true)}
             sx={{ mr: 1 }}
           >
@@ -158,6 +168,17 @@ export default function Bucket() {
         onClose={() => setUploadOpen(false)}
         onUploaded={async () => {
           await browserRef.current?.refresh();
+        }}
+      />
+      <CreateFolderDialog
+        open={newFolderOpen}
+        onCancel={() => setNewFolderOpen(false)}
+        onCreate={async (name) => {
+          const prefix = browserRef.current?.getSelectedPrefix() ?? "";
+          const key = `${prefix}${name.replace(/\/+$/, "")}/`;
+          await objectService.createFolder(connection, key);
+          await browserRef.current?.refresh();
+          setNewFolderOpen(false);
         }}
       />
     </Box>
