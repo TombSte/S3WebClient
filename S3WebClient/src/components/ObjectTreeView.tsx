@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Box, Collapse, ListItemText } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import { Virtuoso } from "react-virtuoso";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
-import { FixedSizeList as VirtualList } from "react-window";
-import type { ListChildComponentProps } from "react-window";
 
 interface Props {
   rootItems: S3ObjectEntity[];
@@ -88,33 +87,28 @@ function Node({
               primary="Caricamento..."
             />
           ) : (
-            <VirtualList
-              height={Math.min(400, sortedChildren.length * 48)}
-              itemCount={sortedChildren.length}
-              itemSize={48}
-              width="100%"
-            >
-              {({ index, style }: ListChildComponentProps) => {
-                const child = sortedChildren[index];
+            <Virtuoso
+              style={{ height: Math.min(400, sortedChildren.length * 48) }}
+              data={sortedChildren}
+              itemContent={(index, child) => {
+                void index;
                 return (
-                  <div style={style}>
-                    <Node
-                      key={child.key}
-                      item={child}
-                      depth={depth + 1}
-                      loadChildren={loadChildren}
-                      onDownload={onDownload}
-                      onRename={onRename}
-                      onDuplicate={onDuplicate}
-                      onShare={onShare}
-                      onProperties={onProperties}
-                      selected={selected}
-                      onSelect={onSelect}
-                    />
-                  </div>
+                  <Node
+                    key={child.key}
+                    item={child}
+                    depth={depth + 1}
+                    loadChildren={loadChildren}
+                    onDownload={onDownload}
+                    onRename={onRename}
+                    onDuplicate={onDuplicate}
+                    onShare={onShare}
+                    onProperties={onProperties}
+                    selected={selected}
+                    onSelect={onSelect}
+                  />
                 );
               }}
-            </VirtualList>
+            />
           )}
         </Collapse>
       )}
@@ -139,32 +133,27 @@ export default function ObjectTreeView({
   const height = Math.min(600, sorted.length * 48);
   return (
     <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}>
-      <VirtualList
-        height={height}
-        itemCount={sorted.length}
-        itemSize={48}
-        width="100%"
-      >
-        {({ index, style }: ListChildComponentProps) => {
-          const item = sorted[index];
+      <Virtuoso
+        style={{ height, width: "100%" }}
+        data={sorted}
+        itemContent={(index, item) => {
+          void index;
           return (
-            <div style={style}>
-              <Node
-                item={item}
-                depth={0}
-                loadChildren={loadChildren}
-                onDownload={onDownload}
-                onRename={onRename}
-                onDuplicate={onDuplicate}
-                onShare={onShare}
-                onProperties={onProperties}
-                selected={selected}
-                onSelect={onSelect}
-              />
-            </div>
+            <Node
+              item={item}
+              depth={0}
+              loadChildren={loadChildren}
+              onDownload={onDownload}
+              onRename={onRename}
+              onDuplicate={onDuplicate}
+              onShare={onShare}
+              onProperties={onProperties}
+              selected={selected}
+              onSelect={onSelect}
+            />
           );
         }}
-      </VirtualList>
+      />
     </Box>
   );
 }

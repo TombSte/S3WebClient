@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
-import { FixedSizeList as VirtualList } from "react-window";
-import type { ListChildComponentProps } from "react-window";
+import { Virtuoso } from "react-virtuoso";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
 
@@ -22,33 +21,27 @@ export default function ObjectFlatList({
   onProperties,
 }: Props) {
   const sorted = [...items].sort((a, b) => a.key.localeCompare(b.key));
-  const Row = ({ index, style }: ListChildComponentProps) => {
-    const item = sorted[index];
-    return (
-      <div style={style}>
-        <ObjectItemRow
-          item={item}
-          name={item.key}
-          onDownload={onDownload}
-          onRename={item.isFolder ? undefined : onRename}
-          onDuplicate={item.isFolder ? undefined : onDuplicate}
-          onShare={item.isFolder ? undefined : onShare}
-          onProperties={onProperties}
-        />
-      </div>
-    );
-  };
   const height = Math.min(600, sorted.length * 48);
   return (
     <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}>
-      <VirtualList
-        height={height}
-        itemCount={sorted.length}
-        itemSize={48}
-        width="100%"
-      >
-        {Row}
-      </VirtualList>
+      <Virtuoso
+        style={{ height, width: "100%" }}
+        data={sorted}
+        itemContent={(index, item) => {
+          void index;
+          return (
+            <ObjectItemRow
+              item={item}
+              name={item.key}
+              onDownload={onDownload}
+              onRename={item.isFolder ? undefined : onRename}
+              onDuplicate={item.isFolder ? undefined : onDuplicate}
+              onShare={item.isFolder ? undefined : onShare}
+              onProperties={onProperties}
+            />
+          );
+        }}
+      />
     </Box>
   );
 }
