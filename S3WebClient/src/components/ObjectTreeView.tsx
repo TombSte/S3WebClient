@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Collapse, ListItemText } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -122,32 +122,26 @@ export default function ObjectTreeView({
   selected,
   onSelect,
 }: Props) {
-  const sorted = [...rootItems].sort(
-    (a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key)
+  const sorted = useMemo(
+    () =>
+      [...rootItems].sort(
+        (a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key)
+      ),
+    [rootItems]
   );
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(
-    Math.min(window.innerHeight, sorted.length * 48)
-  );
-
-  useEffect(() => {
-    const computeHeight = () => {
-      const top = containerRef.current?.getBoundingClientRect().top || 0;
-      const available = window.innerHeight - top - 16;
-      setHeight(Math.min(available, sorted.length * 48));
-    };
-    computeHeight();
-    window.addEventListener("resize", computeHeight);
-    return () => window.removeEventListener("resize", computeHeight);
-  }, [sorted.length]);
 
   return (
     <Box
-      ref={containerRef}
-      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+      sx={{
+        bgcolor: "background.paper",
+        borderRadius: 1,
+        boxShadow: 1,
+        flex: 1,
+        minHeight: 0,
+      }}
     >
       <Virtuoso
-        style={{ height, width: "100%" }}
+        style={{ height: "100%", width: "100%" }}
         data={sorted}
         itemContent={(_index: number, item: S3ObjectEntity) => (
           <Node

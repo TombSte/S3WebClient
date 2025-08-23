@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { Virtuoso } from "react-virtuoso";
-import { useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
 
@@ -21,28 +21,23 @@ export default function ObjectFlatList({
   onShare,
   onProperties,
 }: Props) {
-  const sorted = [...items].sort((a, b) => a.key.localeCompare(b.key));
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState(Math.min(window.innerHeight, sorted.length * 48));
-
-  useEffect(() => {
-    const computeHeight = () => {
-      const top = containerRef.current?.getBoundingClientRect().top || 0;
-      const available = window.innerHeight - top - 16;
-      setHeight(Math.min(available, sorted.length * 48));
-    };
-    computeHeight();
-    window.addEventListener("resize", computeHeight);
-    return () => window.removeEventListener("resize", computeHeight);
-  }, [sorted.length]);
+  const sorted = useMemo(
+    () => [...items].sort((a, b) => a.key.localeCompare(b.key)),
+    [items]
+  );
 
   return (
     <Box
-      ref={containerRef}
-      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+      sx={{
+        bgcolor: "background.paper",
+        borderRadius: 1,
+        boxShadow: 1,
+        flex: 1,
+        minHeight: 0,
+      }}
     >
       <Virtuoso
-        style={{ height, width: "100%" }}
+        style={{ height: "100%", width: "100%" }}
         data={sorted}
         itemContent={(_index: number, item: S3ObjectEntity) => (
           <ObjectItemRow

@@ -210,7 +210,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   }));
 
   return (
-    <div>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <SearchBar
         value={searchInput}
         onChange={setSearchInput}
@@ -219,42 +219,44 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         placeholder="Cerca..."
         sx={{ mb: 2 }}
       />
-      {loading ? (
-        <Typography>Caricamento...</Typography>
-      ) : query ? (
-        searchResults.length > 0 ? (
-          <ObjectFlatList
-            items={searchResults}
+      <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {loading ? (
+          <Typography>Caricamento...</Typography>
+        ) : query ? (
+          searchResults.length > 0 ? (
+            <ObjectFlatList
+              items={searchResults}
+              onDownload={disableActions ? undefined : handleDownload}
+              onRename={disableActions ? undefined : handleRename}
+              onDuplicate={disableActions ? undefined : handleDuplicate}
+              onShare={disableActions ? undefined : handleShare}
+              onProperties={disableActions ? undefined : handleProperties}
+            />
+          ) : (
+            <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
+          )
+        ) : rootItems.length === 0 ? (
+          <Box sx={{ textAlign: "center", mt: 4 }}>
+            <InboxIcon sx={{ fontSize: 64, color: "text.secondary", mb: 1 }} />
+            <Typography>
+              Questo bucket è vuoto. Carica qualche file per iniziare!
+            </Typography>
+          </Box>
+        ) : (
+          <ObjectTreeView
+            key={refreshTick}
+            rootItems={rootItems}
+            loadChildren={loadChildren}
             onDownload={disableActions ? undefined : handleDownload}
             onRename={disableActions ? undefined : handleRename}
             onDuplicate={disableActions ? undefined : handleDuplicate}
             onShare={disableActions ? undefined : handleShare}
             onProperties={disableActions ? undefined : handleProperties}
+            selected={selectedPrefix}
+            onSelect={(p) => setSelectedPrefix(p)}
           />
-        ) : (
-          <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
-        )
-      ) : rootItems.length === 0 ? (
-        <Box sx={{ textAlign: "center", mt: 4 }}>
-          <InboxIcon sx={{ fontSize: 64, color: "text.secondary", mb: 1 }} />
-          <Typography>
-            Questo bucket è vuoto. Carica qualche file per iniziare!
-          </Typography>
-        </Box>
-      ) : (
-        <ObjectTreeView
-          key={refreshTick}
-          rootItems={rootItems}
-          loadChildren={loadChildren}
-          onDownload={disableActions ? undefined : handleDownload}
-          onRename={disableActions ? undefined : handleRename}
-          onDuplicate={disableActions ? undefined : handleDuplicate}
-          onShare={disableActions ? undefined : handleShare}
-          onProperties={disableActions ? undefined : handleProperties}
-          selected={selectedPrefix}
-          onSelect={(p) => setSelectedPrefix(p)}
-        />
-      )}
+        )}
+      </Box>
       <ObjectPropertiesDrawer
         item={propItem}
         onClose={() => setPropItem(null)}
@@ -280,7 +282,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         }}
         onGenerate={confirmShare}
       />
-    </div>
+    </Box>
   );
 });
 
