@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Collapse, ListItemText } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -125,9 +125,27 @@ export default function ObjectTreeView({
   const sorted = [...rootItems].sort(
     (a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key)
   );
-  const height = Math.min(600, sorted.length * 48);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(
+    Math.min(window.innerHeight, sorted.length * 48)
+  );
+
+  useEffect(() => {
+    const computeHeight = () => {
+      const top = containerRef.current?.getBoundingClientRect().top || 0;
+      const available = window.innerHeight - top - 16;
+      setHeight(Math.min(available, sorted.length * 48));
+    };
+    computeHeight();
+    window.addEventListener("resize", computeHeight);
+    return () => window.removeEventListener("resize", computeHeight);
+  }, [sorted.length]);
+
   return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}>
+    <Box
+      ref={containerRef}
+      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+    >
       <Virtuoso
         style={{ height, width: "100%" }}
         data={sorted}
