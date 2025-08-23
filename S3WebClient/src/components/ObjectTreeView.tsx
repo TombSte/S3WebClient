@@ -87,28 +87,23 @@ function Node({
               primary="Caricamento..."
             />
           ) : (
-            <Virtuoso
-              style={{ height: Math.min(400, sortedChildren.length * 48) }}
-              data={sortedChildren}
-              itemContent={(index, child) => {
-                void index;
-                return (
-                  <Node
-                    key={child.key}
-                    item={child}
-                    depth={depth + 1}
-                    loadChildren={loadChildren}
-                    onDownload={onDownload}
-                    onRename={onRename}
-                    onDuplicate={onDuplicate}
-                    onShare={onShare}
-                    onProperties={onProperties}
-                    selected={selected}
-                    onSelect={onSelect}
-                  />
-                );
-              }}
-            />
+            <Box>
+              {sortedChildren.map((child) => (
+                <Node
+                  key={child.key}
+                  item={child}
+                  depth={depth + 1}
+                  loadChildren={loadChildren}
+                  onDownload={onDownload}
+                  onRename={onRename}
+                  onDuplicate={onDuplicate}
+                  onShare={onShare}
+                  onProperties={onProperties}
+                  selected={selected}
+                  onSelect={onSelect}
+                />
+              ))}
+            </Box>
           )}
         </Collapse>
       )}
@@ -136,23 +131,20 @@ export default function ObjectTreeView({
       <Virtuoso
         style={{ height, width: "100%" }}
         data={sorted}
-        itemContent={(index, item) => {
-          void index;
-          return (
-            <Node
-              item={item}
-              depth={0}
-              loadChildren={loadChildren}
-              onDownload={onDownload}
-              onRename={onRename}
-              onDuplicate={onDuplicate}
-              onShare={onShare}
-              onProperties={onProperties}
-              selected={selected}
-              onSelect={onSelect}
-            />
-          );
-        }}
+        itemContent={(_index: number, item: S3ObjectEntity) => (
+          <Node
+            item={item}
+            depth={0}
+            loadChildren={loadChildren}
+            onDownload={onDownload}
+            onRename={onRename}
+            onDuplicate={onDuplicate}
+            onShare={onShare}
+            onProperties={onProperties}
+            selected={selected}
+            onSelect={onSelect}
+          />
+        )}
       />
     </Box>
   );

@@ -27,20 +27,17 @@ export default function ObjectFlatList({
       <Virtuoso
         style={{ height, width: "100%" }}
         data={sorted}
-        itemContent={(index, item) => {
-          void index;
-          return (
-            <ObjectItemRow
-              item={item}
-              name={item.key}
-              onDownload={onDownload}
-              onRename={item.isFolder ? undefined : onRename}
-              onDuplicate={item.isFolder ? undefined : onDuplicate}
-              onShare={item.isFolder ? undefined : onShare}
-              onProperties={onProperties}
-            />
-          );
-        }}
+        itemContent={(_index: number, item: S3ObjectEntity) => (
+          <ObjectItemRow
+            item={item}
+            name={item.key}
+            onDownload={onDownload}
+            onRename={item.isFolder ? undefined : onRename}
+            onDuplicate={item.isFolder ? undefined : onDuplicate}
+            onShare={item.isFolder ? undefined : onShare}
+            onProperties={onProperties}
+          />
+        )}
       />
     </Box>
   );
