@@ -32,8 +32,13 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
 
   const loadFolders = useCallback(
     async (prefix: string) => {
-      const all = await objectService.fetchChildren(connection, prefix);
-      return all.filter((i) => i.isFolder === 1);
+      try {
+        const all = await objectService.fetchChildren(connection, prefix);
+        return all.filter((i) => i.isFolder === 1);
+      } catch {
+        alert("Errore nel caricamento delle cartelle");
+        return [];
+      }
     },
     [connection]
   );
@@ -56,8 +61,8 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
       await objectService.upload(connection, key, file);
       await onUploaded();
       onClose();
-    } catch (err) {
-      console.error("Upload failed", err);
+    } catch {
+      alert("Errore durante il caricamento");
     }
   };
 

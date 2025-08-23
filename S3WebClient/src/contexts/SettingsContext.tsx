@@ -2,9 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 export interface Settings {
-  notifications: boolean;
   darkMode: boolean;
-  debugMode: boolean;
   language: string;
   theme: string;
   realtimeCheck: boolean;
@@ -12,9 +10,7 @@ export interface Settings {
 }
 
 const defaultSettings: Settings = {
-  notifications: true,
   darkMode: false,
-  debugMode: false,
   language: "it",
   theme: "default",
   realtimeCheck: false,

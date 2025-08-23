@@ -17,6 +17,7 @@ import RenameObjectDialog from "./RenameObjectDialog";
 
 interface Props {
   connection: S3Connection;
+  disableActions?: boolean;
 }
 
 export interface ObjectBrowserHandle {
@@ -25,7 +26,7 @@ export interface ObjectBrowserHandle {
 }
 
 const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
-  ({ connection }, ref) => {
+  ({ connection, disableActions = false }, ref) => {
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
@@ -39,7 +40,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   const fetchChildren = useCallback(
     async (prefix: string) => {
-      return await objectService.fetchChildren(connection, prefix);
+      try {
+        return await objectService.fetchChildren(connection, prefix);
+      } catch {
+        alert("Errore nel recupero degli oggetti");
+        return [];
+      }
     },
     [connection]
   );
@@ -101,8 +107,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     try {
       await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
-    } catch (err) {
-      console.error("Error refreshing objects", err);
+    } catch {
+      alert("Errore durante l'aggiornamento degli oggetti");
     } finally {
       setLoading(false);
     }
@@ -121,8 +127,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download failed", err);
+    } catch {
+      alert("Errore durante il download");
     }
   };
 
@@ -142,8 +148,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     try {
       await objectService.rename(connection, renameItem.key, newKey);
       setRefreshTick((t) => t + 1);
-    } catch (err) {
-      console.error("Rename failed", err);
+    } catch {
+      alert("Errore durante la rinomina");
     } finally {
       setRenameItem(null);
     }
@@ -174,9 +180,9 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         searchResults.length > 0 ? (
           <ObjectFlatList
             items={searchResults}
-            onDownload={handleDownload}
-            onRename={handleRename}
-            onProperties={handleProperties}
+            onDownload={disableActions ? undefined : handleDownload}
+            onRename={disableActions ? undefined : handleRename}
+            onProperties={disableActions ? undefined : handleProperties}
           />
         ) : (
           <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
@@ -193,9 +199,9 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           key={refreshTick}
           rootItems={rootItems}
           loadChildren={loadChildren}
-          onDownload={handleDownload}
-          onRename={handleRename}
-          onProperties={handleProperties}
+          onDownload={disableActions ? undefined : handleDownload}
+          onRename={disableActions ? undefined : handleRename}
+          onProperties={disableActions ? undefined : handleProperties}
           selected={selectedPrefix}
           onSelect={(p) => setSelectedPrefix(p)}
         />
