@@ -34,6 +34,23 @@ export class ObjectService {
     await this.refreshAll(connection);
   }
 
+  async duplicate(
+    connection: S3Connection,
+    sourceKey: string,
+    targetKey: string
+  ): Promise<void> {
+    await this.remote.duplicate(connection, sourceKey, targetKey);
+    await this.refreshAll(connection);
+  }
+
+  async share(
+    connection: S3Connection,
+    key: string,
+    expires: Date
+  ): Promise<string> {
+    return await this.remote.share(connection, key, expires);
+  }
+
   async upload(connection: S3Connection, key: string, file: File): Promise<void> {
     await this.remote.upload(connection, key, file);
     const parent = key.slice(0, key.lastIndexOf("/") + 1);

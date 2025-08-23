@@ -14,6 +14,8 @@ import ObjectFlatList from "./ObjectFlatList";
 import SearchBar from "./SearchBar";
 import ObjectPropertiesDrawer from "./ObjectPropertiesDrawer";
 import RenameObjectDialog from "./RenameObjectDialog";
+import DuplicateObjectDialog from "./DuplicateObjectDialog";
+import ShareObjectDialog from "./ShareObjectDialog";
 
 interface Props {
   connection: S3Connection;
@@ -36,6 +38,10 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [propItem, setPropItem] = useState<S3ObjectEntity | null>(null);
   const [renameItem, setRenameItem] = useState<S3ObjectEntity | null>(null);
+  const [duplicateItem, setDuplicateItem] = useState<S3ObjectEntity | null>(null);
+  const [duplicateName, setDuplicateName] = useState("");
+  const [shareItem, setShareItem] = useState<S3ObjectEntity | null>(null);
+  const [shareUrl, setShareUrl] = useState("");
   const [selectedPrefix, setSelectedPrefix] = useState("");
 
   const fetchChildren = useCallback(
@@ -155,6 +161,45 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     }
   };
 
+  const handleDuplicate = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    const base = item.key.split("/").pop() || item.key;
+    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copia${ext}`);
+    setDuplicateItem(item);
+    setDuplicateName(newName);
+  };
+
+  const confirmDuplicate = async (newName: string) => {
+    if (!duplicateItem) return;
+    const newKey = `${duplicateItem.parent}${newName}`;
+    try {
+      await objectService.duplicate(connection, duplicateItem.key, newKey);
+      setRefreshTick((t) => t + 1);
+    } catch {
+      alert("Errore durante la duplicazione");
+    } finally {
+      setDuplicateItem(null);
+      setDuplicateName("");
+    }
+  };
+
+  const handleShare = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    setShareItem(item);
+    setShareUrl("");
+  };
+
+  const confirmShare = async (expires: Date) => {
+    if (!shareItem) return;
+    try {
+      const url = await objectService.share(connection, shareItem.key, expires);
+      setShareUrl(url);
+    } catch {
+      alert("Errore durante la condivisione");
+      setShareItem(null);
+    }
+  };
+
   const handleProperties = (item: S3ObjectEntity) => {
     setPropItem(item);
   };
@@ -182,6 +227,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
             items={searchResults}
             onDownload={disableActions ? undefined : handleDownload}
             onRename={disableActions ? undefined : handleRename}
+            onDuplicate={disableActions ? undefined : handleDuplicate}
+            onShare={disableActions ? undefined : handleShare}
             onProperties={disableActions ? undefined : handleProperties}
           />
         ) : (
@@ -201,6 +248,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           loadChildren={loadChildren}
           onDownload={disableActions ? undefined : handleDownload}
           onRename={disableActions ? undefined : handleRename}
+          onDuplicate={disableActions ? undefined : handleDuplicate}
+          onShare={disableActions ? undefined : handleShare}
           onProperties={disableActions ? undefined : handleProperties}
           selected={selectedPrefix}
           onSelect={(p) => setSelectedPrefix(p)}
@@ -215,6 +264,21 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         currentName={renameItem?.key.split("/").pop() || ""}
         onCancel={() => setRenameItem(null)}
         onConfirm={confirmRename}
+      />
+      <DuplicateObjectDialog
+        open={!!duplicateItem}
+        currentName={duplicateName}
+        onCancel={() => setDuplicateItem(null)}
+        onConfirm={confirmDuplicate}
+      />
+      <ShareObjectDialog
+        open={!!shareItem}
+        url={shareUrl}
+        onCancel={() => {
+          setShareItem(null);
+          setShareUrl("");
+        }}
+        onGenerate={confirmShare}
       />
     </div>
   );
