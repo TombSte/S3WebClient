@@ -77,6 +77,14 @@ export default function SearchBar({
           {...params}
           placeholder={placeholder}
           size="small"
+          onKeyDown={(e) => {
+            params.inputProps.onKeyDown?.(e);
+            if (e.key === "Enter" && value.trim() === "") {
+              e.preventDefault();
+              onChange("");
+              onSearch("");
+            }
+          }}
           InputProps={{
             ...params.InputProps,
             endAdornment: (
