@@ -75,12 +75,22 @@ export default function Bucket() {
         display: "flex",
         flexDirection: "column",
         flex: 1,
+        height: "100%",
         textAlign: "left",
         alignItems: "stretch",
         minHeight: 0,
       }}
     >
-      <Box sx={{ width: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+          height: "100%",
+        }}
+      >
         {/* Header */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
