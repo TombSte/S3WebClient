@@ -8,6 +8,7 @@ import {
   IconButton,
   Drawer,
   Button,
+  Alert,
 } from "@mui/material";
 import {
   Storage as StorageIcon,
@@ -17,7 +18,7 @@ import {
 import ConnectionDetails from "../components/ConnectionDetails";
 import EnvironmentChip from "../components/EnvironmentChip";
 import type { S3Connection } from "../types/s3";
-import { connectionRepository, objectService } from "../repositories";
+import { connectionRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
 import UploadObjectDialog from "../components/UploadObjectDialog";
 import CreateFolderDialog from "../components/CreateFolderDialog";
@@ -114,6 +115,12 @@ export default function Bucket() {
           </Typography>
         </Box>
 
+        {connection.testStatus !== "success" && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Bucket non connesso. Operazioni di caricamento e download sono
+            disabilitate.
+          </Alert>
+        )}
         {/* File navigation */}
         <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3, width: "100%" }}>
           <CardContent sx={{ width: "100%" }}>
@@ -129,6 +136,7 @@ export default function Bucket() {
             size="small"
             onClick={() => setNewFolderOpen(true)}
             sx={{ mr: 1 }}
+            disabled={connection.testStatus !== "success"}
           >
             Nuova cartella
           </Button>
@@ -137,6 +145,7 @@ export default function Bucket() {
             size="small"
             onClick={() => setUploadOpen(true)}
             sx={{ mr: 1 }}
+            disabled={connection.testStatus !== "success"}
           >
             Carica
           </Button>
@@ -148,7 +157,11 @@ export default function Bucket() {
           </IconButton>
             </Box>
             <Box sx={{ width: "100%" }}>
-              <ObjectBrowser ref={browserRef} connection={connection} />
+              <ObjectBrowser
+                ref={browserRef}
+                connection={connection}
+                disableActions={connection.testStatus !== "success"}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -172,13 +185,10 @@ export default function Bucket() {
       />
       <CreateFolderDialog
         open={newFolderOpen}
-        onCancel={() => setNewFolderOpen(false)}
-        onCreate={async (name) => {
-          const prefix = browserRef.current?.getSelectedPrefix() ?? "";
-          const key = `${prefix}${name.replace(/\/+$/, "")}/`;
-          await objectService.createFolder(connection, key);
+        connection={connection}
+        onClose={() => setNewFolderOpen(false)}
+        onCreated={async () => {
           await browserRef.current?.refresh();
-          setNewFolderOpen(false);
         }}
       />
     </Box>

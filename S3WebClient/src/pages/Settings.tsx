@@ -14,8 +14,6 @@ import {
 } from "@mui/material";
 import {
   Settings as SettingsIcon,
-  Security,
-  Notifications,
   Storage,
   Palette,
   Cloud,
@@ -66,32 +64,6 @@ export default function Settings() {
           type: "select",
           value: settings.theme,
           options: ["default", "blue", "green", "purple"],
-        },
-      ],
-    },
-    {
-      title: "Notifiche",
-      icon: <Notifications />,
-      settings: [
-        {
-          key: "notifications",
-          label: "Notifiche Push",
-          description: "Ricevi notifiche per eventi importanti",
-          type: "switch",
-          value: settings.notifications,
-        },
-      ],
-    },
-    {
-      title: "Sicurezza",
-      icon: <Security />,
-      settings: [
-        {
-          key: "debugMode",
-          label: "Modalità Debug",
-          description: "Attiva log dettagliati per il debug",
-          type: "switch",
-          value: settings.debugMode,
         },
       ],
     },

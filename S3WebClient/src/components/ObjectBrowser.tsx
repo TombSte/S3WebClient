@@ -14,9 +14,12 @@ import ObjectFlatList from "./ObjectFlatList";
 import SearchBar from "./SearchBar";
 import ObjectPropertiesDrawer from "./ObjectPropertiesDrawer";
 import RenameObjectDialog from "./RenameObjectDialog";
+import DuplicateObjectDialog from "./DuplicateObjectDialog";
+import ShareObjectDialog from "./ShareObjectDialog";
 
 interface Props {
   connection: S3Connection;
+  disableActions?: boolean;
 }
 
 export interface ObjectBrowserHandle {
@@ -25,7 +28,7 @@ export interface ObjectBrowserHandle {
 }
 
 const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
-  ({ connection }, ref) => {
+  ({ connection, disableActions = false }, ref) => {
   const [refreshTick, setRefreshTick] = useState(0);
   const [loading, setLoading] = useState(false);
   const [rootItems, setRootItems] = useState<S3ObjectEntity[]>([]);
@@ -35,11 +38,20 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [propItem, setPropItem] = useState<S3ObjectEntity | null>(null);
   const [renameItem, setRenameItem] = useState<S3ObjectEntity | null>(null);
+  const [duplicateItem, setDuplicateItem] = useState<S3ObjectEntity | null>(null);
+  const [duplicateName, setDuplicateName] = useState("");
+  const [shareItem, setShareItem] = useState<S3ObjectEntity | null>(null);
+  const [shareUrl, setShareUrl] = useState("");
   const [selectedPrefix, setSelectedPrefix] = useState("");
 
   const fetchChildren = useCallback(
     async (prefix: string) => {
-      return await objectService.fetchChildren(connection, prefix);
+      try {
+        return await objectService.fetchChildren(connection, prefix);
+      } catch {
+        alert("Errore nel recupero degli oggetti");
+        return [];
+      }
     },
     [connection]
   );
@@ -101,8 +113,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     try {
       await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
-    } catch (err) {
-      console.error("Error refreshing objects", err);
+    } catch {
+      alert("Errore durante l'aggiornamento degli oggetti");
     } finally {
       setLoading(false);
     }
@@ -121,8 +133,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Download failed", err);
+    } catch {
+      alert("Errore durante il download");
     }
   };
 
@@ -142,10 +154,49 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     try {
       await objectService.rename(connection, renameItem.key, newKey);
       setRefreshTick((t) => t + 1);
-    } catch (err) {
-      console.error("Rename failed", err);
+    } catch {
+      alert("Errore durante la rinomina");
     } finally {
       setRenameItem(null);
+    }
+  };
+
+  const handleDuplicate = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    const base = item.key.split("/").pop() || item.key;
+    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copia${ext}`);
+    setDuplicateItem(item);
+    setDuplicateName(newName);
+  };
+
+  const confirmDuplicate = async (newName: string) => {
+    if (!duplicateItem) return;
+    const newKey = `${duplicateItem.parent}${newName}`;
+    try {
+      await objectService.duplicate(connection, duplicateItem.key, newKey);
+      setRefreshTick((t) => t + 1);
+    } catch {
+      alert("Errore durante la duplicazione");
+    } finally {
+      setDuplicateItem(null);
+      setDuplicateName("");
+    }
+  };
+
+  const handleShare = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    setShareItem(item);
+    setShareUrl("");
+  };
+
+  const confirmShare = async (expires: Date) => {
+    if (!shareItem) return;
+    try {
+      const url = await objectService.share(connection, shareItem.key, expires);
+      setShareUrl(url);
+    } catch {
+      alert("Errore durante la condivisione");
+      setShareItem(null);
     }
   };
 
@@ -174,9 +225,11 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         searchResults.length > 0 ? (
           <ObjectFlatList
             items={searchResults}
-            onDownload={handleDownload}
-            onRename={handleRename}
-            onProperties={handleProperties}
+            onDownload={disableActions ? undefined : handleDownload}
+            onRename={disableActions ? undefined : handleRename}
+            onDuplicate={disableActions ? undefined : handleDuplicate}
+            onShare={disableActions ? undefined : handleShare}
+            onProperties={disableActions ? undefined : handleProperties}
           />
         ) : (
           <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
@@ -193,9 +246,11 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           key={refreshTick}
           rootItems={rootItems}
           loadChildren={loadChildren}
-          onDownload={handleDownload}
-          onRename={handleRename}
-          onProperties={handleProperties}
+          onDownload={disableActions ? undefined : handleDownload}
+          onRename={disableActions ? undefined : handleRename}
+          onDuplicate={disableActions ? undefined : handleDuplicate}
+          onShare={disableActions ? undefined : handleShare}
+          onProperties={disableActions ? undefined : handleProperties}
           selected={selectedPrefix}
           onSelect={(p) => setSelectedPrefix(p)}
         />
@@ -209,6 +264,21 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         currentName={renameItem?.key.split("/").pop() || ""}
         onCancel={() => setRenameItem(null)}
         onConfirm={confirmRename}
+      />
+      <DuplicateObjectDialog
+        open={!!duplicateItem}
+        currentName={duplicateName}
+        onCancel={() => setDuplicateItem(null)}
+        onConfirm={confirmDuplicate}
+      />
+      <ShareObjectDialog
+        open={!!shareItem}
+        url={shareUrl}
+        onCancel={() => {
+          setShareItem(null);
+          setShareUrl("");
+        }}
+        onGenerate={confirmShare}
       />
     </div>
   );

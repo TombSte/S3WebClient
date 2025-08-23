@@ -10,6 +10,8 @@ interface Props {
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
   onDownload?: (item: S3ObjectEntity) => void;
   onRename?: (item: S3ObjectEntity) => void;
+  onDuplicate?: (item: S3ObjectEntity) => void;
+  onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
@@ -21,6 +23,8 @@ interface NodeProps {
   loadChildren: (prefix: string) => Promise<S3ObjectEntity[]>;
   onDownload?: (item: S3ObjectEntity) => void;
   onRename?: (item: S3ObjectEntity) => void;
+  onDuplicate?: (item: S3ObjectEntity) => void;
+  onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
@@ -32,6 +36,8 @@ function Node({
   loadChildren,
   onDownload,
   onRename,
+  onDuplicate,
+  onShare,
   onProperties,
   selected,
   onSelect,
@@ -63,7 +69,9 @@ function Node({
         onClick={toggle}
         endIcon={item.isFolder === 1 ? open ? <ExpandLess /> : <ExpandMore /> : undefined}
         onDownload={onDownload}
-        onRename={onRename}
+        onRename={item.isFolder ? undefined : onRename}
+        onDuplicate={item.isFolder ? undefined : onDuplicate}
+        onShare={item.isFolder ? undefined : onShare}
         onProperties={onProperties}
         selected={selected === item.key}
       />
@@ -76,17 +84,19 @@ function Node({
               children
                 .sort((a, b) => b.isFolder - a.isFolder || a.key.localeCompare(b.key))
                 .map((child) => (
-                  <Node
-                    key={child.key}
-                    item={child}
-                    depth={depth + 1}
-                    loadChildren={loadChildren}
-                    onDownload={onDownload}
-                    onRename={onRename}
-                    onProperties={onProperties}
-                    selected={selected}
-                    onSelect={onSelect}
-                  />
+                    <Node
+                      key={child.key}
+                      item={child}
+                      depth={depth + 1}
+                      loadChildren={loadChildren}
+                      onDownload={onDownload}
+                      onRename={onRename}
+                      onDuplicate={onDuplicate}
+                      onShare={onShare}
+                      onProperties={onProperties}
+                      selected={selected}
+                      onSelect={onSelect}
+                    />
                 ))
             )}
           </List>
@@ -101,6 +111,8 @@ export default function ObjectTreeView({
   loadChildren,
   onDownload,
   onRename,
+  onDuplicate,
+  onShare,
   onProperties,
   selected,
   onSelect,
@@ -120,6 +132,8 @@ export default function ObjectTreeView({
             loadChildren={loadChildren}
             onDownload={onDownload}
             onRename={onRename}
+            onDuplicate={onDuplicate}
+            onShare={onShare}
             onProperties={onProperties}
             selected={selected}
             onSelect={onSelect}

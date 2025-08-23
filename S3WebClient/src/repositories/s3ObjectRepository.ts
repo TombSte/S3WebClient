@@ -1,4 +1,12 @@
-import { S3Client, ListObjectsV2Command, GetObjectCommand, CopyObjectCommand, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 
 function createClient(connection: S3Connection) {
@@ -143,6 +151,38 @@ export class S3ObjectRepository {
         Body: new Uint8Array(),
       })
     );
+  }
+
+  async duplicate(
+    connection: S3Connection,
+    sourceKey: string,
+    targetKey: string
+  ): Promise<void> {
+    const client = createClient(connection);
+    await client.send(
+      new CopyObjectCommand({
+        Bucket: connection.bucketName,
+        CopySource: `${connection.bucketName}/${encodeURIComponent(sourceKey)}`,
+        Key: targetKey,
+      })
+    );
+  }
+
+  async share(
+    connection: S3Connection,
+    key: string,
+    expires: Date
+  ): Promise<string> {
+    const client = createClient(connection);
+    const command = new GetObjectCommand({
+      Bucket: connection.bucketName,
+      Key: key,
+    });
+    const expiresIn = Math.max(
+      1,
+      Math.floor((expires.getTime() - Date.now()) / 1000)
+    );
+    return await getSignedUrl(client, command, { expiresIn });
   }
 }
 

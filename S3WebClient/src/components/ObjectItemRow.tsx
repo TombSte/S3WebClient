@@ -43,6 +43,8 @@ interface Props {
   endIcon?: ReactNode;
   onDownload?: (item: S3ObjectEntity) => void;
   onRename?: (item: S3ObjectEntity) => void;
+  onDuplicate?: (item: S3ObjectEntity) => void;
+  onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
   selected?: boolean;
 }
@@ -55,11 +57,14 @@ export default function ObjectItemRow({
   endIcon,
   onDownload,
   onRename,
+  onDuplicate,
+  onShare,
   onProperties,
   selected = false,
 }: Props) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const hasActions = onDownload || onRename || onProperties;
+  const hasActions =
+    onDownload || onRename || onDuplicate || onShare || onProperties;
 
   const handleMenuOpen = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -136,7 +141,17 @@ export default function ObjectItemRow({
               Scarica
             </MenuItem>
           )}
-          {onRename && (
+          {item.isFolder === 0 && onDuplicate && (
+            <MenuItem
+              onClick={() => {
+                onDuplicate(item);
+                handleClose();
+              }}
+            >
+              Duplica
+            </MenuItem>
+          )}
+          {item.isFolder === 0 && onRename && (
             <MenuItem
               onClick={() => {
                 onRename(item);
@@ -144,6 +159,16 @@ export default function ObjectItemRow({
               }}
             >
               Rinomina
+            </MenuItem>
+          )}
+          {item.isFolder === 0 && onShare && (
+            <MenuItem
+              onClick={() => {
+                onShare(item);
+                handleClose();
+              }}
+            >
+              Condividi
             </MenuItem>
           )}
           {onProperties && (
