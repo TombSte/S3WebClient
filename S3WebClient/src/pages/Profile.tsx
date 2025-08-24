@@ -122,6 +122,29 @@ export default function Profile() {
     setEditOpen(false);
   };
 
+  const contactItems = [
+    {
+      icon: <Email sx={{ color: "primary.main", fontSize: 20 }} />,
+      label: "Email",
+      value: profile.email,
+    },
+    {
+      icon: <Work sx={{ color: "secondary.main", fontSize: 20 }} />,
+      label: "Azienda",
+      value: profile.company,
+    },
+    {
+      icon: <LocationOn sx={{ color: "success.main", fontSize: 20 }} />,
+      label: "Località",
+      value: profile.location,
+    },
+    {
+      icon: <CalendarToday sx={{ color: "info.main", fontSize: 20 }} />,
+      label: "Membro dal",
+      value: profile.joinDate,
+    },
+  ].filter((item) => item.value);
+
   return (
     <Box
       sx={{
@@ -198,40 +221,50 @@ export default function Profile() {
                 <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
                   {profile.name}
                 </Typography>
-                <Typography
-                  variant="subtitle1"
-                  color="text.secondary"
-                  sx={{ mb: 1 }}
-                >
-                  {profile.role}
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Chip
-                    icon={<Work />}
-                    label={profile.company}
-                    variant="outlined"
-                    color="primary"
-                  />
-                  <Chip
-                    icon={<LocationOn />}
-                    label={profile.location}
-                    variant="outlined"
-                    color="secondary"
-                  />
-                  <Chip
-                    icon={<CalendarToday />}
-                    label={`Membro dal ${profile.joinDate}`}
-                    variant="outlined"
-                    color="info"
-                  />
-                </Box>
+                {profile.role && (
+                  <Typography
+                    variant="subtitle1"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    {profile.role}
+                  </Typography>
+                )}
+                {(profile.company || profile.location || profile.joinDate) && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {profile.company && (
+                      <Chip
+                        icon={<Work />}
+                        label={profile.company}
+                        variant="outlined"
+                        color="primary"
+                      />
+                    )}
+                    {profile.location && (
+                      <Chip
+                        icon={<LocationOn />}
+                        label={profile.location}
+                        variant="outlined"
+                        color="secondary"
+                      />
+                    )}
+                    {profile.joinDate && (
+                      <Chip
+                        icon={<CalendarToday />}
+                        label={`Membro dal ${profile.joinDate}`}
+                        variant="outlined"
+                        color="info"
+                      />
+                    )}
+                  </Box>
+                )}
               </Box>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <Button
@@ -260,26 +293,30 @@ export default function Profile() {
               </Box>
             </Box>
 
-            <Typography variant="body1" sx={{ mb: 2.5, lineHeight: 1.6 }}>
-              {profile.bio}
-            </Typography>
-
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="h6" sx={{ mb: 1.5, fontWeight: "bold" }}>
-                Competenze
+            {profile.bio && (
+              <Typography variant="body1" sx={{ mb: 2.5, lineHeight: 1.6 }}>
+                {profile.bio}
               </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {profile.skills.map((skill, index) => (
-                  <Chip
-                    key={index}
-                    label={skill}
-                    color="primary"
-                    variant="outlined"
-                    sx={{ borderRadius: 2 }}
-                  />
-                ))}
+            )}
+
+            {profile.skills.length > 0 && (
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, fontWeight: "bold" }}>
+                  Competenze
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {profile.skills.map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={skill}
+                      color="primary"
+                      variant="outlined"
+                      sx={{ borderRadius: 2 }}
+                    />
+                  ))}
+                </Box>
               </Box>
-            </Box>
+            )}
           </CardContent>
         </Card>
 
@@ -481,91 +518,53 @@ export default function Profile() {
         </Box>
 
         {/* Contact Information */}
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
-          >
-            Informazioni di Contatto
-          </Typography>
-          <Card
-            sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-          >
-            <CardContent sx={{ p: 2.5 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Email sx={{ color: "primary.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
+        {contactItems.length > 0 && (
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
+            >
+              Informazioni di Contatto
+            </Typography>
+            <Card
+              sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                    gap: 2,
+                  }}
+                >
+                  {contactItems.map((item, index) => (
+                    <Box
+                      key={index}
+                      sx={{ display: "flex", alignItems: "center", gap: 2 }}
                     >
-                      Email
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {profile.email}
-                    </Typography>
-                  </Box>
+                      {item.icon}
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: "0.875rem" }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: "bold" }}
+                        >
+                          {item.value}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
                 </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Work sx={{ color: "secondary.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Azienda
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {profile.company}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <LocationOn sx={{ color: "success.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Località
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {profile.location}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <CalendarToday sx={{ color: "info.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Membro dal
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {profile.joinDate}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
       </Box>
       <EditProfileDialog
         open={editOpen}
