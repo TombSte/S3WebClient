@@ -7,6 +7,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import "./index.scss";
 import App from "./App.tsx";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
+import { NotificationsProvider } from "./contexts/NotificationsContext";
 
 function ThemedApp() {
   const { settings } = useSettings();
@@ -51,7 +52,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <SettingsProvider>
-        <ThemedApp />
+        <NotificationsProvider>
+          <ThemedApp />
+        </NotificationsProvider>
       </SettingsProvider>
     </BrowserRouter>
   </StrictMode>

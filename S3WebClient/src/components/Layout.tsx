@@ -4,6 +4,7 @@ import {
   AppBar,
   Box,
   CssBaseline,
+  Divider,
   Drawer,
   IconButton,
   List,
@@ -13,7 +14,9 @@ import {
   ListItemText,
   Toolbar,
   Typography,
+  alpha,
   useTheme,
+  Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -21,7 +24,10 @@ import {
   Storage,
   Settings,
   AccountCircle,
+  CloudQueue,
+  NotificationsNone,
 } from "@mui/icons-material";
+import { useNotifications } from "../contexts/NotificationsContext";
 
 const drawerWidth = 252;
 
@@ -31,9 +37,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { notifications } = useNotifications();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -52,37 +60,62 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const drawer = (
-    <Box>
-      <Toolbar>
-        <Typography
-          variant="h6"
-          noWrap
-          component="div"
-          sx={{ fontWeight: "bold" }}
-        >
-          S3 Web Client
-        </Typography>
+    <Box height="100%">
+      <Toolbar
+        sx={{
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+          color: theme.palette.primary.contrastText,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <CloudQueue sx={{ mr: 1 }} />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
+            S3 Web Client
+          </Typography>
+        </Box>
       </Toolbar>
-      <List>
+      <Divider />
+      <List sx={{ mt: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               onClick={() => handleMenuClick(item.path)}
               selected={location.pathname === item.path}
               sx={{
-                "&:hover": {
-                  backgroundColor: theme.palette.action.hover,
-                },
-                "&.Mui-selected": {
-                  backgroundColor: theme.palette.primary.light + "20",
-                  borderRight: `3px solid ${theme.palette.primary.main}`,
-                },
-                borderRadius: 1,
+                position: "relative",
                 mx: 1,
                 mb: 0.5,
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+                "&.Mui-selected": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                  "& .MuiListItemIcon-root": {
+                    color: theme.palette.primary.main,
+                  },
+                  "&:before": {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    borderTopLeftRadius: 2,
+                    borderBottomLeftRadius: 2,
+                    backgroundColor: theme.palette.primary.main,
+                  },
+                },
               }}
             >
-              <ListItemIcon sx={{ color: theme.palette.primary.main }}>
+              <ListItemIcon
+                sx={{
+                  color:
+                    location.pathname === item.path
+                      ? theme.palette.primary.main
+                      : theme.palette.text.secondary,
+                }}
+              >
                 {item.icon}
               </ListItemIcon>
               <ListItemText
@@ -137,9 +170,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            S3 Web Client
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <CloudQueue sx={{ mr: 1 }} />
+            <Typography variant="h6" noWrap component="div">
+              S3 Web Client
+            </Typography>
+          </Box>
+          <IconButton
+            color="inherit"
+            aria-label="notifications"
+            onClick={() => setNotifOpen(true)}
+          >
+            <Badge badgeContent={notifications.length} color="primary">
+              <NotificationsNone />
+            </Badge>
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -162,8 +207,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              backgroundColor: theme.palette.background.paper,
-              borderRight: `1px solid ${theme.palette.divider}`,
+              background: theme.palette.background.paper,
+              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
+              borderRight: "none",
+              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
             },
           }}
         >
@@ -178,8 +225,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              backgroundColor: theme.palette.background.paper,
-              borderRight: `1px solid ${theme.palette.divider}`,
+              background: theme.palette.background.paper,
+              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
+              borderRight: "none",
+              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
             },
           }}
           open
@@ -220,6 +269,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </Box>
       </Box>
+      <Drawer
+        anchor="right"
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        sx={{ "& .MuiDrawer-paper": { width: 320 } }}
+      >
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Notifications
+          </Typography>
+        </Toolbar>
+        <Divider />
+        <List>
+          {notifications.slice(0, 10).map((n) => (
+            <ListItem key={n.id}>
+              <ListItemText
+                primary={n.message}
+                secondary={n.date.toLocaleString()}
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Divider />
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                navigate("/notifications");
+                setNotifOpen(false);
+              }}
+            >
+              <ListItemText primary="View all" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Drawer>
     </Box>
   );
 };

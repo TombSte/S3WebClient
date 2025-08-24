@@ -5,6 +5,7 @@ import Buckets from "./pages/Buckets";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Bucket from "./pages/Bucket";
+import Notifications from "./pages/Notifications";
 import styles from "./App.module.scss";
 import { useSettings } from "./contexts/SettingsContext";
 import useRealtimeConnectionCheck from "./hooks/useRealtimeConnectionCheck";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/bucket/:id" element={<Bucket />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </Layout>
     </div>
