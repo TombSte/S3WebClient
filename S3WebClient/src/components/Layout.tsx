@@ -16,6 +16,7 @@ import {
   Typography,
   alpha,
   useTheme,
+  Badge,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -23,6 +24,8 @@ import {
   Storage,
   Settings,
   AccountCircle,
+  CloudQueue,
+  NotificationsNone,
 } from "@mui/icons-material";
 
 const drawerWidth = 252;
@@ -61,9 +64,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           color: theme.palette.primary.contrastText,
         }}
       >
-        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
-          S3 Web Client
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <CloudQueue sx={{ mr: 1 }} />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
+            S3 Web Client
+          </Typography>
+        </Box>
       </Toolbar>
       <Divider />
       <List sx={{ mt: 1 }}>
@@ -161,9 +167,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            S3 Web Client
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <CloudQueue sx={{ mr: 1 }} />
+            <Typography variant="h6" noWrap component="div">
+              S3 Web Client
+            </Typography>
+          </Box>
+          <IconButton
+            color="inherit"
+            aria-label="notifications"
+            onClick={() => navigate("/notifications")}
+          >
+            <Badge badgeContent={0} color="primary">
+              <NotificationsNone />
+            </Badge>
+          </IconButton>
         </Toolbar>
       </AppBar>
 
