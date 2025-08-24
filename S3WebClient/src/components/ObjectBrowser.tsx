@@ -203,6 +203,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   };
 
   const handleMove = (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
     setMoveItem(item);
   };
 

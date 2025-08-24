@@ -55,34 +55,11 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
 
   const handleMove = async () => {
     if (selected === null) return;
-    const isFolder = sourceKey.endsWith("/");
-    const base = isFolder
-      ? sourceKey.replace(/\/$/, "").split("/").pop() || ""
-      : sourceKey.split("/").pop() || sourceKey;
-    const newKey = isFolder ? `${selected}${base}/` : `${selected}${base}`;
+    const base = sourceKey.split("/").pop() || sourceKey;
+    const newKey = `${selected}${base}`;
     if (newKey === sourceKey) {
       onClose();
       return;
-    }
-    // Prevent moving a folder inside itself
-    if (isFolder && newKey.startsWith(sourceKey)) {
-      alert("Non puoi spostare una cartella dentro se stessa");
-      return;
-    }
-    // Prevent moving folder into destination where same-named folder exists
-    if (isFolder) {
-      try {
-        const destChildren = await objectService.fetchChildren(connection, selected);
-        const exists = destChildren.some(
-          (c) => c.isFolder === 1 && c.key === `${selected}${base}/`
-        );
-        if (exists) {
-          alert("Nella destinazione esiste già una cartella con lo stesso nome");
-          return;
-        }
-      } catch {
-        // ignore check errors, proceed to move and rely on backend
-      }
     }
     try {
       await objectService.move(connection, sourceKey, newKey);
