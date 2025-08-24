@@ -17,6 +17,7 @@ import RenameObjectDialog from "./RenameObjectDialog";
 import DuplicateObjectDialog from "./DuplicateObjectDialog";
 import ShareObjectDialog from "./ShareObjectDialog";
 import MoveObjectDialog from "./MoveObjectDialog";
+import { shareRepository } from "../repositories";
 
 interface Props {
   connection: S3Connection;
@@ -211,6 +212,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     if (!shareItem) return;
     try {
       const url = await objectService.share(connection, shareItem.key, expires);
+      await shareRepository.add({
+        connectionId: connection.id,
+        key: shareItem.key,
+        url,
+        expires,
+      });
       setShareUrl(url);
     } catch {
       alert("Errore durante la condivisione");
@@ -280,6 +287,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         )}
       </Box>
       <ObjectPropertiesDrawer
+        connectionId={connection.id}
         item={propItem}
         onClose={() => setPropItem(null)}
       />
