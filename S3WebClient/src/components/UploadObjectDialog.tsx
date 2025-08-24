@@ -17,6 +17,8 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectService } from "../repositories";
+import NameConflictDialog from "./NameConflictDialog";
+import { getAvailableName } from "../utils/naming";
 
 interface Props {
   open: boolean;
@@ -29,6 +31,11 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
   const [rootFolders, setRootFolders] = useState<S3ObjectEntity[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [conflict, setConflict] = useState<{
+    prefix: string;
+    file: File;
+    existing: Set<string>;
+  } | null>(null);
 
   const loadFolders = useCallback(
     async (prefix: string) => {
@@ -56,9 +63,18 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
 
   const handleUpload = async () => {
     if (!file || selected === null) return;
-    const key = `${selected}${file.name}`;
     try {
-      await objectService.upload(connection, key, file);
+      const existing = await objectService.fetchChildren(connection, selected);
+      const names = new Set(
+        existing
+          .filter((i) => i.isFolder === 0)
+          .map((i) => i.key.slice(selected.length))
+      );
+      if (names.has(file.name)) {
+        setConflict({ prefix: selected, file, existing: names });
+        return;
+      }
+      await objectService.upload(connection, `${selected}${file.name}`, file);
       await onUploaded();
       onClose();
     } catch {
@@ -66,10 +82,33 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
     }
   };
 
+  const handleResolve = async (
+    action: "replace" | "keep-both" | "cancel"
+  ) => {
+    if (!conflict) return;
+    if (action === "cancel") {
+      setConflict(null);
+      return;
+    }
+    const name =
+      action === "keep-both"
+        ? getAvailableName(conflict.file.name, conflict.existing)
+        : conflict.file.name;
+    try {
+      await objectService.upload(connection, `${conflict.prefix}${name}`, conflict.file);
+      await onUploaded();
+      setConflict(null);
+      onClose();
+    } catch {
+      alert("Errore durante il caricamento");
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Carica file</DialogTitle>
-      <DialogContent dividers>
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Carica file</DialogTitle>
+        <DialogContent dividers>
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
           Seleziona cartella di destinazione
         </Typography>
@@ -126,7 +165,13 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
           Carica
         </Button>
       </DialogActions>
-    </Dialog>
+      </Dialog>
+      <NameConflictDialog
+        open={conflict !== null}
+        name={conflict?.file.name ?? ""}
+        onResolve={handleResolve}
+      />
+    </>
   );
 }
 
