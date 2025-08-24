@@ -46,6 +46,8 @@ interface Props {
   onDuplicate?: (item: S3ObjectEntity) => void;
   onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
+  onDelete?: (item: S3ObjectEntity) => void;
+  onMove?: (item: S3ObjectEntity) => void;
   selected?: boolean;
 }
 
@@ -60,11 +62,13 @@ export default function ObjectItemRow({
   onDuplicate,
   onShare,
   onProperties,
+  onDelete,
+  onMove,
   selected = false,
 }: Props) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const hasActions =
-    onDownload || onRename || onDuplicate || onShare || onProperties;
+    onDownload || onRename || onDuplicate || onShare || onProperties || onDelete || onMove;
 
   const handleMenuOpen = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -169,6 +173,26 @@ export default function ObjectItemRow({
               }}
             >
               Condividi
+            </MenuItem>
+          )}
+          {onMove && (
+            <MenuItem
+              onClick={() => {
+                onMove(item);
+                handleClose();
+              }}
+            >
+              Sposta
+            </MenuItem>
+          )}
+          {item.isFolder === 0 && onDelete && (
+            <MenuItem
+              onClick={() => {
+                onDelete(item);
+                handleClose();
+              }}
+            >
+              Elimina
             </MenuItem>
           )}
           {onProperties && (

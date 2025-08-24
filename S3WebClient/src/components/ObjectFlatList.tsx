@@ -11,6 +11,8 @@ interface Props {
   onDuplicate?: (item: S3ObjectEntity) => void;
   onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
+  onDelete?: (item: S3ObjectEntity) => void;
+  onMove?: (item: S3ObjectEntity) => void;
 }
 
 export default function ObjectFlatList({
@@ -20,6 +22,8 @@ export default function ObjectFlatList({
   onDuplicate,
   onShare,
   onProperties,
+  onDelete,
+  onMove,
 }: Props) {
   const sorted = useMemo(
     () => [...items].sort((a, b) => a.key.localeCompare(b.key)),
@@ -47,6 +51,8 @@ export default function ObjectFlatList({
             onDuplicate={item.isFolder ? undefined : onDuplicate}
             onShare={item.isFolder ? undefined : onShare}
             onProperties={onProperties}
+            onDelete={item.isFolder ? undefined : onDelete}
+            onMove={onMove}
           />
         )}
       />

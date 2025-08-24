@@ -4,13 +4,12 @@ import { DexieActivityRepository } from "./activityRepository";
 import { DexieObjectRepository } from "./objectRepository";
 import { S3ObjectRepository } from "./s3ObjectRepository";
 import { ObjectService } from "./objectService";
+import { ActivityObjectService } from "./activityObjectService";
 
 export const connectionRepository = new DexieConnectionRepository(dexieDb);
 export const activityRepository = new DexieActivityRepository(dexieDb);
 export const objectRepository = new DexieObjectRepository(dexieDb);
 
 const remoteObjectRepository = new S3ObjectRepository();
-export const objectService = new ObjectService(
-  remoteObjectRepository,
-  objectRepository
-);
+const baseObjectService = new ObjectService(remoteObjectRepository, objectRepository);
+export const objectService = new ActivityObjectService(baseObjectService, activityRepository);
