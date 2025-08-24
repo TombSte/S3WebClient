@@ -27,53 +27,73 @@ import {
   CheckCircle,
   TrendingUp,
 } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { activityRepository, connectionRepository, profileRepository } from "../repositories";
+import type { UserProfile } from "../types/profile";
+import EditProfileDialog from "../components/EditProfileDialog";
+
+interface ActivityItem {
+  type: string;
+  message: string;
+  time: string;
+}
 
 export default function Profile() {
-  // Mock user data
-  const user = {
-    name: "Stefano Tomba",
-    email: "stefano.tomba@example.com",
-    avatar: "ST",
-    role: "Sviluppatore Full-Stack",
-    company: "Tech Solutions",
-    location: "Milano, Italia",
-    joinDate: "Gennaio 2024",
-    bio: "Sviluppatore appassionato di tecnologie cloud e storage distribuito. Specializzato in S3-compatible storage e applicazioni web moderne.",
-    skills: ["React", "TypeScript", "AWS S3", "MinIO", "Docker", "Node.js"],
-    stats: {
-      connectionsCreated: 15,
-      totalBuckets: 28,
-      activeConnections: 12,
-      lastLogin: "2 ore fa",
-    },
+  const [profile, setProfile] = useState<UserProfile>({
+    name: "",
+    email: "",
+    role: "",
+    company: "",
+    location: "",
+    joinDate: "",
+    bio: "",
+    skills: [],
+  });
+
+  const [stats, setStats] = useState({
+    connectionsCreated: 0,
+    totalBuckets: 0,
+    activeConnections: 0,
+    lastLogin: "Nessuna attività",
+  });
+
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const formatTimeAgo = (date: Date): string => {
+    const diff = Date.now() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return "Adesso";
+    if (minutes < 60) return `${minutes} min fa`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ore fa`;
+    const days = Math.floor(hours / 24);
+    return `${days} giorni fa`;
   };
 
-  const recentActivity = [
-    {
-      action: "Connessione creata",
-      target: "MinIO Production",
-      time: "5 min fa",
-      type: "success",
-    },
-    {
-      action: "Test connessione",
-      target: "AWS S3 Backup",
-      time: "1 ora fa",
-      type: "info",
-    },
-    {
-      action: "Bucket eliminato",
-      target: "temp-storage",
-      time: "3 ore fa",
-      type: "warning",
-    },
-    {
-      action: "Connessione modificata",
-      target: "Ceph Cluster",
-      time: "1 giorno fa",
-      type: "info",
-    },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      const p = await profileRepository.get();
+      if (p) setProfile(p);
+
+      const connections = await connectionRepository.getAll();
+      const connectionsCreated = connections.length;
+      const activeConnections = connections.filter((c) => c.isActive === 1).length;
+      const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
+      const lastEntry = await activityRepository.getLast();
+      const lastLogin = lastEntry ? formatTimeAgo(lastEntry.timestamp) : "Nessuna attività";
+      setStats({ connectionsCreated, totalBuckets, activeConnections, lastLogin });
+
+      const activities = await activityRepository.getRecent(5);
+      const formatted = activities.map((act) => ({
+        type: act.type,
+        message: act.message,
+        time: formatTimeAgo(act.timestamp),
+      }));
+      setRecentActivity(formatted);
+    };
+    loadData();
+  }, []);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -86,6 +106,20 @@ export default function Profile() {
       default:
         return <CheckCircle sx={{ color: "primary.main" }} />;
     }
+  };
+
+  const initials = profile.name
+    ? profile.name
+        .split(" ")
+        .map((n) => n[0]?.toUpperCase())
+        .join("")
+        .slice(0, 2)
+    : "";
+
+  const handleSave = async (p: UserProfile) => {
+    await profileRepository.save(p);
+    setProfile(p);
+    setEditOpen(false);
   };
 
   return (
@@ -158,18 +192,18 @@ export default function Profile() {
                   mt: -50,
                 }}
               >
-                {user.avatar}
+                {initials}
               </Avatar>
               <Box sx={{ flex: 1, mb: 1 }}>
                 <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-                  {user.name}
+                  {profile.name}
                 </Typography>
                 <Typography
                   variant="subtitle1"
                   color="text.secondary"
                   sx={{ mb: 1 }}
                 >
-                  {user.role}
+                  {profile.role}
                 </Typography>
                 <Box
                   sx={{
@@ -181,19 +215,19 @@ export default function Profile() {
                 >
                   <Chip
                     icon={<Work />}
-                    label={user.company}
+                    label={profile.company}
                     variant="outlined"
                     color="primary"
                   />
                   <Chip
                     icon={<LocationOn />}
-                    label={user.location}
+                    label={profile.location}
                     variant="outlined"
                     color="secondary"
                   />
                   <Chip
                     icon={<CalendarToday />}
-                    label={`Membro dal ${user.joinDate}`}
+                    label={`Membro dal ${profile.joinDate}`}
                     variant="outlined"
                     color="info"
                   />
@@ -204,6 +238,7 @@ export default function Profile() {
                   variant="outlined"
                   startIcon={<Edit />}
                   sx={{ borderRadius: 2 }}
+                  onClick={() => setEditOpen(true)}
                 >
                   Modifica
                 </Button>
@@ -226,7 +261,7 @@ export default function Profile() {
             </Box>
 
             <Typography variant="body1" sx={{ mb: 2.5, lineHeight: 1.6 }}>
-              {user.bio}
+              {profile.bio}
             </Typography>
 
             <Box sx={{ mb: 2.5 }}>
@@ -234,7 +269,7 @@ export default function Profile() {
                 Competenze
               </Typography>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {user.skills.map((skill, index) => (
+                {profile.skills.map((skill, index) => (
                   <Chip
                     key={index}
                     label={skill}
@@ -284,7 +319,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.connectionsCreated}
+                      {stats.connectionsCreated}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -319,7 +354,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.totalBuckets}
+                      {stats.totalBuckets}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -354,7 +389,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.activeConnections}
+                      {stats.activeConnections}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -389,7 +424,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.lastLogin}
+                      {stats.lastLogin}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -427,16 +462,7 @@ export default function Profile() {
                           variant="body1"
                           sx={{ fontWeight: "bold", fontSize: "0.875rem" }}
                         >
-                          {activity.action}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ fontSize: "0.875rem" }}
-                        >
-                          {activity.target}
+                          {activity.message}
                         </Typography>
                       }
                     />
@@ -484,7 +510,7 @@ export default function Profile() {
                       Email
                     </Typography>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.email}
+                      {profile.email}
                     </Typography>
                   </Box>
                 </Box>
@@ -500,7 +526,7 @@ export default function Profile() {
                       Azienda
                     </Typography>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.company}
+                      {profile.company}
                     </Typography>
                   </Box>
                 </Box>
@@ -516,7 +542,7 @@ export default function Profile() {
                       Località
                     </Typography>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.location}
+                      {profile.location}
                     </Typography>
                   </Box>
                 </Box>
@@ -532,7 +558,7 @@ export default function Profile() {
                       Membro dal
                     </Typography>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.joinDate}
+                      {profile.joinDate}
                     </Typography>
                   </Box>
                 </Box>
@@ -541,6 +567,12 @@ export default function Profile() {
           </Card>
         </Box>
       </Box>
+      <EditProfileDialog
+        open={editOpen}
+        profile={profile}
+        onClose={() => setEditOpen(false)}
+        onSave={handleSave}
+      />
     </Box>
   );
 }
