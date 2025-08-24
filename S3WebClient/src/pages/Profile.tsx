@@ -21,7 +21,6 @@ import {
   Work,
   Star,
   Edit,
-  Settings,
   Cloud,
   Storage,
   CheckCircle,
@@ -155,6 +154,7 @@ export default function Profile() {
         flex: 1,
         textAlign: "left",
         alignItems: "flex-start",
+        p: { xs: 2, sm: 3 },
       }}
     >
       <Box sx={{ width: "100%" }}>
@@ -201,24 +201,34 @@ export default function Profile() {
           />
           <CardContent sx={{ p: 3, pt: 0 }}>
             <Box
-              sx={{ display: "flex", alignItems: "flex-end", gap: 3, mb: 2.5 }}
+              sx={{
+                display: "flex",
+                alignItems: { xs: "center", sm: "flex-end" },
+                flexDirection: { xs: "column", sm: "row" },
+                textAlign: { xs: "center", sm: "left" },
+                gap: 3,
+                mb: 2.5,
+              }}
             >
               <Avatar
                 sx={{
-                  width: 100,
-                  height: 100,
-                  fontSize: 40,
+                  width: { xs: 80, sm: 100 },
+                  height: { xs: 80, sm: 100 },
+                  fontSize: { xs: 32, sm: 40 },
                   fontWeight: "bold",
                   border: "4px solid white",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "primary.main",
-                  mt: -50,
+                  mt: { xs: -40, sm: -50 },
                 }}
               >
                 {initials}
               </Avatar>
               <Box sx={{ flex: 1, mb: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", mb: 1 }}
+                >
                   {profile.name}
                 </Typography>
                 {profile.role && (
@@ -237,6 +247,7 @@ export default function Profile() {
                       alignItems: "center",
                       gap: 2,
                       flexWrap: "wrap",
+                      justifyContent: { xs: "center", sm: "flex-start" },
                     }}
                   >
                     {profile.company && (
@@ -266,7 +277,15 @@ export default function Profile() {
                   </Box>
                 )}
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  mt: { xs: 2, sm: 0 },
+                  width: { xs: "100%", sm: "auto" },
+                  justifyContent: { xs: "center", sm: "flex-end" },
+                }}
+              >
                 <Button
                   variant="outlined"
                   startIcon={<Edit />}
@@ -274,21 +293,6 @@ export default function Profile() {
                   onClick={() => setEditOpen(true)}
                 >
                   Modifica
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Settings />}
-                  sx={{
-                    borderRadius: 2,
-                    background:
-                      "linear-gradient(45deg, #FF6B6B 30%, #FFE66D 90%)",
-                    "&:hover": {
-                      background:
-                        "linear-gradient(45deg, #FF5252 30%, #FFD600 90%)",
-                    },
-                  }}
-                >
-                  Impostazioni
                 </Button>
               </Box>
             </Box>
@@ -331,7 +335,7 @@ export default function Profile() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: 2,
             }}
           >
@@ -533,7 +537,7 @@ export default function Profile() {
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                     gap: 2,
                   }}
                 >
