@@ -107,6 +107,8 @@ function Node({
                   onDuplicate={onDuplicate}
                   onShare={onShare}
                   onProperties={onProperties}
+                  onDelete={onDelete}
+                  onMove={onMove}
                   selected={selected}
                   onSelect={onSelect}
                 />
