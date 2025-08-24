@@ -6,8 +6,11 @@ import {
   ListItem,
   ListItemText,
   IconButton,
+  Link,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useEffect, useState } from "react";
 import type { S3ObjectEntity } from "../types/s3";
 import type { ShareLink } from "../database/database";
@@ -87,13 +90,37 @@ export default function ObjectPropertiesDrawer({
                   <ListItem
                     key={s.id}
                     secondaryAction={
-                      <IconButton edge="end" onClick={() => removeShare(s.id!)}>
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <IconButton
+                          onClick={() => navigator.clipboard.writeText(s.url)}
+                          size="small"
+                        >
+                          <ContentCopyIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          edge="end"
+                          onClick={() => removeShare(s.id!)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     }
                   >
                     <ListItemText
-                      primary={s.url}
+                      primary={
+                        <Tooltip title={s.url}>
+                          <Link
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            underline="hover"
+                            noWrap
+                            sx={{ display: "block" }}
+                          >
+                            {s.url}
+                          </Link>
+                        </Tooltip>
+                      }
                       secondary={`Scade: ${new Date(s.expires).toLocaleString()}`}
                     />
                   </ListItem>
