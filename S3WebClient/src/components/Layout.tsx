@@ -27,6 +27,7 @@ import {
   CloudQueue,
   NotificationsNone,
 } from "@mui/icons-material";
+import { useNotifications } from "../contexts/NotificationsContext";
 
 const drawerWidth = 252;
 
@@ -36,9 +37,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { notifications } = useNotifications();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -176,9 +179,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <IconButton
             color="inherit"
             aria-label="notifications"
-            onClick={() => navigate("/notifications")}
+            onClick={() => setNotifOpen(true)}
           >
-            <Badge badgeContent={0} color="primary">
+            <Badge badgeContent={notifications.length} color="primary">
               <NotificationsNone />
             </Badge>
           </IconButton>
@@ -266,6 +269,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </Box>
       </Box>
+      <Drawer
+        anchor="right"
+        open={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        sx={{ "& .MuiDrawer-paper": { width: 320 } }}
+      >
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Notifications
+          </Typography>
+        </Toolbar>
+        <Divider />
+        <List>
+          {notifications.slice(0, 10).map((n) => (
+            <ListItem key={n.id}>
+              <ListItemText
+                primary={n.message}
+                secondary={n.date.toLocaleString()}
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Divider />
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                navigate("/notifications");
+                setNotifOpen(false);
+              }}
+            >
+              <ListItemText primary="View all" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Drawer>
     </Box>
   );
 };
