@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   CopyObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -138,6 +139,77 @@ export class S3ObjectRepository {
     await client.send(
       new DeleteObjectCommand({ Bucket: connection.bucketName, Key: oldKey })
     );
+  }
+
+  async delete(connection: S3Connection, key: string): Promise<void> {
+    const client = createClient(connection);
+    await client.send(
+      new DeleteObjectCommand({ Bucket: connection.bucketName, Key: key })
+    );
+  }
+
+  async move(connection: S3Connection, oldKey: string, newKey: string): Promise<void> {
+    // Move is implemented as copy + delete (same as rename semantics)
+    await this.rename(connection, oldKey, newKey);
+  }
+
+  async movePrefix(
+    connection: S3Connection,
+    oldPrefix: string,
+    newPrefix: string
+  ): Promise<void> {
+    const client = createClient(connection);
+    // List EVERY object under the prefix (no Delimiter)
+    let token: string | undefined;
+    const keys: string[] = [];
+    do {
+      const res = await client.send(
+        new ListObjectsV2Command({
+          Bucket: connection.bucketName,
+          Prefix: oldPrefix,
+          ContinuationToken: token,
+        })
+      );
+      (res.Contents ?? []).forEach((o) => {
+        if (!o.Key) return;
+        keys.push(o.Key);
+      });
+      token = res.IsTruncated ? res.NextContinuationToken : undefined;
+    } while (token);
+
+    // Copy all to new prefix
+    for (const key of keys) {
+      const suffix = key.substring(oldPrefix.length);
+      const targetKey = `${newPrefix}${suffix}`;
+      await client.send(
+        new CopyObjectCommand({
+          Bucket: connection.bucketName,
+          CopySource: `${connection.bucketName}/${encodeURIComponent(key)}`,
+          Key: targetKey,
+        })
+      );
+    }
+
+    // Delete originals in batches (use DeleteObjects when possible)
+    const chunkSize = 900; // Stay under service limits
+    for (let i = 0; i < keys.length; i += chunkSize) {
+      const chunk = keys.slice(i, i + chunkSize);
+      if (chunk.length === 1) {
+        await client.send(
+          new DeleteObjectCommand({
+            Bucket: connection.bucketName,
+            Key: chunk[0],
+          })
+        );
+      } else if (chunk.length > 1) {
+        await client.send(
+          new DeleteObjectsCommand({
+            Bucket: connection.bucketName,
+            Delete: { Objects: chunk.map((k) => ({ Key: k })) },
+          })
+        );
+      }
+    }
   }
 
   async upload(connection: S3Connection, key: string, file: File): Promise<void> {

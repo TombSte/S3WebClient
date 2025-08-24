@@ -16,6 +16,7 @@ import ObjectPropertiesDrawer from "./ObjectPropertiesDrawer";
 import RenameObjectDialog from "./RenameObjectDialog";
 import DuplicateObjectDialog from "./DuplicateObjectDialog";
 import ShareObjectDialog from "./ShareObjectDialog";
+import MoveObjectDialog from "./MoveObjectDialog";
 
 interface Props {
   connection: S3Connection;
@@ -43,6 +44,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [shareItem, setShareItem] = useState<S3ObjectEntity | null>(null);
   const [shareUrl, setShareUrl] = useState("");
   const [selectedPrefix, setSelectedPrefix] = useState("");
+  const [moveItem, setMoveItem] = useState<S3ObjectEntity | null>(null);
 
   const fetchChildren = useCallback(
     async (prefix: string) => {
@@ -189,6 +191,21 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
     setShareUrl("");
   };
 
+  const handleDelete = async (item: S3ObjectEntity) => {
+    if (item.isFolder === 1) return;
+    if (!confirm(`Eliminare definitivamente ${item.key}?`)) return;
+    try {
+      await objectService.delete(connection, item.key);
+      setRefreshTick((t) => t + 1);
+    } catch {
+      alert("Errore durante l'eliminazione");
+    }
+  };
+
+  const handleMove = (item: S3ObjectEntity) => {
+    setMoveItem(item);
+  };
+
   const confirmShare = async (expires: Date) => {
     if (!shareItem) return;
     try {
@@ -210,7 +227,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   }));
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       <SearchBar
         value={searchInput}
         onChange={setSearchInput}
@@ -219,7 +236,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         placeholder="Cerca..."
         sx={{ mb: 2 }}
       />
-      <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
         {loading ? (
           <Typography>Caricamento...</Typography>
         ) : query ? (
@@ -231,6 +248,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
               onDuplicate={disableActions ? undefined : handleDuplicate}
               onShare={disableActions ? undefined : handleShare}
               onProperties={disableActions ? undefined : handleProperties}
+              onDelete={disableActions ? undefined : handleDelete}
+              onMove={disableActions ? undefined : handleMove}
             />
           ) : (
             <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
@@ -252,6 +271,8 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
             onDuplicate={disableActions ? undefined : handleDuplicate}
             onShare={disableActions ? undefined : handleShare}
             onProperties={disableActions ? undefined : handleProperties}
+            onDelete={disableActions ? undefined : handleDelete}
+            onMove={disableActions ? undefined : handleMove}
             selected={selectedPrefix}
             onSelect={(p) => setSelectedPrefix(p)}
           />
@@ -281,6 +302,15 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
           setShareUrl("");
         }}
         onGenerate={confirmShare}
+      />
+      <MoveObjectDialog
+        open={!!moveItem}
+        connection={connection}
+        sourceKey={moveItem?.key || ""}
+        onClose={() => setMoveItem(null)}
+        onMoved={async () => {
+          setRefreshTick((t) => t + 1);
+        }}
       />
     </Box>
   );

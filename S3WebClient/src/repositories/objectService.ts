@@ -81,4 +81,28 @@ export class ObjectService {
       },
     ]);
   }
+
+  async delete(connection: S3Connection, key: string): Promise<void> {
+    await this.remote.delete(connection, key);
+    // Refresh cache to reflect deletion
+    await this.refreshAll(connection);
+  }
+
+  async move(connection: S3Connection, oldKey: string, newKey: string): Promise<void> {
+    // Folder move: copy all objects under prefix and delete originals
+    if (oldKey.endsWith("/")) {
+      const oldPrefix = oldKey;
+      const newPrefix = newKey.endsWith("/") ? newKey : `${newKey}/`;
+      if ((this.remote as any).movePrefix) {
+        await (this.remote as any).movePrefix(connection, oldPrefix, newPrefix);
+      } else {
+        // Fallback not expected, but ensure behavior at least renames placeholder
+        await this.remote.rename(connection, oldPrefix, newPrefix);
+      }
+    } else {
+      // File move is just rename
+      await this.remote.rename(connection, oldKey, newKey);
+    }
+    await this.refreshAll(connection);
+  }
 }

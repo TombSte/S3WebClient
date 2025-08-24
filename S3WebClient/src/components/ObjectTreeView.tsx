@@ -14,6 +14,8 @@ interface Props {
   onDuplicate?: (item: S3ObjectEntity) => void;
   onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
+  onDelete?: (item: S3ObjectEntity) => void;
+  onMove?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
 }
@@ -27,6 +29,8 @@ interface NodeProps {
   onDuplicate?: (item: S3ObjectEntity) => void;
   onShare?: (item: S3ObjectEntity) => void;
   onProperties?: (item: S3ObjectEntity) => void;
+  onDelete?: (item: S3ObjectEntity) => void;
+  onMove?: (item: S3ObjectEntity) => void;
   selected: string;
   onSelect: (prefix: string) => void;
 }
@@ -40,6 +44,8 @@ function Node({
   onDuplicate,
   onShare,
   onProperties,
+  onDelete,
+  onMove,
   selected,
   onSelect,
 }: NodeProps) {
@@ -77,6 +83,8 @@ function Node({
         onDuplicate={item.isFolder ? undefined : onDuplicate}
         onShare={item.isFolder ? undefined : onShare}
         onProperties={onProperties}
+        onDelete={item.isFolder ? undefined : onDelete}
+        onMove={onMove}
         selected={selected === item.key}
       />
       {item.isFolder === 1 && (
@@ -119,6 +127,8 @@ export default function ObjectTreeView({
   onDuplicate,
   onShare,
   onProperties,
+  onDelete,
+  onMove,
   selected,
   onSelect,
 }: Props) {
@@ -136,12 +146,11 @@ export default function ObjectTreeView({
         bgcolor: "background.paper",
         borderRadius: 1,
         boxShadow: 1,
-        flex: 1,
-        minHeight: 0,
+        width: "100%",
       }}
     >
       <Virtuoso
-        style={{ height: "100%", width: "100%" }}
+        useWindowScroll
         data={sorted}
         itemContent={(_index: number, item: S3ObjectEntity) => (
           <Node
@@ -153,6 +162,8 @@ export default function ObjectTreeView({
             onDuplicate={onDuplicate}
             onShare={onShare}
             onProperties={onProperties}
+            onDelete={onDelete}
+            onMove={onMove}
             selected={selected}
             onSelect={onSelect}
           />

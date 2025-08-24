@@ -74,11 +74,8 @@ export default function Bucket() {
         minWidth: "100%",
         display: "flex",
         flexDirection: "column",
-        flex: 1,
-        height: "100%",
         textAlign: "left",
         alignItems: "stretch",
-        minHeight: 0,
       }}
     >
       <Box
@@ -86,9 +83,7 @@ export default function Bucket() {
           width: "100%",
           display: "flex",
           flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
-          height: "100%",
+          gap: 0,
         }}
       >
         {/* Header */}
@@ -138,13 +133,11 @@ export default function Bucket() {
             boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
             mt: 3,
             width: "100%",
-            flex: 1,
             display: "flex",
             flexDirection: "column",
-            minHeight: 0,
           }}
         >
-          <CardContent sx={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <CardContent sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Typography
             variant="h6"
@@ -177,7 +170,7 @@ export default function Bucket() {
             <RefreshIcon />
           </IconButton>
             </Box>
-            <Box sx={{ width: "100%", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <Box sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
               <ObjectBrowser
                 ref={browserRef}
                 connection={connection}

@@ -31,6 +31,7 @@ export default function Dashboard() {
     activeConnections: 0,
     inactiveConnections: 0,
     totalBuckets: 0,
+    connectedBuckets: 0,
     lastActivity: "Nessuna attività",
   });
 
@@ -54,6 +55,11 @@ export default function Dashboard() {
       const activeConnections = connections.filter((c) => c.isActive === 1).length;
       const inactiveConnections = totalConnections - activeConnections;
       const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
+      const connectedBuckets = new Set(
+        connections
+          .filter((c) => c.testStatus === "success")
+          .map((c) => c.bucketName)
+      ).size;
 
       const lastEntry = await activityRepository.getLast();
       const lastActivity = lastEntry
@@ -65,6 +71,7 @@ export default function Dashboard() {
         activeConnections,
         inactiveConnections,
         totalBuckets,
+        connectedBuckets,
         lastActivity,
       });
 
@@ -218,13 +225,13 @@ export default function Dashboard() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {stats.activeConnections}
+                      {stats.connectedBuckets}
                     </Typography>
                     <Typography
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Connessioni Attive
+                      Bucket Connessi
                     </Typography>
                   </Box>
                   <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />

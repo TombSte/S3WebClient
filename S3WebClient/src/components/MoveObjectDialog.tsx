@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField,
   List,
   ListItemButton,
   ListItemIcon,
@@ -22,19 +21,14 @@ import { objectService } from "../repositories";
 interface Props {
   open: boolean;
   connection: S3Connection;
+  sourceKey: string;
   onClose: () => void;
-  onCreated: () => Promise<void> | void;
+  onMoved: () => Promise<void> | void;
 }
 
-export default function CreateFolderDialog({
-  open,
-  connection,
-  onClose,
-  onCreated,
-}: Props) {
+export default function MoveObjectDialog({ open, connection, sourceKey, onClose, onMoved }: Props) {
   const [rootFolders, setRootFolders] = useState<S3ObjectEntity[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [selected, setSelected] = useState<string | null>("");
 
   const loadFolders = useCallback(
     async (prefix: string) => {
@@ -54,40 +48,63 @@ export default function CreateFolderDialog({
       (async () => {
         const folders = await loadFolders("");
         setRootFolders(folders);
-        setSelected(null);
-        setName("");
+        setSelected("");
       })();
     }
   }, [open, loadFolders]);
 
-  const handleCreate = async () => {
-    if (selected === null || !name.trim()) return;
-    const key = `${selected}${name.replace(/\/+$/, "")}/`;
+  const handleMove = async () => {
+    if (selected === null) return;
+    const isFolder = sourceKey.endsWith("/");
+    const base = isFolder
+      ? sourceKey.replace(/\/$/, "").split("/").pop() || ""
+      : sourceKey.split("/").pop() || sourceKey;
+    const newKey = isFolder ? `${selected}${base}/` : `${selected}${base}`;
+    if (newKey === sourceKey) {
+      onClose();
+      return;
+    }
+    // Prevent moving a folder inside itself
+    if (isFolder && newKey.startsWith(sourceKey)) {
+      alert("Non puoi spostare una cartella dentro se stessa");
+      return;
+    }
+    // Prevent moving folder into destination where same-named folder exists
+    if (isFolder) {
+      try {
+        const destChildren = await objectService.fetchChildren(connection, selected);
+        const exists = destChildren.some(
+          (c) => c.isFolder === 1 && c.key === `${selected}${base}/`
+        );
+        if (exists) {
+          alert("Nella destinazione esiste già una cartella con lo stesso nome");
+          return;
+        }
+      } catch {
+        // ignore check errors, proceed to move and rely on backend
+      }
+    }
     try {
-      await objectService.createFolder(connection, key);
-      await onCreated();
+      await objectService.move(connection, sourceKey, newKey);
+      await onMoved();
       onClose();
     } catch {
-      alert("Errore durante la creazione della cartella");
+      alert("Errore durante lo spostamento");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Nuova cartella</DialogTitle>
+      <DialogTitle>Sposta oggetto</DialogTitle>
       <DialogContent dividers>
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
           Seleziona cartella di destinazione
         </Typography>
         <List
           disablePadding
-          sx={{ maxHeight: 200, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+          sx={{ maxHeight: 240, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
         >
-          <ListItemButton
-            selected={selected === ""}
-            onClick={() => setSelected("")}
-            sx={{ pl: 2 }}
-          >
+          <ListItemButton selected={selected === ""} onClick={() => setSelected("")} sx={{ pl: 2 }}>
             <ListItemIcon sx={{ minWidth: 32 }}>
               <FolderIcon sx={{ color: "primary.main" }} />
             </ListItemIcon>
@@ -104,22 +121,11 @@ export default function CreateFolderDialog({
             />
           ))}
         </List>
-        <TextField
-          label="Nome cartella"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={selected === null}
-        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Annulla</Button>
-        <Button
-          onClick={handleCreate}
-          variant="contained"
-          disabled={selected === null || !name.trim()}
-        >
-          Crea
+        <Button onClick={handleMove} variant="contained" disabled={selected === null}>
+          Sposta qui
         </Button>
       </DialogActions>
     </Dialog>
