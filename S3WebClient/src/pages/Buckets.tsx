@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Button,
   Box,
@@ -17,6 +17,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -31,6 +36,8 @@ import {
   CheckCircle,
   Error,
   FolderOpen,
+  FilterList,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
@@ -58,20 +65,38 @@ const Buckets: React.FC = () => {
   } = useS3Connections();
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isMobile = useMediaQuery("(max-width:600px)");
 
-  const [searchInput, setSearchInput] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const initialStatus = (() => {
+    const v = searchParams.get("status");
+    return v === "success" || v === "failed" || v === "untested" ? v : "all";
+  })();
+  const initialActive = (() => {
+    const v = searchParams.get("active");
+    return v === "active" || v === "inactive" ? v : "all";
+  })();
+  const initialEnv = (() => {
+    const v = searchParams.get("env");
+    return v === "dev" || v === "test" || v === "prod" || v === "custom"
+      ? v
+      : "all";
+  })();
+  const initialQuery = searchParams.get("q") ?? "";
+
+  const [searchInput, setSearchInput] = useState(initialQuery);
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [filteredConnections, setFilteredConnections] =
     useState<S3Connection[]>([]);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "success" | "failed" | "untested"
-  >("all");
+  >(initialStatus);
   const [activeFilter, setActiveFilter] = useState<
     "all" | "active" | "inactive"
-  >("all");
+  >(initialActive);
   const [environmentFilter, setEnvironmentFilter] = useState<
     "all" | "dev" | "test" | "prod" | "custom"
-  >("all");
+  >(initialEnv);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
@@ -80,11 +105,31 @@ const Buckets: React.FC = () => {
     message: string;
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [pendingStatusFilter, setPendingStatusFilter] = useState<
+    "all" | "success" | "failed" | "untested"
+  >(statusFilter);
+  const [pendingActiveFilter, setPendingActiveFilter] = useState<
+    "all" | "active" | "inactive"
+  >(activeFilter);
+  const [pendingEnvironmentFilter, setPendingEnvironmentFilter] = useState<
+    "all" | "dev" | "test" | "prod" | "custom"
+  >(environmentFilter);
 
   const connectionNames = React.useMemo(
     () => Array.from(new Set(connections.map((c) => c.displayName))),
     [connections]
   );
+
+  // Sync applied filters/search to URL query params
+  React.useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set("q", searchTerm.trim());
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (activeFilter !== "all") params.set("active", activeFilter);
+    if (environmentFilter !== "all") params.set("env", environmentFilter);
+    setSearchParams(params, { replace: true });
+  }, [searchTerm, statusFilter, activeFilter, environmentFilter, setSearchParams]);
 
   // Search and filter connections
   React.useEffect(() => {
@@ -281,10 +326,10 @@ const Buckets: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              flexWrap: "wrap",
+              flexWrap: "nowrap",
             }}
           >
-            <Box sx={{ flexGrow: 1, minWidth: 240 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <SearchBar
                 placeholder="Cerca connessioni..."
                 value={searchInput}
@@ -294,58 +339,199 @@ const Buckets: React.FC = () => {
                 sx={{ mb: 0 }}
               />
             </Box>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="status-filter-label">Stato</InputLabel>
-              <Select
-                labelId="status-filter-label"
-                label="Stato"
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value as typeof statusFilter)
-                }
-              >
-                <MenuItem value="all">Tutti</MenuItem>
-                <MenuItem value="success">OK</MenuItem>
-                <MenuItem value="failed">Errore</MenuItem>
-                <MenuItem value="untested">Non testato</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="active-filter-label">Attivo</InputLabel>
-              <Select
-                labelId="active-filter-label"
-                label="Attivo"
-                value={activeFilter}
-                onChange={(e) =>
-                  setActiveFilter(e.target.value as typeof activeFilter)
-                }
-              >
-                <MenuItem value="all">Tutti</MenuItem>
-                <MenuItem value="active">Attivi</MenuItem>
-                <MenuItem value="inactive">Inattivi</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="env-filter-label">Env</InputLabel>
-              <Select
-                labelId="env-filter-label"
-                label="Env"
-                value={environmentFilter}
-                onChange={(e) =>
-                  setEnvironmentFilter(
-                    e.target.value as typeof environmentFilter
-                  )
-                }
-              >
-                <MenuItem value="all">Tutti</MenuItem>
-                <MenuItem value="dev">Dev</MenuItem>
-                <MenuItem value="test">Test</MenuItem>
-                <MenuItem value="prod">Prod</MenuItem>
-                <MenuItem value="custom">Custom</MenuItem>
-              </Select>
-            </FormControl>
+            {(() => {
+              const activeCount =
+                (statusFilter !== "all" ? 1 : 0) +
+                (activeFilter !== "all" ? 1 : 0) +
+                (environmentFilter !== "all" ? 1 : 0);
+              const label = activeCount > 0 ? `Filtri (${activeCount})` : "Filtri";
+              const openFilters = () => {
+                setPendingStatusFilter(statusFilter);
+                setPendingActiveFilter(activeFilter);
+                setPendingEnvironmentFilter(environmentFilter);
+                setFiltersOpen(true);
+              };
+              return (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<FilterList />}
+                  onClick={openFilters}
+                  sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                >
+                  {label}
+                </Button>
+              );
+            })()}
           </Box>
+
+          {/* Active filters summary chips */}
+          {(
+            statusFilter !== "all" ||
+            activeFilter !== "all" ||
+            environmentFilter !== "all"
+          ) && (
+            <Box
+              sx={{
+                mt: 1,
+                display: "block",
+                overflowX: "auto",
+                whiteSpace: "nowrap",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {statusFilter !== "all" && (
+                <Chip
+                  label={`Stato: ${
+                    statusFilter === "success"
+                      ? "OK"
+                      : statusFilter === "failed"
+                      ? "Errore"
+                      : "Non testato"
+                  }`}
+                  onDelete={() => setStatusFilter("all")}
+                  size="small"
+                  sx={{ mr: 1, mb: 0.5 }}
+                />
+              )}
+              {activeFilter !== "all" && (
+                <Chip
+                  label={`Attivo: ${activeFilter === "active" ? "Sì" : "No"}`}
+                  onDelete={() => setActiveFilter("all")}
+                  size="small"
+                  sx={{ mr: 1, mb: 0.5 }}
+                />
+              )}
+              {environmentFilter !== "all" && (
+                <Chip
+                  label={`Env: ${environmentFilter}`}
+                  onDelete={() => setEnvironmentFilter("all")}
+                  size="small"
+                  sx={{ mr: 1, mb: 0.5 }}
+                />
+              )}
+              <Button
+                size="small"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setActiveFilter("all");
+                  setEnvironmentFilter("all");
+                  setSearchInput("");
+                  setSearchTerm("");
+                  setSearchParams({}, { replace: true });
+                }}
+                sx={{ mb: 0.5 }}
+              >
+                Azzera filtri
+              </Button>
+            </Box>
+          )}
         </Box>
+
+        {/* Filters Dialog */}
+        <Dialog
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          fullScreen={isMobile}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ m: 0, p: 2 }}>
+            Filtri
+            <IconButton
+              aria-label="close"
+              onClick={() => setFiltersOpen(false)}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setStatusFilter(pendingStatusFilter);
+              setActiveFilter(pendingActiveFilter);
+              setEnvironmentFilter(pendingEnvironmentFilter);
+              setFiltersOpen(false);
+            }}
+          >
+            <DialogContent dividers>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 0.5 }}>
+              <FormControl size="small" fullWidth>
+                <InputLabel id="status-filter-label">Stato</InputLabel>
+                <Select
+                  labelId="status-filter-label"
+                  label="Stato"
+                  value={pendingStatusFilter}
+                  autoFocus
+                  onChange={(e) =>
+                    setPendingStatusFilter(e.target.value as typeof pendingStatusFilter)
+                  }
+                >
+                  <MenuItem value="all">Tutti</MenuItem>
+                  <MenuItem value="success">OK</MenuItem>
+                  <MenuItem value="failed">Errore</MenuItem>
+                  <MenuItem value="untested">Non testato</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel id="active-filter-label">Attivo</InputLabel>
+                <Select
+                  labelId="active-filter-label"
+                  label="Attivo"
+                  value={pendingActiveFilter}
+                  onChange={(e) =>
+                    setPendingActiveFilter(e.target.value as typeof pendingActiveFilter)
+                  }
+                >
+                  <MenuItem value="all">Tutti</MenuItem>
+                  <MenuItem value="active">Attivi</MenuItem>
+                  <MenuItem value="inactive">Inattivi</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" fullWidth>
+                <InputLabel id="env-filter-label">Env</InputLabel>
+                <Select
+                  labelId="env-filter-label"
+                  label="Env"
+                  value={pendingEnvironmentFilter}
+                  onChange={(e) =>
+                    setPendingEnvironmentFilter(
+                      e.target.value as typeof pendingEnvironmentFilter
+                    )
+                  }
+                >
+                  <MenuItem value="all">Tutti</MenuItem>
+                  <MenuItem value="dev">Dev</MenuItem>
+                  <MenuItem value="test">Test</MenuItem>
+                  <MenuItem value="prod">Prod</MenuItem>
+                  <MenuItem value="custom">Custom</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            </DialogContent>
+            <DialogActions>
+            <Button
+              onClick={() => {
+                setPendingStatusFilter("all");
+                setPendingActiveFilter("all");
+                setPendingEnvironmentFilter("all");
+              }}
+            >
+              Azzera
+            </Button>
+            <Button type="submit" variant="contained">
+              Applica
+            </Button>
+            </DialogActions>
+          </Box>
+        </Dialog>
 
         {/* Connections Grid */}
         {filteredConnections.length === 0 ? (

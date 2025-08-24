@@ -136,12 +136,11 @@ export default function ObjectTreeView({
         bgcolor: "background.paper",
         borderRadius: 1,
         boxShadow: 1,
-        flex: 1,
-        minHeight: 0,
+        width: "100%",
       }}
     >
       <Virtuoso
-        style={{ height: "100%", width: "100%" }}
+        useWindowScroll
         data={sorted}
         itemContent={(_index: number, item: S3ObjectEntity) => (
           <Node

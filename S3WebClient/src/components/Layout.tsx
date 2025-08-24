@@ -200,7 +200,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           backgroundColor: theme.palette.background.default,
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden",
+          overflow: "visible",
         }}
       >
         <Toolbar />
@@ -214,7 +214,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             boxSizing: "border-box",
             textAlign: "left",
             alignItems: "flex-start",
-            overflow: "auto",
+            overflow: "visible",
           }}
         >
           {children}

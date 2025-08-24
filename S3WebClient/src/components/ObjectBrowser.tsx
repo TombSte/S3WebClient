@@ -210,7 +210,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   }));
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       <SearchBar
         value={searchInput}
         onChange={setSearchInput}
@@ -219,7 +219,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         placeholder="Cerca..."
         sx={{ mb: 2 }}
       />
-      <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
         {loading ? (
           <Typography>Caricamento...</Typography>
         ) : query ? (
