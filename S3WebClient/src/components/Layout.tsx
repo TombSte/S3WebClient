@@ -4,6 +4,7 @@ import {
   AppBar,
   Box,
   CssBaseline,
+  Divider,
   Drawer,
   IconButton,
   List,
@@ -13,6 +14,7 @@ import {
   ListItemText,
   Toolbar,
   Typography,
+  alpha,
   useTheme,
 } from "@mui/material";
 import {
@@ -52,37 +54,59 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const drawer = (
-    <Box>
-      <Toolbar>
-        <Typography
-          variant="h6"
-          noWrap
-          component="div"
-          sx={{ fontWeight: "bold" }}
-        >
+    <Box height="100%">
+      <Toolbar
+        sx={{
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+          color: theme.palette.primary.contrastText,
+        }}
+      >
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
           S3 Web Client
         </Typography>
       </Toolbar>
-      <List>
+      <Divider />
+      <List sx={{ mt: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton
               onClick={() => handleMenuClick(item.path)}
               selected={location.pathname === item.path}
               sx={{
-                "&:hover": {
-                  backgroundColor: theme.palette.action.hover,
-                },
-                "&.Mui-selected": {
-                  backgroundColor: theme.palette.primary.light + "20",
-                  borderRight: `3px solid ${theme.palette.primary.main}`,
-                },
-                borderRadius: 1,
+                position: "relative",
                 mx: 1,
                 mb: 0.5,
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+                "&.Mui-selected": {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                  "& .MuiListItemIcon-root": {
+                    color: theme.palette.primary.main,
+                  },
+                  "&:before": {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4,
+                    borderTopLeftRadius: 2,
+                    borderBottomLeftRadius: 2,
+                    backgroundColor: theme.palette.primary.main,
+                  },
+                },
               }}
             >
-              <ListItemIcon sx={{ color: theme.palette.primary.main }}>
+              <ListItemIcon
+                sx={{
+                  color:
+                    location.pathname === item.path
+                      ? theme.palette.primary.main
+                      : theme.palette.text.secondary,
+                }}
+              >
                 {item.icon}
               </ListItemIcon>
               <ListItemText
@@ -162,8 +186,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              backgroundColor: theme.palette.background.paper,
-              borderRight: `1px solid ${theme.palette.divider}`,
+              background: theme.palette.background.paper,
+              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
+              borderRight: "none",
+              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
             },
           }}
         >
@@ -178,8 +204,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              backgroundColor: theme.palette.background.paper,
-              borderRight: `1px solid ${theme.palette.divider}`,
+              background: theme.palette.background.paper,
+              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
+              borderRight: "none",
+              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
             },
           }}
           open
