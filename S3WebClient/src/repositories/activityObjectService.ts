@@ -1,4 +1,5 @@
-import type { S3Connection, S3ObjectEntity } from "../types/s3";
+/* eslint-disable no-empty */
+import type { S3Connection } from "../types/s3";
 import type { ActivityRepository } from "./activityRepository";
 import { ObjectService } from "./objectService";
 

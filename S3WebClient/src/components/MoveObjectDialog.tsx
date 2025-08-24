@@ -17,6 +17,8 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectService } from "../repositories";
+import NameConflictDialog from "./NameConflictDialog";
+import { getAvailableName } from "../utils/naming";
 
 interface Props {
   open: boolean;
@@ -29,6 +31,11 @@ interface Props {
 export default function MoveObjectDialog({ open, connection, sourceKey, onClose, onMoved }: Props) {
   const [rootFolders, setRootFolders] = useState<S3ObjectEntity[]>([]);
   const [selected, setSelected] = useState<string | null>("");
+  const [conflict, setConflict] = useState<{
+    prefix: string;
+    base: string;
+    existing: Set<string>;
+  } | null>(null);
 
   const loadFolders = useCallback(
     async (prefix: string) => {
@@ -55,36 +62,23 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
 
   const handleMove = async () => {
     if (selected === null) return;
-    const isFolder = sourceKey.endsWith("/");
-    const base = isFolder
-      ? sourceKey.replace(/\/$/, "").split("/").pop() || ""
-      : sourceKey.split("/").pop() || sourceKey;
-    const newKey = isFolder ? `${selected}${base}/` : `${selected}${base}`;
+    const base = sourceKey.split("/").pop() || sourceKey;
+    const newKey = `${selected}${base}`;
     if (newKey === sourceKey) {
       onClose();
       return;
     }
-    // Prevent moving a folder inside itself
-    if (isFolder && newKey.startsWith(sourceKey)) {
-      alert("Non puoi spostare una cartella dentro se stessa");
-      return;
-    }
-    // Prevent moving folder into destination where same-named folder exists
-    if (isFolder) {
-      try {
-        const destChildren = await objectService.fetchChildren(connection, selected);
-        const exists = destChildren.some(
-          (c) => c.isFolder === 1 && c.key === `${selected}${base}/`
-        );
-        if (exists) {
-          alert("Nella destinazione esiste già una cartella con lo stesso nome");
-          return;
-        }
-      } catch {
-        // ignore check errors, proceed to move and rely on backend
-      }
-    }
     try {
+      const existing = await objectService.fetchChildren(connection, selected);
+      const names = new Set(
+        existing
+          .filter((i) => i.isFolder === 0)
+          .map((i) => i.key.slice(selected.length))
+      );
+      if (names.has(base)) {
+        setConflict({ prefix: selected, base, existing: names });
+        return;
+      }
       await objectService.move(connection, sourceKey, newKey);
       await onMoved();
       onClose();
@@ -93,42 +87,71 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
     }
   };
 
+  const handleResolve = async (
+    action: "replace" | "keep-both" | "cancel"
+  ) => {
+    if (!conflict) return;
+    if (action === "cancel") {
+      setConflict(null);
+      return;
+    }
+    const name =
+      action === "keep-both"
+        ? getAvailableName(conflict.base, conflict.existing)
+        : conflict.base;
+    try {
+      await objectService.move(connection, sourceKey, `${conflict.prefix}${name}`);
+      await onMoved();
+      setConflict(null);
+      onClose();
+    } catch {
+      alert("Errore durante lo spostamento");
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Sposta oggetto</DialogTitle>
-      <DialogContent dividers>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Seleziona cartella di destinazione
-        </Typography>
-        <List
-          disablePadding
-          sx={{ maxHeight: 240, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
-        >
-          <ListItemButton selected={selected === ""} onClick={() => setSelected("")} sx={{ pl: 2 }}>
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              <FolderIcon sx={{ color: "primary.main" }} />
-            </ListItemIcon>
-            <ListItemText primary="/" />
-          </ListItemButton>
-          {rootFolders.map((f) => (
-            <FolderNode
-              key={f.key}
-              item={f}
-              depth={1}
-              selected={selected ?? ""}
-              onSelect={setSelected}
-              loadFolders={loadFolders}
-            />
-          ))}
-        </List>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Annulla</Button>
-        <Button onClick={handleMove} variant="contained" disabled={selected === null}>
-          Sposta qui
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Sposta oggetto</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Seleziona cartella di destinazione
+          </Typography>
+          <List
+            disablePadding
+            sx={{ maxHeight: 240, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+          >
+            <ListItemButton selected={selected === ""} onClick={() => setSelected("")} sx={{ pl: 2 }}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <FolderIcon sx={{ color: "primary.main" }} />
+              </ListItemIcon>
+              <ListItemText primary="/" />
+            </ListItemButton>
+            {rootFolders.map((f) => (
+              <FolderNode
+                key={f.key}
+                item={f}
+                depth={1}
+                selected={selected ?? ""}
+                onSelect={setSelected}
+                loadFolders={loadFolders}
+              />
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Annulla</Button>
+          <Button onClick={handleMove} variant="contained" disabled={selected === null}>
+            Sposta qui
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <NameConflictDialog
+        open={conflict !== null}
+        name={conflict?.base ?? ""}
+        onResolve={handleResolve}
+      />
+    </>
   );
 }
 

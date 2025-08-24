@@ -175,7 +175,7 @@ export default function ObjectItemRow({
               Condividi
             </MenuItem>
           )}
-          {onMove && (
+          {item.isFolder === 0 && onMove && (
             <MenuItem
               onClick={() => {
                 onMove(item);

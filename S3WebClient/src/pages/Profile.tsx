@@ -21,59 +21,78 @@ import {
   Work,
   Star,
   Edit,
-  Settings,
   Cloud,
   Storage,
   CheckCircle,
   TrendingUp,
 } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { activityRepository, connectionRepository, profileRepository } from "../repositories";
+import type { UserProfile } from "../types/profile";
+import EditProfileDialog from "../components/EditProfileDialog";
+
+interface ActivityItem {
+  type: string;
+  message: string;
+  time: string;
+}
 
 export default function Profile() {
-  // Mock user data
-  const user = {
-    name: "Stefano Tomba",
-    email: "stefano.tomba@example.com",
-    avatar: "ST",
-    role: "Sviluppatore Full-Stack",
-    company: "Tech Solutions",
-    location: "Milano, Italia",
-    joinDate: "Gennaio 2024",
-    bio: "Sviluppatore appassionato di tecnologie cloud e storage distribuito. Specializzato in S3-compatible storage e applicazioni web moderne.",
-    skills: ["React", "TypeScript", "AWS S3", "MinIO", "Docker", "Node.js"],
-    stats: {
-      connectionsCreated: 15,
-      totalBuckets: 28,
-      activeConnections: 12,
-      lastLogin: "2 ore fa",
-    },
+  const [profile, setProfile] = useState<UserProfile>({
+    name: "",
+    email: "",
+    role: "",
+    company: "",
+    location: "",
+    joinDate: "",
+    bio: "",
+    skills: [],
+  });
+
+  const [stats, setStats] = useState({
+    connectionsCreated: 0,
+    totalBuckets: 0,
+    activeConnections: 0,
+    lastLogin: "Nessuna attività",
+  });
+
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const formatTimeAgo = (date: Date): string => {
+    const diff = Date.now() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return "Adesso";
+    if (minutes < 60) return `${minutes} min fa`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ore fa`;
+    const days = Math.floor(hours / 24);
+    return `${days} giorni fa`;
   };
 
-  const recentActivity = [
-    {
-      action: "Connessione creata",
-      target: "MinIO Production",
-      time: "5 min fa",
-      type: "success",
-    },
-    {
-      action: "Test connessione",
-      target: "AWS S3 Backup",
-      time: "1 ora fa",
-      type: "info",
-    },
-    {
-      action: "Bucket eliminato",
-      target: "temp-storage",
-      time: "3 ore fa",
-      type: "warning",
-    },
-    {
-      action: "Connessione modificata",
-      target: "Ceph Cluster",
-      time: "1 giorno fa",
-      type: "info",
-    },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      const p = await profileRepository.get();
+      if (p) setProfile(p);
+
+      const connections = await connectionRepository.getAll();
+      const connectionsCreated = connections.length;
+      const activeConnections = connections.filter((c) => c.isActive === 1).length;
+      const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
+      const lastEntry = await activityRepository.getLast();
+      const lastLogin = lastEntry ? formatTimeAgo(lastEntry.timestamp) : "Nessuna attività";
+      setStats({ connectionsCreated, totalBuckets, activeConnections, lastLogin });
+
+      const activities = await activityRepository.getRecent(5);
+      const formatted = activities.map((act) => ({
+        type: act.type,
+        message: act.message,
+        time: formatTimeAgo(act.timestamp),
+      }));
+      setRecentActivity(formatted);
+    };
+    loadData();
+  }, []);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -88,6 +107,43 @@ export default function Profile() {
     }
   };
 
+  const initials = profile.name
+    ? profile.name
+        .split(" ")
+        .map((n) => n[0]?.toUpperCase())
+        .join("")
+        .slice(0, 2)
+    : "";
+
+  const handleSave = async (p: UserProfile) => {
+    await profileRepository.save(p);
+    setProfile(p);
+    setEditOpen(false);
+  };
+
+  const contactItems = [
+    {
+      icon: <Email sx={{ color: "primary.main", fontSize: 20 }} />,
+      label: "Email",
+      value: profile.email,
+    },
+    {
+      icon: <Work sx={{ color: "secondary.main", fontSize: 20 }} />,
+      label: "Azienda",
+      value: profile.company,
+    },
+    {
+      icon: <LocationOn sx={{ color: "success.main", fontSize: 20 }} />,
+      label: "Località",
+      value: profile.location,
+    },
+    {
+      icon: <CalendarToday sx={{ color: "info.main", fontSize: 20 }} />,
+      label: "Membro dal",
+      value: profile.joinDate,
+    },
+  ].filter((item) => item.value);
+
   return (
     <Box
       sx={{
@@ -98,6 +154,7 @@ export default function Profile() {
         flex: 1,
         textAlign: "left",
         alignItems: "flex-start",
+        p: { xs: 2, sm: 3 },
       }}
     >
       <Box sx={{ width: "100%" }}>
@@ -144,107 +201,126 @@ export default function Profile() {
           />
           <CardContent sx={{ p: 3, pt: 0 }}>
             <Box
-              sx={{ display: "flex", alignItems: "flex-end", gap: 3, mb: 2.5 }}
+              sx={{
+                display: "flex",
+                alignItems: { xs: "center", sm: "flex-end" },
+                flexDirection: { xs: "column", sm: "row" },
+                textAlign: { xs: "center", sm: "left" },
+                gap: 3,
+                mb: 2.5,
+              }}
             >
               <Avatar
                 sx={{
-                  width: 100,
-                  height: 100,
-                  fontSize: 40,
+                  width: { xs: 80, sm: 100 },
+                  height: { xs: 80, sm: 100 },
+                  fontSize: { xs: 32, sm: 40 },
                   fontWeight: "bold",
                   border: "4px solid white",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "primary.main",
-                  mt: -50,
+                  mt: { xs: -40, sm: -50 },
                 }}
               >
-                {user.avatar}
+                {initials}
               </Avatar>
               <Box sx={{ flex: 1, mb: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-                  {user.name}
-                </Typography>
                 <Typography
-                  variant="subtitle1"
-                  color="text.secondary"
-                  sx={{ mb: 1 }}
+                  variant="h5"
+                  sx={{ fontWeight: "bold", mb: 1 }}
                 >
-                  {user.role}
+                  {profile.name}
                 </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Chip
-                    icon={<Work />}
-                    label={user.company}
-                    variant="outlined"
-                    color="primary"
-                  />
-                  <Chip
-                    icon={<LocationOn />}
-                    label={user.location}
-                    variant="outlined"
-                    color="secondary"
-                  />
-                  <Chip
-                    icon={<CalendarToday />}
-                    label={`Membro dal ${user.joinDate}`}
-                    variant="outlined"
-                    color="info"
-                  />
-                </Box>
+                {profile.role && (
+                  <Typography
+                    variant="subtitle1"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    {profile.role}
+                  </Typography>
+                )}
+                {(profile.company || profile.location || profile.joinDate) && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      flexWrap: "wrap",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                    }}
+                  >
+                    {profile.company && (
+                      <Chip
+                        icon={<Work />}
+                        label={profile.company}
+                        variant="outlined"
+                        color="primary"
+                      />
+                    )}
+                    {profile.location && (
+                      <Chip
+                        icon={<LocationOn />}
+                        label={profile.location}
+                        variant="outlined"
+                        color="secondary"
+                      />
+                    )}
+                    {profile.joinDate && (
+                      <Chip
+                        icon={<CalendarToday />}
+                        label={`Membro dal ${profile.joinDate}`}
+                        variant="outlined"
+                        color="info"
+                      />
+                    )}
+                  </Box>
+                )}
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  mt: { xs: 2, sm: 0 },
+                  width: { xs: "100%", sm: "auto" },
+                  justifyContent: { xs: "center", sm: "flex-end" },
+                }}
+              >
                 <Button
                   variant="outlined"
                   startIcon={<Edit />}
                   sx={{ borderRadius: 2 }}
+                  onClick={() => setEditOpen(true)}
                 >
                   Modifica
                 </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Settings />}
-                  sx={{
-                    borderRadius: 2,
-                    background:
-                      "linear-gradient(45deg, #FF6B6B 30%, #FFE66D 90%)",
-                    "&:hover": {
-                      background:
-                        "linear-gradient(45deg, #FF5252 30%, #FFD600 90%)",
-                    },
-                  }}
-                >
-                  Impostazioni
-                </Button>
               </Box>
             </Box>
 
-            <Typography variant="body1" sx={{ mb: 2.5, lineHeight: 1.6 }}>
-              {user.bio}
-            </Typography>
-
-            <Box sx={{ mb: 2.5 }}>
-              <Typography variant="h6" sx={{ mb: 1.5, fontWeight: "bold" }}>
-                Competenze
+            {profile.bio && (
+              <Typography variant="body1" sx={{ mb: 2.5, lineHeight: 1.6 }}>
+                {profile.bio}
               </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {user.skills.map((skill, index) => (
-                  <Chip
-                    key={index}
-                    label={skill}
-                    color="primary"
-                    variant="outlined"
-                    sx={{ borderRadius: 2 }}
-                  />
-                ))}
+            )}
+
+            {profile.skills.length > 0 && (
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="h6" sx={{ mb: 1.5, fontWeight: "bold" }}>
+                  Competenze
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {profile.skills.map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={skill}
+                      color="primary"
+                      variant="outlined"
+                      sx={{ borderRadius: 2 }}
+                    />
+                  ))}
+                </Box>
               </Box>
-            </Box>
+            )}
           </CardContent>
         </Card>
 
@@ -259,7 +335,7 @@ export default function Profile() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: 2,
             }}
           >
@@ -284,7 +360,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.connectionsCreated}
+                      {stats.connectionsCreated}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -319,7 +395,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.totalBuckets}
+                      {stats.totalBuckets}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -354,7 +430,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.activeConnections}
+                      {stats.activeConnections}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -389,7 +465,7 @@ export default function Profile() {
                 >
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                      {user.stats.lastLogin}
+                      {stats.lastLogin}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -427,16 +503,7 @@ export default function Profile() {
                           variant="body1"
                           sx={{ fontWeight: "bold", fontSize: "0.875rem" }}
                         >
-                          {activity.action}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ fontSize: "0.875rem" }}
-                        >
-                          {activity.target}
+                          {activity.message}
                         </Typography>
                       }
                     />
@@ -455,92 +522,60 @@ export default function Profile() {
         </Box>
 
         {/* Contact Information */}
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
-          >
-            Informazioni di Contatto
-          </Typography>
-          <Card
-            sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-          >
-            <CardContent sx={{ p: 2.5 }}>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Email sx={{ color: "primary.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
+        {contactItems.length > 0 && (
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
+            >
+              Informazioni di Contatto
+            </Typography>
+            <Card
+              sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                    gap: 2,
+                  }}
+                >
+                  {contactItems.map((item, index) => (
+                    <Box
+                      key={index}
+                      sx={{ display: "flex", alignItems: "center", gap: 2 }}
                     >
-                      Email
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.email}
-                    </Typography>
-                  </Box>
+                      {item.icon}
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: "0.875rem" }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: "bold" }}
+                        >
+                          {item.value}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
                 </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Work sx={{ color: "secondary.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Azienda
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.company}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <LocationOn sx={{ color: "success.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Località
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.location}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <CalendarToday sx={{ color: "info.main", fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: "0.875rem" }}
-                    >
-                      Membro dal
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      {user.joinDate}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
       </Box>
+      <EditProfileDialog
+        open={editOpen}
+        profile={profile}
+        onClose={() => setEditOpen(false)}
+        onSave={handleSave}
+      />
     </Box>
   );
 }
