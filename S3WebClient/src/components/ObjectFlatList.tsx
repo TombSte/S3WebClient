@@ -1,4 +1,6 @@
-import { List } from "@mui/material";
+import { Box } from "@mui/material";
+import { Virtuoso } from "react-virtuoso";
+import { useMemo } from "react";
 import type { S3ObjectEntity } from "../types/s3";
 import ObjectItemRow from "./ObjectItemRow";
 
@@ -19,16 +21,26 @@ export default function ObjectFlatList({
   onShare,
   onProperties,
 }: Props) {
+  const sorted = useMemo(
+    () => [...items].sort((a, b) => a.key.localeCompare(b.key)),
+    [items]
+  );
+
   return (
-    <List
-      disablePadding
-      sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
+    <Box
+      sx={{
+        bgcolor: "background.paper",
+        borderRadius: 1,
+        boxShadow: 1,
+        flex: 1,
+        minHeight: 0,
+      }}
     >
-      {items
-        .sort((a, b) => a.key.localeCompare(b.key))
-        .map((item) => (
+      <Virtuoso
+        style={{ height: "100%", width: "100%" }}
+        data={sorted}
+        itemContent={(_index: number, item: S3ObjectEntity) => (
           <ObjectItemRow
-            key={item.key}
             item={item}
             name={item.key}
             onDownload={onDownload}
@@ -37,7 +49,8 @@ export default function ObjectFlatList({
             onShare={item.isFolder ? undefined : onShare}
             onProperties={onProperties}
           />
-        ))}
-    </List>
+        )}
+      />
+    </Box>
   );
 }

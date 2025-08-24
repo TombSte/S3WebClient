@@ -75,11 +75,22 @@ export default function Bucket() {
         display: "flex",
         flexDirection: "column",
         flex: 1,
+        height: "100%",
         textAlign: "left",
         alignItems: "stretch",
+        minHeight: 0,
       }}
     >
-      <Box sx={{ width: "100%" }}>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+          height: "100%",
+        }}
+      >
         {/* Header */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -122,8 +133,18 @@ export default function Bucket() {
           </Alert>
         )}
         {/* File navigation */}
-        <Card sx={{ boxShadow: "0 2px 10px rgba(0,0,0,0.08)", mt: 3, width: "100%" }}>
-          <CardContent sx={{ width: "100%" }}>
+        <Card
+          sx={{
+            boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+            mt: 3,
+            width: "100%",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
+          <CardContent sx={{ width: "100%", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <Typography
             variant="h6"
@@ -156,7 +177,7 @@ export default function Bucket() {
             <RefreshIcon />
           </IconButton>
             </Box>
-            <Box sx={{ width: "100%" }}>
+            <Box sx={{ width: "100%", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
               <ObjectBrowser
                 ref={browserRef}
                 connection={connection}

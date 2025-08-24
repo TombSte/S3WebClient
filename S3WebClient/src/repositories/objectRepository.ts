@@ -9,6 +9,7 @@ export interface ObjectRepository {
     connectionId: string,
     objects: S3ObjectEntity[]
   ): Promise<void>;
+  clear(connectionId: string): Promise<void>;
 }
 
 export class DexieObjectRepository implements ObjectRepository {
@@ -59,5 +60,9 @@ export class DexieObjectRepository implements ObjectRepository {
     if (objects.length > 0) {
       await this.db.objects.bulkPut(objects);
     }
+  }
+
+  async clear(connectionId: string): Promise<void> {
+    await this.db.objects.where("connectionId").equals(connectionId).delete();
   }
 }

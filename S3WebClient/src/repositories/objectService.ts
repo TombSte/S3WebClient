@@ -19,9 +19,11 @@ export class ObjectService {
   }
 
   async refreshAll(connection: S3Connection): Promise<S3ObjectEntity[]> {
-    const all = await this.remote.listAll(connection);
-    await this.local.replaceAll(connection.id, all);
-    return all;
+    await this.local.clear(connection.id);
+    for await (const page of this.remote.listAllPaginated(connection)) {
+      await this.local.save(page);
+    }
+    return await this.local.getChildren(connection.id, "");
   }
 
   async download(connection: S3Connection, key: string): Promise<Uint8Array | undefined> {
