@@ -50,3 +50,29 @@ Notes:
 - SPA routing is configured via `nginx.conf` with `try_files ... /index.html`.
 - To customize app config, add/edit `S3WebClient/.env.production` before building the image (see Configuration above).
 
+## CI/CD (GitHub Actions → Docker Hub)
+
+This repo includes a GitHub Actions workflow to build and publish the Docker image to Docker Hub.
+
+1) Create secrets
+- Preferred: Environment secrets under `Settings → Environments → Prod → Secrets`.
+- `DOCKERHUB_USERNAME`: your Docker Hub username
+- `DOCKERHUB_TOKEN`: a Docker Hub access token (Account Settings → Security → New Access Token)
+
+2) Optional: adjust image name
+- By default, the workflow publishes to `${DOCKERHUB_USERNAME}/s3webclient`.
+- To change, edit `env.IMAGE_NAME` in `.github/workflows/docker-publish.yml`.
+
+3) Triggers
+- On push to branches named `release-<version>` (e.g., `release-0.0.1`) or `realease-<version>`.
+- Also via manual dispatch from the Actions tab.
+
+4) Tagging & Releases
+- On `release-*` branches the workflow pushes two tags:
+  - `<DOCKERHUB_USERNAME>/s3webclient:<version>` where `<version>` comes from the branch name (prefix `release-`/`realease-` stripped)
+  - `<DOCKERHUB_USERNAME>/s3webclient:latest`
+- Nessun trigger su `main`/`master`: crei la release quando apri/pushi un branch `release-*`.
+- Viene anche creata/aggiornata una GitHub Release con tag `<version>`.
+
+5) Environment
+- The workflow targets the `Prod` environment to read its secrets and (optionally) require approvals.
