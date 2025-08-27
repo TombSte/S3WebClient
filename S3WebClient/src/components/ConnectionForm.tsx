@@ -521,7 +521,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1,
-                  bgcolor: "background.paper",
+                  bgcolor: "transparent",
                   "&:hover": {
                     bgcolor: "action.hover",
                     borderColor: "primary.main",
@@ -577,6 +577,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
       </form>
     </Dialog>
     <Snackbar
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       open={snackbar.open}
       autoHideDuration={6000}
       onClose={() => setSnackbar({ ...snackbar, open: false })}

@@ -12,6 +12,8 @@ import {
   ListItemText,
   Collapse,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import ExpandLess from "@mui/icons-material/ExpandLess";
@@ -35,6 +37,7 @@ export default function CreateFolderDialog({
   const [rootFolders, setRootFolders] = useState<S3ObjectEntity[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "error" | "success" | "warning" | "info" }>({ open: false, message: "", severity: "error" });
 
   const loadFolders = useCallback(
     async (prefix: string) => {
@@ -42,7 +45,7 @@ export default function CreateFolderDialog({
         const all = await objectService.fetchChildren(connection, prefix);
         return all.filter((i) => i.isFolder === 1);
       } catch {
-        alert("Error loading folders");
+        setSnackbar({ open: true, message: "Error loading folders", severity: "error" });
         return [];
       }
     },
@@ -68,11 +71,12 @@ export default function CreateFolderDialog({
       await onCreated();
       onClose();
     } catch {
-      alert("Error creating folder");
+      setSnackbar({ open: true, message: "Error creating folder", severity: "error" });
     }
   };
 
   return (
+    <>
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>New folder</DialogTitle>
       <DialogContent dividers>
@@ -123,6 +127,17 @@ export default function CreateFolderDialog({
         </Button>
       </DialogActions>
     </Dialog>
+    <Snackbar
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      open={snackbar.open}
+      autoHideDuration={6000}
+      onClose={() => setSnackbar({ ...snackbar, open: false })}
+    >
+      <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+    </>
   );
 }
 

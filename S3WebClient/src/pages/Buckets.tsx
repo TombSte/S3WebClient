@@ -41,6 +41,7 @@ import {
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
+import ConfirmDialog from "../components/ConfirmDialog";
 import TestStatusChip from "../components/TestStatusChip";
 import EnvironmentChip from "../components/EnvironmentChip";
 import SearchBar from "../components/SearchBar";
@@ -105,6 +106,7 @@ const Buckets: React.FC = () => {
     message: string;
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string; name: string } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pendingStatusFilter, setPendingStatusFilter] = useState<
     "all" | "success" | "failed" | "untested"
@@ -192,12 +194,20 @@ const Buckets: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this connection?")) {
-      try {
-        await deleteConnection(id);
-      } catch (err) {
-        console.error("Error deleting connection:", err);
-      }
+    const conn = connections.find((c) => c.id === id);
+    setConfirmDelete({ open: true, id, name: conn?.displayName || id });
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    try {
+      await deleteConnection(confirmDelete.id);
+      setSnackbar({ open: true, message: "Connection deleted", severity: "success" });
+    } catch (err) {
+      console.error("Error deleting connection:", err);
+      setSnackbar({ open: true, message: "Error deleting connection", severity: "error" });
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -837,6 +847,7 @@ const Buckets: React.FC = () => {
           editingConnection={editingConnection}
         />
         <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
@@ -849,6 +860,15 @@ const Buckets: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+        <ConfirmDialog
+          open={Boolean(confirmDelete?.open)}
+          title="Delete connection"
+          message={`Delete connection ${confirmDelete?.name}?`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={confirmDeleteAction}
+        />
       </Box>
     </Box>
   );
