@@ -23,28 +23,28 @@ async function performTest(connection: S3Connection): Promise<ConnectionTestResu
       await client.send(new HeadBucketCommand({ Bucket: connection.bucketName }));
       return {
         success: true,
-        message: "Connessione testata con successo",
+        message: "Connection tested successfully",
         timestamp: new Date(),
       };
     } catch (err: unknown) {
       const e = err as { $metadata?: { httpStatusCode?: number }; name?: string; message?: string };
-      let message = "Errore nel test della connessione";
+      let message = "Error testing connection";
       if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") {
-        message = "Bucket non trovato";
+        message = "Bucket not found";
       }
       return {
         success: false,
         message,
         timestamp: new Date(),
-        error: e.message ?? "Errore sconosciuto",
+        error: e.message ?? "Unknown error",
       };
     }
   } catch (err) {
     return {
       success: false,
-      message: "Errore nel test della connessione",
+      message: "Error testing connection",
       timestamp: new Date(),
-      error: err instanceof Error ? err.message : "Errore sconosciuto",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
   }
 }
@@ -67,4 +67,3 @@ export function useRealtimeConnectionCheck(
 }
 
 export default useRealtimeConnectionCheck;
-

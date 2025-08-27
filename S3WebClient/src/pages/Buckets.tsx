@@ -41,6 +41,7 @@ import {
 } from "@mui/icons-material";
 import { useS3Connections } from "../hooks/useS3Connections";
 import ConnectionForm from "../components/ConnectionForm";
+import ConfirmDialog from "../components/ConfirmDialog";
 import TestStatusChip from "../components/TestStatusChip";
 import EnvironmentChip from "../components/EnvironmentChip";
 import SearchBar from "../components/SearchBar";
@@ -105,6 +106,7 @@ const Buckets: React.FC = () => {
     message: string;
     severity: "success" | "error";
   }>({ open: false, message: "", severity: "success" });
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; id: string; name: string } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pendingStatusFilter, setPendingStatusFilter] = useState<
     "all" | "success" | "failed" | "untested"
@@ -192,12 +194,20 @@ const Buckets: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Sei sicuro di voler eliminare questa connessione?")) {
-      try {
-        await deleteConnection(id);
-      } catch (err) {
-        console.error("Error deleting connection:", err);
-      }
+    const conn = connections.find((c) => c.id === id);
+    setConfirmDelete({ open: true, id, name: conn?.displayName || id });
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    try {
+      await deleteConnection(confirmDelete.id);
+      setSnackbar({ open: true, message: "Connection deleted", severity: "success" });
+    } catch (err) {
+      console.error("Error deleting connection:", err);
+      setSnackbar({ open: true, message: "Error deleting connection", severity: "error" });
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -223,7 +233,7 @@ const Buckets: React.FC = () => {
       console.error("Error testing connection:", err);
       setSnackbar({
         open: true,
-        message: "Errore nel test della connessione",
+        message: "Error testing connection",
         severity: "error",
       });
     }
@@ -241,7 +251,7 @@ const Buckets: React.FC = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Buckets
         </Typography>
-        <Typography>Caricamento connessioni...</Typography>
+        <Typography>Loading connections...</Typography>
       </Box>
     );
   }
@@ -288,19 +298,19 @@ const Buckets: React.FC = () => {
               }}
             >
               <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
-              Gestione Connessioni S3
+              S3 Connections
             </Typography>
             <Typography
               variant="body2"
               color="text.secondary"
               sx={{ ml: 1 }}
             >
-              Configura e gestisci le tue connessioni a storage S3-compatibili
+              Configure and manage your S3-compatible storage connections
             </Typography>
           </Box>
           <Chip
             icon={<StorageIcon sx={{ color: "inherit" }} />}
-            label={`${filteredConnections.length} connessioni`}
+            label={`${filteredConnections.length} connections`}
             sx={{
               fontWeight: "bold",
               bgcolor: "primary.main",
@@ -331,7 +341,7 @@ const Buckets: React.FC = () => {
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <SearchBar
-                placeholder="Cerca connessioni..."
+                placeholder="Search connections..."
                 value={searchInput}
                 onChange={setSearchInput}
                 onSearch={setSearchTerm}
@@ -344,7 +354,7 @@ const Buckets: React.FC = () => {
                 (statusFilter !== "all" ? 1 : 0) +
                 (activeFilter !== "all" ? 1 : 0) +
                 (environmentFilter !== "all" ? 1 : 0);
-              const label = activeCount > 0 ? `Filtri (${activeCount})` : "Filtri";
+              const label = activeCount > 0 ? `Filters (${activeCount})` : "Filters";
               const openFilters = () => {
                 setPendingStatusFilter(statusFilter);
                 setPendingActiveFilter(activeFilter);
@@ -382,12 +392,12 @@ const Buckets: React.FC = () => {
             >
               {statusFilter !== "all" && (
                 <Chip
-                  label={`Stato: ${
+                  label={`Status: ${
                     statusFilter === "success"
                       ? "OK"
                       : statusFilter === "failed"
-                      ? "Errore"
-                      : "Non testato"
+                      ? "Error"
+                      : "Not tested"
                   }`}
                   onDelete={() => setStatusFilter("all")}
                   size="small"
@@ -396,7 +406,7 @@ const Buckets: React.FC = () => {
               )}
               {activeFilter !== "all" && (
                 <Chip
-                  label={`Attivo: ${activeFilter === "active" ? "Sì" : "No"}`}
+                  label={`Active: ${activeFilter === "active" ? "Yes" : "No"}`}
                   onDelete={() => setActiveFilter("all")}
                   size="small"
                   sx={{ mr: 1, mb: 0.5 }}
@@ -422,7 +432,7 @@ const Buckets: React.FC = () => {
                 }}
                 sx={{ mb: 0.5 }}
               >
-                Azzera filtri
+                Clear filters
               </Button>
             </Box>
           )}
@@ -437,7 +447,7 @@ const Buckets: React.FC = () => {
           fullWidth
         >
           <DialogTitle sx={{ m: 0, p: 2 }}>
-            Filtri
+            Filters
             <IconButton
               aria-label="close"
               onClick={() => setFiltersOpen(false)}
@@ -464,35 +474,35 @@ const Buckets: React.FC = () => {
             <DialogContent dividers>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 0.5 }}>
               <FormControl size="small" fullWidth>
-                <InputLabel id="status-filter-label">Stato</InputLabel>
+                <InputLabel id="status-filter-label">Status</InputLabel>
                 <Select
                   labelId="status-filter-label"
-                  label="Stato"
+                  label="Status"
                   value={pendingStatusFilter}
                   autoFocus
                   onChange={(e) =>
                     setPendingStatusFilter(e.target.value as typeof pendingStatusFilter)
                   }
                 >
-                  <MenuItem value="all">Tutti</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
                   <MenuItem value="success">OK</MenuItem>
-                  <MenuItem value="failed">Errore</MenuItem>
-                  <MenuItem value="untested">Non testato</MenuItem>
+                  <MenuItem value="failed">Error</MenuItem>
+                  <MenuItem value="untested">Not tested</MenuItem>
                 </Select>
               </FormControl>
               <FormControl size="small" fullWidth>
-                <InputLabel id="active-filter-label">Attivo</InputLabel>
+                <InputLabel id="active-filter-label">Active</InputLabel>
                 <Select
                   labelId="active-filter-label"
-                  label="Attivo"
+                  label="Active"
                   value={pendingActiveFilter}
                   onChange={(e) =>
                     setPendingActiveFilter(e.target.value as typeof pendingActiveFilter)
                   }
                 >
-                  <MenuItem value="all">Tutti</MenuItem>
-                  <MenuItem value="active">Attivi</MenuItem>
-                  <MenuItem value="inactive">Inattivi</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
               <FormControl size="small" fullWidth>
@@ -507,7 +517,7 @@ const Buckets: React.FC = () => {
                     )
                   }
                 >
-                  <MenuItem value="all">Tutti</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
                   <MenuItem value="dev">Dev</MenuItem>
                   <MenuItem value="test">Test</MenuItem>
                   <MenuItem value="prod">Prod</MenuItem>
@@ -524,10 +534,10 @@ const Buckets: React.FC = () => {
                 setPendingEnvironmentFilter("all");
               }}
             >
-              Azzera
+              Reset
             </Button>
             <Button type="submit" variant="contained">
-              Applica
+              Apply
             </Button>
             </DialogActions>
           </Box>
@@ -547,12 +557,12 @@ const Buckets: React.FC = () => {
           >
             <Cloud sx={{ fontSize: 56, color: "text.secondary", mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              Nessuna connessione trovata
+              No connections found
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {searchTerm
-                ? "Prova a modificare i termini di ricerca"
-                : "Crea la tua prima connessione S3-compatibile"}
+                ? "Try adjusting the search terms"
+                : "Create your first S3-compatible connection"}
             </Typography>
             {!searchTerm && (
               <Button
@@ -569,7 +579,7 @@ const Buckets: React.FC = () => {
                   },
                 }}
               >
-                Prima Connessione
+                Create First Connection
               </Button>
             )}
           </Box>
@@ -692,7 +702,7 @@ const Buckets: React.FC = () => {
                             color="text.secondary"
                             sx={{ fontSize: "0.875rem" }}
                           >
-                            Regione: {connection.region}
+                            Region: {connection.region}
                           </Typography>
                         </Box>
                       )}
@@ -708,7 +718,7 @@ const Buckets: React.FC = () => {
                           color="text.secondary"
                           sx={{ fontSize: "0.875rem" }}
                         >
-                          Path Style: {connection.pathStyle === 1 ? "Sì" : "No"}
+                          Path Style: {connection.pathStyle === 1 ? "Yes" : "No"}
                         </Typography>
                       </Box>
                     </Box>
@@ -721,7 +731,7 @@ const Buckets: React.FC = () => {
 
                   {/* Action Buttons */}
                   <CardActions sx={{ p: 1.5, pt: 0, gap: 0.5 }}>
-                    <Tooltip title="Apri">
+                    <Tooltip title="Open">
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -737,7 +747,7 @@ const Buckets: React.FC = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Testa Connessione">
+                    <Tooltip title="Test Connection">
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -753,7 +763,7 @@ const Buckets: React.FC = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Duplica">
+                    <Tooltip title="Duplicate">
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -769,7 +779,7 @@ const Buckets: React.FC = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Modifica">
+                    <Tooltip title="Edit">
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -785,7 +795,7 @@ const Buckets: React.FC = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Elimina">
+                    <Tooltip title="Delete">
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -837,6 +847,7 @@ const Buckets: React.FC = () => {
           editingConnection={editingConnection}
         />
         <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
@@ -849,6 +860,15 @@ const Buckets: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+        <ConfirmDialog
+          open={Boolean(confirmDelete?.open)}
+          title="Delete connection"
+          message={`Delete connection ${confirmDelete?.name}?`}
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={confirmDeleteAction}
+        />
       </Box>
     </Box>
   );

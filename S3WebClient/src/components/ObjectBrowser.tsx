@@ -5,7 +5,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Snackbar, Alert } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository, objectService } from "../repositories";
@@ -18,6 +18,7 @@ import DuplicateObjectDialog from "./DuplicateObjectDialog";
 import ShareObjectDialog from "./ShareObjectDialog";
 import MoveObjectDialog from "./MoveObjectDialog";
 import { shareRepository } from "../repositories";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   connection: S3Connection;
@@ -46,13 +47,15 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [shareUrl, setShareUrl] = useState("");
   const [selectedPrefix, setSelectedPrefix] = useState("");
   const [moveItem, setMoveItem] = useState<S3ObjectEntity | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "error" | "success" | "warning" | "info" }>({ open: false, message: "", severity: "error" });
+  const [confirmDelete, setConfirmDelete] = useState<S3ObjectEntity | null>(null);
 
   const fetchChildren = useCallback(
     async (prefix: string) => {
       try {
         return await objectService.fetchChildren(connection, prefix);
       } catch {
-        alert("Errore nel recupero degli oggetti");
+        setSnackbar({ open: true, message: "Error fetching objects", severity: "error" });
         return [];
       }
     },
@@ -117,7 +120,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante l'aggiornamento degli oggetti");
+      setSnackbar({ open: true, message: "Error refreshing objects", severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -137,7 +140,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Errore durante il download");
+      setSnackbar({ open: true, message: "Error downloading", severity: "error" });
     }
   };
 
@@ -158,7 +161,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.rename(connection, renameItem.key, newKey);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante la rinomina");
+      setSnackbar({ open: true, message: "Error renaming", severity: "error" });
     } finally {
       setRenameItem(null);
     }
@@ -167,7 +170,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const handleDuplicate = (item: S3ObjectEntity) => {
     if (item.isFolder === 1) return;
     const base = item.key.split("/").pop() || item.key;
-    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copia${ext}`);
+    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copy${ext}`);
     setDuplicateItem(item);
     setDuplicateName(newName);
   };
@@ -179,7 +182,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.duplicate(connection, duplicateItem.key, newKey);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante la duplicazione");
+      setSnackbar({ open: true, message: "Error duplicating", severity: "error" });
     } finally {
       setDuplicateItem(null);
       setDuplicateName("");
@@ -194,12 +197,18 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   const handleDelete = async (item: S3ObjectEntity) => {
     if (item.isFolder === 1) return;
-    if (!confirm(`Eliminare definitivamente ${item.key}?`)) return;
+    setConfirmDelete(item);
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
     try {
-      await objectService.delete(connection, item.key);
+      await objectService.delete(connection, confirmDelete.key);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante l'eliminazione");
+      setSnackbar({ open: true, message: "Error deleting", severity: "error" });
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -220,7 +229,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       });
       setShareUrl(url);
     } catch {
-      alert("Errore durante la condivisione");
+      setSnackbar({ open: true, message: "Error sharing", severity: "error" });
       setShareItem(null);
     }
   };
@@ -241,12 +250,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         onChange={setSearchInput}
         onSearch={handleSearch}
         suggestions={suggestions}
-        placeholder="Cerca..."
+        placeholder="Search..."
         sx={{ mb: 2 }}
       />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {loading ? (
-          <Typography>Caricamento...</Typography>
+          <Typography>Loading...</Typography>
         ) : query ? (
           searchResults.length > 0 ? (
             <ObjectFlatList
@@ -260,13 +269,13 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
               onMove={disableActions ? undefined : handleMove}
             />
           ) : (
-            <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
+            <Typography>No objects match the search</Typography>
           )
         ) : rootItems.length === 0 ? (
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <InboxIcon sx={{ fontSize: 64, color: "text.secondary", mb: 1 }} />
             <Typography>
-              Questo bucket è vuoto. Carica qualche file per iniziare!
+              This bucket is empty. Upload some files to get started!
             </Typography>
           </Box>
         ) : (
@@ -320,6 +329,25 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         onMoved={async () => {
           setRefreshTick((t) => t + 1);
         }}
+      />
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete object"
+        message={`Permanently delete ${confirmDelete?.key}?`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={confirmDeleteAction}
       />
     </Box>
   );

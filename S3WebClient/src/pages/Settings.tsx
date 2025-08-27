@@ -33,34 +33,34 @@ export default function Settings() {
 
   const settingCategories = [
     {
-      title: "Generali",
+      title: "General",
       icon: <SettingsIcon />,
       settings: [
         {
           key: "realtimeCheck",
-          label: "Verifica connessioni in realtime",
+          label: "Realtime connection checks",
           description:
-            "Controlla periodicamente lo stato delle connessioni",
+            "Periodically check connection status",
           type: "switch",
           value: settings.realtimeCheck,
         },
       ],
     },
     {
-      title: "Interfaccia",
+      title: "Interface",
       icon: <Palette />,
       settings: [
         {
           key: "darkMode",
-          label: "Modalità Scura",
-          description: "Attiva il tema scuro per l'interfaccia",
+          label: "Dark Mode",
+          description: "Enable dark theme for the UI",
           type: "switch",
           value: settings.darkMode,
         },
         {
           key: "theme",
-          label: "Tema",
-          description: "Tema personalizzato dell'applicazione",
+          label: "Theme",
+          description: "Application theme",
           type: "select",
           value: settings.theme,
           options: ["default", "blue", "green", "purple"],
@@ -71,17 +71,17 @@ export default function Settings() {
 
   const systemInfo = [
     {
-      label: "Versione App",
+      label: "App Version",
       value: "1.0.0",
       icon: <Info sx={{ color: "info.main" }} />,
     },
     {
-      label: "Versione React",
+      label: "React Version",
       value: "18.2.0",
       icon: <Info sx={{ color: "info.main" }} />,
     },
     {
-      label: "Versione Material-UI",
+      label: "Material-UI Version",
       value: "5.15.0",
       icon: <Info sx={{ color: "info.main" }} />,
     },
@@ -92,7 +92,7 @@ export default function Settings() {
     },
     {
       label: "Storage",
-      value: "Locale (Browser)",
+      value: "Local (Browser)",
       icon: <Cloud sx={{ color: "success.main" }} />,
     },
   ];
@@ -128,11 +128,10 @@ export default function Settings() {
             }}
           >
             <SettingsIcon sx={{ fontSize: 32, color: "secondary.main" }} />
-            Impostazioni
+            Settings
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Personalizza l'esperienza e configura le preferenze
-            dell'applicazione
+            Customize the experience and configure application preferences
           </Typography>
         </Box>
 
@@ -190,7 +189,7 @@ export default function Settings() {
                               </Typography>
                               {setting.type === "switch" && (
                                 <Chip
-                                  label={setting.value ? "Attivo" : "Disattivo"}
+                                  label={setting.value ? "Enabled" : "Disabled"}
                                   size="small"
                                   color={setting.value ? "success" : "default"}
                                   variant="outlined"
@@ -210,7 +209,7 @@ export default function Settings() {
                               {setting.key === "realtimeCheck" && settings.realtimeCheck && (
                                 <TextField
                                   type="number"
-                                  label="Intervallo (s)"
+                                  label="Interval (s)"
                                   size="small"
                                   value={settings.realtimeInterval}
                                   onChange={(e) =>
@@ -313,7 +312,7 @@ export default function Settings() {
             color="secondary"
             sx={{ px: 3, py: 1, borderRadius: 2 }}
           >
-            Ripristina Default
+            Restore Defaults
           </Button>
           <Button
             variant="contained"
@@ -328,7 +327,7 @@ export default function Settings() {
               },
             }}
           >
-            Salva Impostazioni
+            Save Settings
           </Button>
         </Box>
       </Box>

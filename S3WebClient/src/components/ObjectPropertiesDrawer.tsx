@@ -52,23 +52,23 @@ export default function ObjectPropertiesDrawer({
     <Drawer anchor="right" open={!!item} onClose={onClose}>
       <Box sx={{ width: 320, p: 2 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Proprietà
+          Properties
         </Typography>
         {item && (
           <List>
             <ListItem>
               <ListItemText
-                primary="Nome"
+                primary="Name"
                 secondary={item.key.split("/").pop() || item.key}
               />
             </ListItem>
             <ListItem>
-              <ListItemText primary="Percorso" secondary={item.key} />
+              <ListItemText primary="Path" secondary={item.key} />
             </ListItem>
             {item.size !== undefined && (
               <ListItem>
                 <ListItemText
-                  primary="Dimensione"
+                  primary="Size"
                   secondary={`${(item.size / 1024).toFixed(1)} KB`}
                 />
               </ListItem>
@@ -76,7 +76,7 @@ export default function ObjectPropertiesDrawer({
             {item.lastModified && (
               <ListItem>
                 <ListItemText
-                  primary="Ultima modifica"
+                  primary="Last modified"
                   secondary={item.lastModified.toLocaleString()}
                 />
               </ListItem>
@@ -84,7 +84,7 @@ export default function ObjectPropertiesDrawer({
             {shares.length > 0 && (
               <>
                 <ListItem>
-                  <ListItemText primary="Condivisioni" />
+                  <ListItemText primary="Shares" />
                 </ListItem>
                 {shares.map((s) => (
                   <ListItem
@@ -121,7 +121,7 @@ export default function ObjectPropertiesDrawer({
                           </Link>
                         </Tooltip>
                       }
-                      secondary={`Scade: ${new Date(s.expires).toLocaleString()}`}
+                      secondary={`Expires: ${new Date(s.expires).toLocaleString()}`}
                     />
                   </ListItem>
                 ))}
@@ -133,4 +133,3 @@ export default function ObjectPropertiesDrawer({
     </Drawer>
   );
 }
-

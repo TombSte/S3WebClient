@@ -29,7 +29,7 @@ export default function RenameObjectDialog({
 
   return (
     <Dialog open={open} onClose={onCancel}>
-      <DialogTitle>Rinomina</DialogTitle>
+      <DialogTitle>Rename</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -40,9 +40,9 @@ export default function RenameObjectDialog({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Annulla</Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button onClick={() => onConfirm(name)} variant="contained">
-          Salva
+          Save
         </Button>
       </DialogActions>
     </Dialog>

@@ -18,7 +18,7 @@ describe("RenameObjectDialog", () => {
     const input = screen.getByDisplayValue("file.txt");
     await userEvent.clear(input);
     await userEvent.type(input, "renamed.txt");
-    await userEvent.click(screen.getByRole("button", { name: "Salva" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(onConfirm).toHaveBeenCalledWith("renamed.txt");
   });

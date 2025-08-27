@@ -17,7 +17,7 @@ export class ActivityObjectService {
   }
 
   async refreshAll(connection: S3Connection) {
-    // Non tracciamo l'aggiornamento della cache
+    // Do not track cache refresh
     return await this.inner.refreshAll(connection);
   }
 
@@ -28,7 +28,7 @@ export class ActivityObjectService {
         try {
           await this.activity.add(
             "success",
-            `Scaricato ${key} da ${connection.displayName}`
+            `Downloaded ${key} from ${connection.displayName}`
           );
         } catch {}
       }
@@ -37,7 +37,7 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "error",
-          `Errore download ${key} da ${connection.displayName}`
+          `Error downloading ${key} from ${connection.displayName}`
         );
       } catch {}
       throw e;
@@ -50,14 +50,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Rinominato ${oldKey} in ${newKey}`
+          `Renamed ${oldKey} to ${newKey}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore rinomina ${oldKey} in ${newKey}`
+          `Error renaming ${oldKey} to ${newKey}`
         );
       } catch {}
       throw e;
@@ -74,14 +74,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Duplicato ${sourceKey} in ${targetKey}`
+          `Duplicated ${sourceKey} to ${targetKey}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore duplicazione ${sourceKey} in ${targetKey}`
+          `Error duplicating ${sourceKey} to ${targetKey}`
         );
       } catch {}
       throw e;
@@ -92,14 +92,14 @@ export class ActivityObjectService {
     try {
       const url = await this.inner.share(connection, key, expires);
       try {
-        await this.activity.add("info", `Generato link per ${key}`);
+        await this.activity.add("info", `Generated link for ${key}`);
       } catch {}
       return url;
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore generazione link per ${key}`
+          `Error generating link for ${key}`
         );
       } catch {}
       throw e;
@@ -112,14 +112,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Caricato ${key} su ${connection.displayName}`
+          `Uploaded ${key} to ${connection.displayName}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore upload ${key} su ${connection.displayName}`
+          `Error uploading ${key} to ${connection.displayName}`
         );
       } catch {}
       throw e;
@@ -132,14 +132,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Creata cartella ${key} su ${connection.displayName}`
+          `Created folder ${key} on ${connection.displayName}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore creazione cartella ${key} su ${connection.displayName}`
+          `Error creating folder ${key} on ${connection.displayName}`
         );
       } catch {}
       throw e;
@@ -152,14 +152,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Eliminato ${key} da ${connection.displayName}`
+          `Deleted ${key} from ${connection.displayName}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore eliminazione ${key} da ${connection.displayName}`
+          `Error deleting ${key} from ${connection.displayName}`
         );
       } catch {}
       throw e;
@@ -172,14 +172,14 @@ export class ActivityObjectService {
       try {
         await this.activity.add(
           "success",
-          `Spostato ${oldKey} in ${newKey}`
+          `Moved ${oldKey} to ${newKey}`
         );
       } catch {}
     } catch (e) {
       try {
         await this.activity.add(
           "error",
-          `Errore spostamento ${oldKey} in ${newKey}`
+          `Error moving ${oldKey} to ${newKey}`
         );
       } catch {}
       throw e;

@@ -35,7 +35,7 @@ describe('MoveObjectDialog', () => {
       />
     );
     await waitFor(() => expect(fetchChildren).toHaveBeenCalled());
-    await userEvent.click(screen.getByText('Sposta qui'));
+    await userEvent.click(screen.getByText('Move here'));
     expect(move).toHaveBeenCalledWith(connection, 'folder/file.txt', 'file.txt');
     expect(onMoved).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();

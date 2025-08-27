@@ -20,7 +20,7 @@ export const useS3Connections = () => {
       setConnections(allConnections);
       setError(null);
     } catch (err) {
-      setError("Errore nel caricamento delle connessioni");
+      setError("Error loading connections");
       console.error("Error loading connections:", err);
     } finally {
       setLoading(false);
@@ -34,12 +34,12 @@ export const useS3Connections = () => {
         const id = await connectionRepository.add(connectionData);
         await activityRepository.add(
           "success",
-          `Aggiunto bucket ${connectionData.displayName}`
+          `Added bucket ${connectionData.displayName}`
         );
         await loadConnections();
         return id;
       } catch (err) {
-        setError("Errore nell'aggiunta della connessione");
+        setError("Error adding connection");
         console.error("Error adding connection:", err);
         throw err;
       }
@@ -54,10 +54,10 @@ export const useS3Connections = () => {
         const existing = await connectionRepository.get(id);
         await connectionRepository.update(id, updates);
         const name = updates.displayName ?? existing?.displayName ?? id;
-        await activityRepository.add("info", `Modificato bucket ${name}`);
+        await activityRepository.add("info", `Updated bucket ${name}`);
         await loadConnections();
       } catch (err) {
-        setError("Errore nell'aggiornamento della connessione");
+        setError("Error updating connection");
         console.error("Error updating connection:", err);
         throw err;
       }
@@ -73,11 +73,11 @@ export const useS3Connections = () => {
         await connectionRepository.delete(id);
         await activityRepository.add(
           "error",
-          `Eliminato bucket ${existing?.displayName ?? id}`
+          `Deleted bucket ${existing?.displayName ?? id}`
         );
         await loadConnections();
       } catch (err) {
-        setError("Errore nell'eliminazione della connessione");
+        setError("Error deleting connection");
         console.error("Error deleting connection:", err);
         throw err;
       }
@@ -96,7 +96,7 @@ export const useS3Connections = () => {
           });
         }
       } catch (err) {
-        setError("Errore nel cambio di stato della connessione");
+        setError("Error toggling connection status");
         console.error("Error toggling connection status:", err);
         throw err;
       }
@@ -110,7 +110,7 @@ export const useS3Connections = () => {
       try {
         const connection = connections.find((c) => c.id === id);
         if (!connection) {
-          throw new Error("Connessione non trovata");
+        throw new Error("Connection not found");
         }
 
         const duplicatedData: S3ConnectionForm = {
@@ -127,7 +127,7 @@ export const useS3Connections = () => {
 
         return await addConnection(duplicatedData);
       } catch (err) {
-        setError("Errore nella duplicazione della connessione");
+        setError("Error duplicating connection");
         console.error("Error duplicating connection:", err);
         throw err;
       }
@@ -156,7 +156,7 @@ export const useS3Connections = () => {
           );
           return {
             success: true,
-            message: "Connessione testata con successo",
+            message: "Connection tested successfully",
             timestamp: new Date(),
           };
         } catch (err) {
@@ -165,23 +165,23 @@ export const useS3Connections = () => {
             name?: string;
             message?: string;
           };
-          let message = "Errore nel test della connessione";
+          let message = "Error testing connection";
           if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") {
-            message = "Bucket non trovato";
+            message = "Bucket not found";
           }
           return {
             success: false,
             message,
             timestamp: new Date(),
-            error: e.message ?? "Errore sconosciuto",
+            error: e.message ?? "Unknown error",
           };
         }
       } catch (err) {
         return {
           success: false,
-          message: "Errore nel test della connessione",
+          message: "Error testing connection",
           timestamp: new Date(),
-          error: err instanceof Error ? err.message : "Errore sconosciuto",
+          error: err instanceof Error ? err.message : "Unknown error",
         };
       }
     },
@@ -195,9 +195,9 @@ export const useS3Connections = () => {
       if (!connection) {
         const result: ConnectionTestResult = {
           success: false,
-          message: "Errore nel test della connessione",
+          message: "Error testing connection",
           timestamp: new Date(),
-          error: "Connessione non trovata",
+          error: "Connection not found",
         };
         return result;
       }
@@ -227,7 +227,7 @@ export const useS3Connections = () => {
         }
         return await connectionRepository.search(query);
       } catch (err) {
-        setError("Errore nella ricerca delle connessioni");
+        setError("Error searching connections");
         console.error("Error searching connections:", err);
         return [];
       }
@@ -241,7 +241,7 @@ export const useS3Connections = () => {
       try {
         return await connectionRepository.getByEnvironment(environment);
       } catch (err) {
-        setError("Errore nel filtraggio per environment");
+        setError("Error filtering by environment");
         console.error("Error filtering by environment:", err);
         return [];
       }

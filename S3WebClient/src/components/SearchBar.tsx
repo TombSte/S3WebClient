@@ -17,7 +17,7 @@ export default function SearchBar({
   onChange,
   onSearch,
   suggestions = [],
-  placeholder = "Cerca...",
+  placeholder = "Search...",
   sx,
 }: SearchBarProps) {
   return (

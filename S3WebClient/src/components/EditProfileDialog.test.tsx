@@ -21,10 +21,10 @@ describe('EditProfileDialog', () => {
       <EditProfileDialog open profile={profile} onClose={() => {}} onSave={onSave} />
     );
 
-    await userEvent.type(screen.getByLabelText('Nome'), ' Rossi');
-    await userEvent.clear(screen.getByLabelText('Competenze (separate da virgola)'));
-    await userEvent.type(screen.getByLabelText('Competenze (separate da virgola)'), 'ts, react');
-    await userEvent.click(screen.getByText('Salva'));
+    await userEvent.type(screen.getByLabelText('Name'), ' Rossi');
+    await userEvent.clear(screen.getByLabelText('Skills (comma separated)'));
+    await userEvent.type(screen.getByLabelText('Skills (comma separated)'), 'ts, react');
+    await userEvent.click(screen.getByText('Save'));
 
     expect(onSave).toHaveBeenCalledWith({
       ...profile,

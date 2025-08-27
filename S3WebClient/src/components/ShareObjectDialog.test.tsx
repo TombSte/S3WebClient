@@ -9,13 +9,13 @@ describe("ShareObjectDialog", () => {
       <ShareObjectDialog open url="" onCancel={() => {}} onGenerate={onGenerate} />
     );
 
-    const dateInput = screen.getByLabelText("Data di scadenza");
-    const timeInput = screen.getByLabelText("Ora di scadenza");
+    const dateInput = screen.getByLabelText("Expiration date");
+    const timeInput = screen.getByLabelText("Expiration time");
     await userEvent.clear(dateInput);
     await userEvent.type(dateInput, "2023-01-02");
     await userEvent.clear(timeInput);
     await userEvent.type(timeInput, "10:30");
-    await userEvent.click(screen.getByRole("button", { name: "Genera" }));
+    await userEvent.click(screen.getByRole("button", { name: "Generate" }));
 
     expect(onGenerate).toHaveBeenCalledWith(new Date("2023-01-02T10:30"));
   });
@@ -32,7 +32,7 @@ describe("ShareObjectDialog", () => {
     );
 
     expect(screen.getByDisplayValue("https://example.com")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Chiudi" }));
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onCancel).toHaveBeenCalled();
   });
 });

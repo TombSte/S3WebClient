@@ -18,7 +18,7 @@ describe("DuplicateObjectDialog", () => {
     const input = screen.getByDisplayValue("file.txt");
     await userEvent.clear(input);
     await userEvent.type(input, "copy.txt");
-    await userEvent.click(screen.getByRole("button", { name: "Duplica" }));
+    await userEvent.click(screen.getByRole("button", { name: "Duplicate" }));
 
     expect(onConfirm).toHaveBeenCalledWith("copy.txt");
   });
