@@ -54,7 +54,8 @@ Notes:
 
 This repo includes a GitHub Actions workflow to build and publish the Docker image to Docker Hub.
 
-1) Create repository secrets (Settings → Secrets and variables → Actions → New repository secret):
+1) Create secrets
+- Preferred: Environment secrets under `Settings → Environments → Prod → Secrets`.
 - `DOCKERHUB_USERNAME`: your Docker Hub username
 - `DOCKERHUB_TOKEN`: a Docker Hub access token (Account Settings → Security → New Access Token)
 
@@ -72,3 +73,6 @@ This repo includes a GitHub Actions workflow to build and publish the Docker ima
   - `<DOCKERHUB_USERNAME>/s3webclient:latest`
 - Nessun trigger su `main`/`master`: crei la release quando apri/pushi un branch `release-*`.
 - Viene anche creata/aggiornata una GitHub Release con tag `<version>`.
+
+5) Environment
+- The workflow targets the `Prod` environment to read its secrets and (optionally) require approvals.
