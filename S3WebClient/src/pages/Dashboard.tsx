@@ -32,7 +32,7 @@ export default function Dashboard() {
     inactiveConnections: 0,
     totalBuckets: 0,
     connectedBuckets: 0,
-    lastActivity: "Nessuna attività",
+    lastActivity: "No activity",
   });
 
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
@@ -40,12 +40,12 @@ export default function Dashboard() {
   const formatTimeAgo = (date: Date): string => {
     const diff = Date.now() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "Adesso";
-    if (minutes < 60) return `${minutes} min fa`;
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} ore fa`;
+    if (hours < 24) return `${hours} hours ago`;
     const days = Math.floor(hours / 24);
-    return `${days} giorni fa`;
+    return `${days} days ago`;
   };
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function Dashboard() {
       const lastEntry = await activityRepository.getLast();
       const lastActivity = lastEntry
         ? formatTimeAgo(lastEntry.timestamp)
-        : "Nessuna attività";
+        : "No activity";
 
       setStats({
         totalConnections,
@@ -149,8 +149,7 @@ export default function Dashboard() {
             Dashboard
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Benvenuto nel tuo client S3 Web. Monitora e gestisci le tue
-            connessioni storage.
+            Welcome to your S3 Web client. Monitor and manage your storage connections.
           </Typography>
         </Box>
 
@@ -160,7 +159,7 @@ export default function Dashboard() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Panoramica
+            Overview
           </Typography>
           <Box
             sx={{
@@ -196,7 +195,7 @@ export default function Dashboard() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Connessioni Totali
+                      Total Connections
                     </Typography>
                   </Box>
                   <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -231,7 +230,7 @@ export default function Dashboard() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Bucket Connessi
+                      Connected Buckets
                     </Typography>
                   </Box>
                   <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -266,7 +265,7 @@ export default function Dashboard() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Bucket Totali
+                      Total Buckets
                     </Typography>
                   </Box>
                   <Cloud sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -301,7 +300,7 @@ export default function Dashboard() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Ultima Attività
+                      Last Activity
                     </Typography>
                   </Box>
                   <TrendingUp sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -317,7 +316,7 @@ export default function Dashboard() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Attività Recenti
+            Recent Activity
           </Typography>
           <Paper sx={{ p: 2.5, borderRadius: 2 }}>
             {recentActivity.map((activity, index) => (
@@ -356,7 +355,7 @@ export default function Dashboard() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Azioni Rapide
+            Quick Actions
           </Typography>
           <Box
             sx={{
@@ -385,14 +384,14 @@ export default function Dashboard() {
                   gutterBottom
                   sx={{ fontWeight: "bold" }}
                 >
-                  Nuova Connessione
+                  New Connection
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: "0.875rem" }}
                 >
-                  Configura una nuova connessione S3
+                  Set up a new S3 connection
                 </Typography>
               </CardContent>
             </Card>
@@ -417,14 +416,14 @@ export default function Dashboard() {
                   gutterBottom
                   sx={{ fontWeight: "bold" }}
                 >
-                  Test Connessioni
+                  Test Connections
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: "0.875rem" }}
                 >
-                  Verifica lo stato delle connessioni
+                  Check the status of connections
                 </Typography>
               </CardContent>
             </Card>
@@ -447,14 +446,14 @@ export default function Dashboard() {
                   gutterBottom
                   sx={{ fontWeight: "bold" }}
                 >
-                  Impostazioni
+                  Settings
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: "0.875rem" }}
                 >
-                  Configura le preferenze dell'app
+                  Configure app preferences
                 </Typography>
               </CardContent>
             </Card>

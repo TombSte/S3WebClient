@@ -35,7 +35,7 @@ describe('ObjectPropertiesDrawer', () => {
     ]);
     render(<ObjectPropertiesDrawer connectionId="c1" item={item} onClose={() => {}} />);
     await waitFor(() => expect(list).toHaveBeenCalled());
-    expect(screen.getByText('Condivisioni')).toBeInTheDocument();
+    expect(screen.getByText('Shares')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'http://link' })).toBeInTheDocument();
   });
 

@@ -52,7 +52,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       try {
         return await objectService.fetchChildren(connection, prefix);
       } catch {
-        alert("Errore nel recupero degli oggetti");
+        alert("Error fetching objects");
         return [];
       }
     },
@@ -117,7 +117,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.refreshAll(connection);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante l'aggiornamento degli oggetti");
+      alert("Error refreshing objects");
     } finally {
       setLoading(false);
     }
@@ -137,7 +137,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Errore durante il download");
+      alert("Error downloading");
     }
   };
 
@@ -158,7 +158,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.rename(connection, renameItem.key, newKey);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante la rinomina");
+      alert("Error renaming");
     } finally {
       setRenameItem(null);
     }
@@ -167,7 +167,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const handleDuplicate = (item: S3ObjectEntity) => {
     if (item.isFolder === 1) return;
     const base = item.key.split("/").pop() || item.key;
-    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copia${ext}`);
+    const newName = base.replace(/(\.[^.]*)?$/, (ext) => `-copy${ext}`);
     setDuplicateItem(item);
     setDuplicateName(newName);
   };
@@ -179,7 +179,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       await objectService.duplicate(connection, duplicateItem.key, newKey);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante la duplicazione");
+      alert("Error duplicating");
     } finally {
       setDuplicateItem(null);
       setDuplicateName("");
@@ -194,12 +194,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   const handleDelete = async (item: S3ObjectEntity) => {
     if (item.isFolder === 1) return;
-    if (!confirm(`Eliminare definitivamente ${item.key}?`)) return;
+    if (!confirm(`Permanently delete ${item.key}?`)) return;
     try {
       await objectService.delete(connection, item.key);
       setRefreshTick((t) => t + 1);
     } catch {
-      alert("Errore durante l'eliminazione");
+      alert("Error deleting");
     }
   };
 
@@ -220,7 +220,7 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
       });
       setShareUrl(url);
     } catch {
-      alert("Errore durante la condivisione");
+      alert("Error sharing");
       setShareItem(null);
     }
   };
@@ -241,12 +241,12 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         onChange={setSearchInput}
         onSearch={handleSearch}
         suggestions={suggestions}
-        placeholder="Cerca..."
+        placeholder="Search..."
         sx={{ mb: 2 }}
       />
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         {loading ? (
-          <Typography>Caricamento...</Typography>
+          <Typography>Loading...</Typography>
         ) : query ? (
           searchResults.length > 0 ? (
             <ObjectFlatList
@@ -260,13 +260,13 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
               onMove={disableActions ? undefined : handleMove}
             />
           ) : (
-            <Typography>Nessun oggetto corrisponde alla ricerca</Typography>
+            <Typography>No objects match the search</Typography>
           )
         ) : rootItems.length === 0 ? (
           <Box sx={{ textAlign: "center", mt: 4 }}>
             <InboxIcon sx={{ fontSize: 64, color: "text.secondary", mb: 1 }} />
             <Typography>
-              Questo bucket è vuoto. Carica qualche file per iniziare!
+              This bucket is empty. Upload some files to get started!
             </Typography>
           </Box>
         ) : (

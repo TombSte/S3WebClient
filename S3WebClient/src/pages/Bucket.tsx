@@ -54,7 +54,7 @@ export default function Bucket() {
   if (loading) {
     return (
       <Box sx={{ width: "100%", minWidth: "100%" }}>
-        <Typography>Caricamento...</Typography>
+        <Typography>Loading...</Typography>
       </Box>
     );
   }
@@ -62,7 +62,7 @@ export default function Bucket() {
   if (!connection) {
     return (
       <Box sx={{ width: "100%", minWidth: "100%" }}>
-        <Typography>Bucket non trovato</Typography>
+        <Typography>Bucket not found</Typography>
       </Box>
     );
   }
@@ -117,14 +117,13 @@ export default function Bucket() {
             </IconButton>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Dettagli del bucket e contenuti
+            Bucket details and contents
           </Typography>
         </Box>
 
         {connection.testStatus !== "success" && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Bucket non connesso. Operazioni di caricamento e download sono
-            disabilitate.
+            Bucket not connected. Upload and download operations are disabled.
           </Alert>
         )}
         {/* File navigation */}
@@ -143,7 +142,7 @@ export default function Bucket() {
             variant="h6"
             sx={{ flexGrow: 1, color: "primary.main", fontWeight: "bold" }}
           >
-            Contenuti del bucket
+            Bucket contents
           </Typography>
           <Button
             variant="contained"
@@ -152,7 +151,7 @@ export default function Bucket() {
             sx={{ mr: 1 }}
             disabled={connection.testStatus !== "success"}
           >
-            Nuova cartella
+            New folder
           </Button>
           <Button
             variant="contained"
@@ -161,7 +160,7 @@ export default function Bucket() {
             sx={{ mr: 1 }}
             disabled={connection.testStatus !== "success"}
           >
-            Carica
+            Upload
           </Button>
           <IconButton
             aria-label="refresh"

@@ -92,7 +92,7 @@ function Node({
           {loading ? (
             <ListItemText
               sx={{ pl: (depth + 1) * 2 + 2 }}
-              primary="Caricamento..."
+              primary="Loading..."
             />
           ) : (
             <Box>

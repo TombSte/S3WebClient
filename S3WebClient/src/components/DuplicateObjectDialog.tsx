@@ -29,7 +29,7 @@ export default function DuplicateObjectDialog({
 
   return (
     <Dialog open={open} onClose={onCancel}>
-      <DialogTitle>Duplica</DialogTitle>
+      <DialogTitle>Duplicate</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -40,9 +40,9 @@ export default function DuplicateObjectDialog({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Annulla</Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button onClick={() => onConfirm(name)} variant="contained">
-          Duplica
+          Duplicate
         </Button>
       </DialogActions>
     </Dialog>

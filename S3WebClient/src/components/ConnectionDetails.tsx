@@ -23,7 +23,7 @@ const ConnectionDetails: React.FC<Props> = ({ connection, compact = false }) => 
           variant="h6"
           sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
         >
-          Informazioni principali
+          Key information
         </Typography>
         <Box
           sx={{
@@ -49,7 +49,7 @@ const ConnectionDetails: React.FC<Props> = ({ connection, compact = false }) => 
           {connection.region && (
             <Box>
               <Typography variant="body2" color="text.secondary">
-                Regione
+              Region
               </Typography>
               <Typography variant="body1">{connection.region}</Typography>
             </Box>
@@ -64,10 +64,10 @@ const ConnectionDetails: React.FC<Props> = ({ connection, compact = false }) => 
 
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Stato
+              Status
             </Typography>
             <Chip
-              label={connection.isActive === 1 ? "Attiva" : "Inattiva"}
+              label={connection.isActive === 1 ? "Active" : "Inactive"}
               color={connection.isActive === 1 ? "success" : "default"}
               size="small"
               icon={
@@ -85,18 +85,18 @@ const ConnectionDetails: React.FC<Props> = ({ connection, compact = false }) => 
 
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Ultimo test
+              Last test
             </Typography>
             <Typography variant="body1">
               {connection.lastTested
                 ? new Date(connection.lastTested).toLocaleString()
-                : "Mai"}
+                : "Never"}
             </Typography>
           </Box>
 
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Modalità URL
+              URL Mode
             </Typography>
             <Typography variant="body1">
               {connection.pathStyle === 1 ? "Path-style" : "Virtual-hosted"}

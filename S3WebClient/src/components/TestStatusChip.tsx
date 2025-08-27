@@ -11,11 +11,11 @@ interface Props {
 const TestStatusChip: React.FC<Props> = ({ status, size = "small" }) => {
   switch (status) {
     case "success":
-      return <Chip label="Connesso" color="success" size={size} icon={<CheckCircle />} />;
+      return <Chip label="Connected" color="success" size={size} icon={<CheckCircle />} />;
     case "failed":
-      return <Chip label="Errore" color="error" size={size} icon={<ErrorIcon />} />;
+      return <Chip label="Error" color="error" size={size} icon={<ErrorIcon />} />;
     default:
-      return <Chip label="Non testato" color="default" size={size} icon={<InfoIcon />} />;
+      return <Chip label="Not tested" color="default" size={size} icon={<InfoIcon />} />;
   }
 };
 

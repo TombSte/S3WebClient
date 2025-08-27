@@ -16,17 +16,17 @@ interface Props {
 export default function NameConflictDialog({ open, name, onResolve }: Props) {
   return (
     <Dialog open={open} onClose={() => onResolve("cancel")} fullWidth maxWidth="xs">
-      <DialogTitle>File esistente</DialogTitle>
+      <DialogTitle>File exists</DialogTitle>
       <DialogContent dividers>
         <Typography>
-          Esiste già un file chiamato "{name}". Cosa vuoi fare?
+          A file named "{name}" already exists. What do you want to do?
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => onResolve("cancel")}>Annulla</Button>
-        <Button onClick={() => onResolve("keep-both")}>Mantieni entrambi</Button>
+        <Button onClick={() => onResolve("cancel")}>Cancel</Button>
+        <Button onClick={() => onResolve("keep-both")}>Keep both</Button>
         <Button onClick={() => onResolve("replace")} color="error" variant="contained">
-          Sostituisci
+          Replace
         </Button>
       </DialogActions>
     </Dialog>

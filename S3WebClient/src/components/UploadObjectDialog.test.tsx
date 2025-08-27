@@ -29,9 +29,9 @@ describe('UploadObjectDialog', () => {
     await waitFor(() => expect(fetchChildren).toHaveBeenCalled());
     await userEvent.click(screen.getByText('/'));
     const file = new File(['hello'], 'test.txt', { type: 'text/plain' });
-    const input = screen.getByText('Scegli file').querySelector('input') as HTMLInputElement;
+    const input = screen.getByText('Choose file').querySelector('input') as HTMLInputElement;
     await userEvent.upload(input, file);
-    await userEvent.click(screen.getByText('Carica'));
+    await userEvent.click(screen.getByText('Upload'));
     expect(upload).toHaveBeenCalledWith(connection, 'test.txt', file);
     expect(onUploaded).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();

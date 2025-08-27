@@ -42,7 +42,7 @@ export default function CreateFolderDialog({
         const all = await objectService.fetchChildren(connection, prefix);
         return all.filter((i) => i.isFolder === 1);
       } catch {
-        alert("Errore nel caricamento delle cartelle");
+        alert("Error loading folders");
         return [];
       }
     },
@@ -68,16 +68,16 @@ export default function CreateFolderDialog({
       await onCreated();
       onClose();
     } catch {
-      alert("Errore durante la creazione della cartella");
+      alert("Error creating folder");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Nuova cartella</DialogTitle>
+      <DialogTitle>New folder</DialogTitle>
       <DialogContent dividers>
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Seleziona cartella di destinazione
+          Select destination folder
         </Typography>
         <List
           disablePadding
@@ -105,7 +105,7 @@ export default function CreateFolderDialog({
           ))}
         </List>
         <TextField
-          label="Nome cartella"
+          label="Folder name"
           fullWidth
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -113,13 +113,13 @@ export default function CreateFolderDialog({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Annulla</Button>
+        <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={handleCreate}
           variant="contained"
           disabled={selected === null || !name.trim()}
         >
-          Crea
+          Create
         </Button>
       </DialogActions>
     </Dialog>

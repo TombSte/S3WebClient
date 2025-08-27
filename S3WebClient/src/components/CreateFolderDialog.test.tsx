@@ -38,7 +38,7 @@ describe("CreateFolderDialog", () => {
 
     await screen.findByText("docs");
     await userEvent.click(screen.getByText("/"));
-    const input = screen.getByLabelText("Nome cartella") as HTMLInputElement;
+    const input = screen.getByLabelText("Folder name") as HTMLInputElement;
     expect(input.disabled).toBe(false);
     await userEvent.type(input, "new");
     await userEvent.click(screen.getByRole("button", { name: "Crea" }));

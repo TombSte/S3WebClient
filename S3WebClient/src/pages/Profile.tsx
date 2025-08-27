@@ -53,7 +53,7 @@ export default function Profile() {
     connectionsCreated: 0,
     totalBuckets: 0,
     activeConnections: 0,
-    lastLogin: "Nessuna attività",
+    lastLogin: "No activity",
   });
 
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
@@ -62,12 +62,12 @@ export default function Profile() {
   const formatTimeAgo = (date: Date): string => {
     const diff = Date.now() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "Adesso";
-    if (minutes < 60) return `${minutes} min fa`;
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} ore fa`;
+    if (hours < 24) return `${hours} hours ago`;
     const days = Math.floor(hours / 24);
-    return `${days} giorni fa`;
+    return `${days} days ago`;
   };
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function Profile() {
       const activeConnections = connections.filter((c) => c.isActive === 1).length;
       const totalBuckets = new Set(connections.map((c) => c.bucketName)).size;
       const lastEntry = await activityRepository.getLast();
-      const lastLogin = lastEntry ? formatTimeAgo(lastEntry.timestamp) : "Nessuna attività";
+      const lastLogin = lastEntry ? formatTimeAgo(lastEntry.timestamp) : "No activity";
       setStats({ connectionsCreated, totalBuckets, activeConnections, lastLogin });
 
       const activities = await activityRepository.getRecent(5);
@@ -129,17 +129,17 @@ export default function Profile() {
     },
     {
       icon: <Work sx={{ color: "secondary.main", fontSize: 20 }} />,
-      label: "Azienda",
+      label: "Company",
       value: profile.company,
     },
     {
       icon: <LocationOn sx={{ color: "success.main", fontSize: 20 }} />,
-      label: "Località",
+      label: "Location",
       value: profile.location,
     },
     {
       icon: <CalendarToday sx={{ color: "info.main", fontSize: 20 }} />,
-      label: "Membro dal",
+      label: "Member since",
       value: profile.joinDate,
     },
   ].filter((item) => item.value);
@@ -176,10 +176,10 @@ export default function Profile() {
             }}
           >
             <PersonIcon sx={{ fontSize: 32, color: "error.main" }} />
-            Profilo Utente
+            User Profile
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            Gestisci il tuo profilo e visualizza le statistiche personali
+            Manage your profile and view personal statistics
           </Typography>
         </Box>
 
@@ -269,7 +269,7 @@ export default function Profile() {
                     {profile.joinDate && (
                       <Chip
                         icon={<CalendarToday />}
-                        label={`Membro dal ${profile.joinDate}`}
+                        label={`Member since ${profile.joinDate}`}
                         variant="outlined"
                         color="info"
                       />
@@ -292,7 +292,7 @@ export default function Profile() {
                   sx={{ borderRadius: 2 }}
                   onClick={() => setEditOpen(true)}
                 >
-                  Modifica
+                  Edit
                 </Button>
               </Box>
             </Box>
@@ -306,7 +306,7 @@ export default function Profile() {
             {profile.skills.length > 0 && (
               <Box sx={{ mb: 2.5 }}>
                 <Typography variant="h6" sx={{ mb: 1.5, fontWeight: "bold" }}>
-                  Competenze
+                  Skills
                 </Typography>
                 <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   {profile.skills.map((skill, index) => (
@@ -330,7 +330,7 @@ export default function Profile() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Statistiche Personali
+            Personal Statistics
           </Typography>
           <Box
             sx={{
@@ -366,7 +366,7 @@ export default function Profile() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Connessioni Create
+                      Connections Created
                     </Typography>
                   </Box>
                   <Cloud sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -401,7 +401,7 @@ export default function Profile() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Bucket Totali
+                      Total Buckets
                     </Typography>
                   </Box>
                   <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -436,7 +436,7 @@ export default function Profile() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Connessioni Attive
+                      Active Connections
                     </Typography>
                   </Box>
                   <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -471,7 +471,7 @@ export default function Profile() {
                       variant="body2"
                       sx={{ opacity: 0.9, fontSize: "0.875rem" }}
                     >
-                      Ultimo Accesso
+                      Last Login
                     </Typography>
                   </Box>
                   <TrendingUp sx={{ fontSize: 40, opacity: 0.8 }} />
@@ -487,7 +487,7 @@ export default function Profile() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Attività Recenti
+            Recent Activity
           </Typography>
           <Paper sx={{ p: 2.5, borderRadius: 2 }}>
             <List>

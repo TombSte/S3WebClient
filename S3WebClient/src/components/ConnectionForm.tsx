@@ -105,28 +105,28 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.displayName.trim()) {
-      newErrors.displayName = "Il nome visuale è obbligatorio";
+      newErrors.displayName = "Display name is required";
     }
 
     if (!formData.endpoint.trim()) {
-      newErrors.endpoint = "L'endpoint è obbligatorio";
+      newErrors.endpoint = "Endpoint is required";
     } else if (
       !formData.endpoint.startsWith("http://") &&
       !formData.endpoint.startsWith("https://")
     ) {
-      newErrors.endpoint = "L'endpoint deve iniziare con http:// o https://";
+      newErrors.endpoint = "Endpoint must start with http:// or https://";
     }
 
     if (!formData.accessKeyId.trim()) {
-      newErrors.accessKeyId = "L'Access Key ID è obbligatorio";
+      newErrors.accessKeyId = "Access Key ID is required";
     }
 
     if (!formData.secretAccessKey.trim()) {
-      newErrors.secretAccessKey = "La Secret Access Key è obbligatoria";
+      newErrors.secretAccessKey = "Secret Access Key is required";
     }
 
     if (!formData.bucketName.trim()) {
-      newErrors.bucketName = "Il nome del bucket è obbligatorio";
+      newErrors.bucketName = "Bucket name is required";
     }
 
     setErrors(newErrors);
@@ -160,7 +160,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         console.error("Error testing connection:", err);
         setSnackbar({
           open: true,
-          message: "Errore nel test della connessione",
+          message: "Error testing connection",
           severity: "error",
         });
       } finally {
@@ -207,12 +207,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         <Cloud sx={{ fontSize: 28 }} />
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" component="div">
-            {editingConnection ? "Modifica Connessione" : "Nuova Connessione"}
+            {editingConnection ? "Edit Connection" : "New Connection"}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
             {editingConnection
-              ? "Aggiorna i parametri della connessione esistente"
-              : "Configura una nuova connessione S3-compatibile"}
+              ? "Update existing connection parameters"
+              : "Configure a new S3-compatible connection"}
           </Typography>
         </Box>
         <IconButton onClick={handleClose} sx={{ color: "white" }}>
@@ -241,12 +241,12 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 }}
               >
                 <Storage sx={{ fontSize: 18 }} />
-                Informazioni Base
+                Basic Information
               </Typography>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
-                  label="Nome Visuale"
+                  label="Display Name"
                   value={formData.displayName}
                   onChange={(e) =>
                     setFormData({ ...formData, displayName: e.target.value })
@@ -330,7 +330,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 }}
               >
                 <Language sx={{ fontSize: 18 }} />
-                Dettagli Connessione
+                Connection Details
               </Typography>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -344,10 +344,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                   required
                   placeholder="https://minio.example.com:9000"
                   error={!!errors.endpoint}
-                  helperText={
-                    errors.endpoint ||
-                    "Endpoint del tuo storage S3-compatibile (es. MinIO, Ceph, etc.)"
-                  }
+                  helperText={errors.endpoint || "Endpoint of your S3-compatible storage (e.g., MinIO, Ceph, etc.)"}
                   InputProps={{
                     startAdornment: (
                       <Language sx={{ mr: 1, color: "text.secondary" }} />
@@ -356,7 +353,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 />
 
                 <TextField
-                  label="Regione (opzionale)"
+                  label="Region (optional)"
                   value={formData.region || ""}
                   onChange={(e) =>
                     setFormData({
@@ -365,8 +362,8 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                     })
                   }
                   fullWidth
-                  placeholder="us-east-1 (solo per AWS S3)"
-                  helperText="Richiesto solo per AWS S3. Per MinIO e altri storage S3-compatibili può essere lasciato vuoto."
+                  placeholder="us-east-1 (only for AWS S3)"
+                  helperText="Required only for AWS S3. For MinIO and other S3-compatible storage it can be left empty."
                   InputProps={{
                     startAdornment: (
                       <Settings sx={{ mr: 1, color: "text.secondary" }} />
@@ -375,7 +372,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 />
 
                 <TextField
-                  label="Nome Bucket"
+                  label="Bucket Name"
                   value={formData.bucketName}
                   onChange={(e) =>
                     setFormData({ ...formData, bucketName: e.target.value })
@@ -408,7 +405,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 }}
               >
                 <Lock sx={{ fontSize: 18 }} />
-                Credenziali di Accesso
+                Access Credentials
               </Typography>
 
               <Box
@@ -503,7 +500,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 }}
               >
                 <Settings sx={{ fontSize: 18 }} />
-                Opzioni Avanzate
+                Advanced Options
               </Typography>
 
               <FormControlLabel
@@ -518,7 +515,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                     }
                   />
                 }
-                label="Path Style (invece di Virtual Hosted)"
+                label="Path Style (instead of Virtual Hosted)"
                 sx={{
                   p: 1.5,
                   border: "1px solid",
@@ -535,13 +532,22 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5, bgcolor: "grey.50", flexShrink: 0 }}>
+        <DialogActions
+          sx={{
+            p: 2.5,
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark'
+                ? theme.palette.background.paper
+                : theme.palette.grey[50],
+            flexShrink: 0,
+          }}
+        >
           <Button
             onClick={handleClose}
             variant="outlined"
             sx={{ px: 2.5, py: 1, borderRadius: 2 }}
           >
-            Annulla
+            Cancel
           </Button>
           <Button
             onClick={handleTest}
@@ -549,7 +555,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
             disabled={testing}
             sx={{ px: 2.5, py: 1, borderRadius: 2 }}
           >
-            {testing ? "Test in corso..." : "Test Connessione"}
+            {testing ? "Testing..." : "Test Connection"}
           </Button>
           <Button
             type="submit"
@@ -565,7 +571,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
               },
             }}
           >
-            {editingConnection ? "Aggiorna" : "Salva"}
+            {editingConnection ? "Update" : "Save"}
           </Button>
         </DialogActions>
       </form>

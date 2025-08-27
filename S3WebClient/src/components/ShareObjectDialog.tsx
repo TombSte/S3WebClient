@@ -27,7 +27,7 @@ export default function ShareObjectDialog({
 
   return (
     <Dialog open={open} onClose={onCancel}>
-      <DialogTitle>Condividi</DialogTitle>
+      <DialogTitle>Share</DialogTitle>
       <DialogContent>
         {url ? (
           <TextField
@@ -39,7 +39,7 @@ export default function ShareObjectDialog({
         ) : (
           <>
             <TextField
-              label="Data di scadenza"
+              label="Expiration date"
               type="date"
               fullWidth
               margin="dense"
@@ -48,7 +48,7 @@ export default function ShareObjectDialog({
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              label="Ora di scadenza"
+              label="Expiration time"
               type="time"
               fullWidth
               margin="dense"
@@ -60,17 +60,17 @@ export default function ShareObjectDialog({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Annulla</Button>
+        <Button onClick={onCancel}>Cancel</Button>
         {url ? (
           <Button onClick={onCancel} variant="contained">
-            Chiudi
+            Close
           </Button>
         ) : (
           <Button
             onClick={() => onGenerate(new Date(`${date}T${time}`))}
             variant="contained"
           >
-            Genera
+            Generate
           </Button>
         )}
       </DialogActions>

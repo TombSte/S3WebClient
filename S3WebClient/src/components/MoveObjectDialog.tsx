@@ -43,7 +43,7 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
         const all = await objectService.fetchChildren(connection, prefix);
         return all.filter((i) => i.isFolder === 1);
       } catch {
-        alert("Errore nel caricamento delle cartelle");
+        alert("Error loading folders");
         return [];
       }
     },
@@ -83,7 +83,7 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
       await onMoved();
       onClose();
     } catch {
-      alert("Errore durante lo spostamento");
+      alert("Error while moving");
     }
   };
 
@@ -105,17 +105,17 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
       setConflict(null);
       onClose();
     } catch {
-      alert("Errore durante lo spostamento");
+      alert("Error while moving");
     }
   };
 
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle>Sposta oggetto</DialogTitle>
+        <DialogTitle>Move object</DialogTitle>
         <DialogContent dividers>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Seleziona cartella di destinazione
+            Select destination folder
           </Typography>
           <List
             disablePadding
@@ -140,9 +140,9 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
           </List>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Annulla</Button>
+          <Button onClick={onClose}>Cancel</Button>
           <Button onClick={handleMove} variant="contained" disabled={selected === null}>
-            Sposta qui
+            Move here
           </Button>
         </DialogActions>
       </Dialog>

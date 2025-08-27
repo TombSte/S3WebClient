@@ -25,13 +25,13 @@ describe("ObjectItemRow", () => {
     render(<ObjectItemRow item={file} name="file.txt" onMove={onMove} />);
     const menuButton = screen.getAllByRole("button")[1];
     await userEvent.click(menuButton);
-    expect(await screen.findByText("Sposta")).toBeInTheDocument();
+    expect(await screen.findByText("Move")).toBeInTheDocument();
   });
 
   it("hides move action for folders", async () => {
     render(<ObjectItemRow item={folder} name="folder" onMove={vi.fn()} />);
     const menuButton = screen.getAllByRole("button")[1];
     await userEvent.click(menuButton);
-    expect(screen.queryByText("Sposta")).not.toBeInTheDocument();
+    expect(screen.queryByText("Move")).not.toBeInTheDocument();
   });
 });

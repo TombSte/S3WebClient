@@ -142,7 +142,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Scarica
+              Download
             </MenuItem>
           )}
           {item.isFolder === 0 && onDuplicate && (
@@ -152,7 +152,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Duplica
+              Duplicate
             </MenuItem>
           )}
           {item.isFolder === 0 && onRename && (
@@ -162,7 +162,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Rinomina
+              Rename
             </MenuItem>
           )}
           {item.isFolder === 0 && onShare && (
@@ -172,7 +172,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Condividi
+              Share
             </MenuItem>
           )}
           {item.isFolder === 0 && onMove && (
@@ -182,7 +182,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Sposta
+              Move
             </MenuItem>
           )}
           {item.isFolder === 0 && onDelete && (
@@ -192,7 +192,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Elimina
+              Delete
             </MenuItem>
           )}
           {onProperties && (
@@ -202,7 +202,7 @@ export default function ObjectItemRow({
                 handleClose();
               }}
             >
-              Proprietà
+              Properties
             </MenuItem>
           )}
         </Menu>

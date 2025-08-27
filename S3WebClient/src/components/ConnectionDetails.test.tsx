@@ -26,13 +26,13 @@ describe("ConnectionDetails", () => {
     expect(screen.getByText("https://example.com")).toBeInTheDocument();
     expect(screen.getByText("bucket")).toBeInTheDocument();
     expect(screen.getByText("us-east-1")).toBeInTheDocument();
-    expect(screen.getByText("Attiva")).toBeInTheDocument();
-    expect(screen.getByText("Connesso")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("Connected")).toBeInTheDocument();
   });
 
   it("hides region when not set", () => {
     render(<ConnectionDetails connection={base} />);
-    expect(screen.queryByText("Regione")).not.toBeInTheDocument();
-    expect(screen.getByText("Mai")).toBeInTheDocument();
+    expect(screen.queryByText("Region")).not.toBeInTheDocument();
+    expect(screen.getByText("Never")).toBeInTheDocument();
   });
 });
