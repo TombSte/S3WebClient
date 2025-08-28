@@ -49,7 +49,12 @@ function ThemedApp() {
           },
         },
       },
-      MuiPaper: { defaultProps: { elevation: 0 } },
+      MuiPaper: {
+        defaultProps: { elevation: 0, variant: 'outlined' },
+        styleOverrides: {
+          outlined: { borderColor: base.palette.divider },
+        },
+      },
       MuiAppBar: {
         styleOverrides: {
           root: {

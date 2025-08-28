@@ -186,7 +186,7 @@ export default function Profile() {
         {/* Profile Card */}
         <Card sx={{ mb: 3, borderRadius: 3, overflow: "hidden" }}>
           <Box
-            sx={{ height: 100, bgcolor: "background.paper", position: "relative", borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
+            sx={{ height: 56, bgcolor: "background.paper", position: "relative", borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
           />
           <CardContent sx={{ p: 3, pt: 0 }}>
             <Box
@@ -208,7 +208,7 @@ export default function Profile() {
                   border: "4px solid white",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "primary.main",
-                  mt: { xs: -40, sm: -50 },
+                  mt: { xs: -28, sm: -36 },
                 }}
               >
                 {initials}
@@ -478,7 +478,7 @@ export default function Profile() {
           >
             Recent Activity
           </Typography>
-          <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+          <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <List>
               {recentActivity.map((activity, index) => (
                 <Box key={index}>

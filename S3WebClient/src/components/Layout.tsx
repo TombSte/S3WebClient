@@ -207,7 +207,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           ml: { sm: `${collapsed ? collapsedWidth : expandedWidth}px` },
           backgroundColor: theme.palette.background.default,
           color: theme.palette.text.primary,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
           zIndex: theme.zIndex.appBar,
         }}
       >

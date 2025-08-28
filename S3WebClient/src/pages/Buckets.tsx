@@ -316,6 +316,8 @@ const Buckets: React.FC = () => {
               bgcolor: "primary.main",
               color: "primary.contrastText",
               boxShadow: 1,
+              px: 1.5,
+              height: 28,
               "& .MuiChip-icon": { color: "inherit" },
             }}
           />
