@@ -1,4 +1,4 @@
-import type { Environment, EnvColor } from "../types/env";
+import type { Environment } from "../types/env";
 import type { S3WebClientDatabase } from "../database/database";
 
 export interface EnvironmentRepository {

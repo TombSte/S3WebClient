@@ -118,10 +118,6 @@ const Buckets: React.FC = () => {
   >(activeFilter);
   const [pendingEnvironmentFilter, setPendingEnvironmentFilter] = useState<"all" | string>(environmentFilter);
 
-  const envDisplayName = React.useCallback((key: string) => {
-    const env = environments.find((e) => e.key === key);
-    return env?.name ?? key;
-  }, [environments]);
 
   const renderEnvironmentFilterChip = (key: string) => {
     const env = environments.find((e) => e.key === key);

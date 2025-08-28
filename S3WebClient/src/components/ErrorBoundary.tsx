@@ -44,7 +44,7 @@ export default class ErrorBoundary extends React.Component<
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             The application encountered an unexpected error. Try reloading.
           </Typography>
-          {process.env.NODE_ENV !== "production" && this.state.error && (
+          {import.meta.env.MODE !== "production" && this.state.error ? (
             <Box sx={{
               p: 1.5,
               bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100'),
@@ -56,11 +56,10 @@ export default class ErrorBoundary extends React.Component<
             }}>
               {String((this.state.error as { message?: string }).message ?? this.state.error)}
             </Box>
-          )}
+          ) : null}
           <Button variant="contained" onClick={this.reset}>Reload</Button>
         </Paper>
       </Box>
     );
   }
 }
-

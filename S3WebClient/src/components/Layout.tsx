@@ -227,7 +227,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Toggle moved to sidebar bottom on desktop */}
           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1, minWidth: 0 }}>
             {location.pathname !== "/" && (() => {
-              const items: JSX.Element[] = [];
+              const items: React.ReactNode[] = [];
               if (location.pathname.startsWith("/buckets")) {
                 items.push(<Typography key="buckets" color="text.primary">Buckets</Typography>);
               }
