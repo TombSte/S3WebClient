@@ -272,6 +272,23 @@ export class S3ObjectRepository {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await getSignedUrl(client as any, command as any, { expiresIn });
   }
+
+  async presignUpload(
+    connection: S3Connection,
+    key: string,
+    expires: Date,
+    contentType?: string
+  ): Promise<string> {
+    const client = createClient(connection);
+    const command = new PutObjectCommand({
+      Bucket: connection.bucketName,
+      Key: key,
+      ContentType: contentType,
+    });
+    const expiresIn = Math.max(1, Math.floor((expires.getTime() - Date.now()) / 1000));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await getSignedUrl(client as any, command as any, { expiresIn });
+  }
 }
 
 export const s3ObjectRepository = new S3ObjectRepository();

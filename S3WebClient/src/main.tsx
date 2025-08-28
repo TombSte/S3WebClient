@@ -6,6 +6,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import "./index.scss";
 import App from "./App.tsx";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { EnvironmentsProvider } from "./contexts/EnvironmentsContext";
 import { NotificationsProvider } from "./contexts/NotificationsContext";
@@ -91,7 +92,9 @@ function ThemedApp() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

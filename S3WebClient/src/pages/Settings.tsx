@@ -173,6 +173,7 @@ export default function Settings() {
                     <Box key={settingIndex}>
                       <ListItem sx={{ px: 0, py: 1 }}>
                         <ListItemText
+                          disableTypography
                           primary={
                             <Box
                               sx={{

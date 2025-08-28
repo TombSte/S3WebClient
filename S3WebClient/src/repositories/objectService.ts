@@ -53,6 +53,15 @@ export class ObjectService {
     return await this.remote.share(connection, key, expires);
   }
 
+  async presignUpload(
+    connection: S3Connection,
+    key: string,
+    expires: Date,
+    contentType?: string
+  ): Promise<string> {
+    return await this.remote.presignUpload(connection, key, expires, contentType);
+  }
+
   async upload(connection: S3Connection, key: string, file: File): Promise<void> {
     await this.remote.upload(connection, key, file);
     const parent = key.slice(0, key.lastIndexOf("/") + 1);

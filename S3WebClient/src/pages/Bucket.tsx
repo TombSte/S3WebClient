@@ -9,6 +9,7 @@ import {
   Drawer,
   Button,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   Storage as StorageIcon,
@@ -22,6 +23,7 @@ import { connectionRepository } from "../repositories";
 import ObjectBrowser, { type ObjectBrowserHandle } from "../components/ObjectBrowser";
 import UploadObjectDialog from "../components/UploadObjectDialog";
 import CreateFolderDialog from "../components/CreateFolderDialog";
+import { S3Client, HeadBucketCommand } from "@aws-sdk/client-s3";
 
 export default function Bucket() {
   const { id } = useParams();
@@ -30,6 +32,8 @@ export default function Bucket() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" } | null>(null);
   const browserRef = useRef<ObjectBrowserHandle>(null);
 
   useEffect(() => {
@@ -66,6 +70,41 @@ export default function Bucket() {
       </Box>
     );
   }
+
+  const handleTestConnection = async () => {
+    if (!connection) return;
+    setTesting(true);
+    try {
+      const client = new S3Client({
+        endpoint: connection.endpoint,
+        region: connection.region || "us-east-1",
+        forcePathStyle: connection.pathStyle === 1,
+        credentials: {
+          accessKeyId: connection.accessKeyId,
+          secretAccessKey: connection.secretAccessKey,
+        },
+      });
+      try {
+        await client.send(new HeadBucketCommand({ Bucket: connection.bucketName }));
+        const result = { success: true, message: "Connection tested successfully", timestamp: new Date() } as const;
+        await connectionRepository.test(connection.id, result);
+        const updated = await connectionRepository.get(connection.id);
+        setSnackbar({ open: true, message: result.message, severity: "success" });
+        if (updated) setConnection(updated);
+      } catch (err) {
+        const e = err as { $metadata?: { httpStatusCode?: number }; name?: string; message?: string };
+        let message = "Error testing connection";
+        if (e.$metadata?.httpStatusCode === 404 || e.name === "NotFound") message = "Bucket not found";
+        const result = { success: false, message, timestamp: new Date(), error: e.message ?? "Unknown error" } as const;
+        await connectionRepository.test(connection.id, result);
+        const updated = await connectionRepository.get(connection.id);
+        setSnackbar({ open: true, message: `${result.message}${e.message ? `: ${e.message}` : ""}`, severity: "error" });
+        if (updated) setConnection(updated);
+      }
+    } finally {
+      setTesting(false);
+    }
+  };
 
   return (
     <Box
@@ -152,6 +191,15 @@ export default function Bucket() {
           >
             Upload
           </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleTestConnection}
+            sx={{ mr: 1 }}
+            disabled={testing}
+          >
+            {testing ? "Testing..." : "Test Connection"}
+          </Button>
           <IconButton
             aria-label="refresh"
             onClick={() => browserRef.current?.refresh()}
@@ -175,6 +223,11 @@ export default function Bucket() {
         >
           <Box sx={{ width: 320, p: 2 }}>
             <ConnectionDetails connection={connection} compact />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button size="small" variant="outlined" onClick={handleTestConnection} disabled={testing}>
+                {testing ? "Testing..." : "Test Connection"}
+              </Button>
+            </Box>
           </Box>
         </Drawer>
       </Box>
@@ -194,6 +247,16 @@ export default function Bucket() {
           await browserRef.current?.refresh();
         }}
       />
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        open={Boolean(snackbar?.open)}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(null)}
+      >
+        <Alert onClose={() => setSnackbar(null)} severity={snackbar?.severity ?? "info"} sx={{ width: "100%" }}>
+          {snackbar?.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

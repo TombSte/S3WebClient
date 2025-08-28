@@ -796,37 +796,41 @@ const Buckets: React.FC = () => {
                     </Tooltip>
 
                     <Tooltip title={hasEnvironments ? "Duplicate" : "Duplicate (disabled: no environments)"}>
-                      <IconButton
-                        size="small"
-                        disabled={!hasEnvironments}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicate(connection.id);
-                        }}
-                        sx={{
-                          color: "info.main",
-                          "&:hover": { bgcolor: "info.50" },
-                        }}
-                      >
-                        <ContentCopy />
-                      </IconButton>
+                      <span style={{ display: 'inline-flex' }}>
+                        <IconButton
+                          size="small"
+                          disabled={!hasEnvironments}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(connection.id);
+                          }}
+                          sx={{
+                            color: "info.main",
+                            "&:hover": { bgcolor: "info.50" },
+                          }}
+                        >
+                          <ContentCopy />
+                        </IconButton>
+                      </span>
                     </Tooltip>
 
                     <Tooltip title={hasEnvironments ? "Edit" : "Edit (disabled: no environments)"}>
-                      <IconButton
-                        size="small"
-                        disabled={!hasEnvironments}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenDialog(connection);
-                        }}
-                        sx={{
-                          color: "primary.main",
-                          "&:hover": { bgcolor: "primary.50" },
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
+                      <span style={{ display: 'inline-flex' }}>
+                        <IconButton
+                          size="small"
+                          disabled={!hasEnvironments}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDialog(connection);
+                          }}
+                          sx={{
+                            color: "primary.main",
+                            "&:hover": { bgcolor: "primary.50" },
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </span>
                     </Tooltip>
 
                     <Tooltip title="Delete">
