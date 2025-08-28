@@ -114,17 +114,7 @@ export default function Settings() {
           <Typography
             variant="h5"
             component="h1"
-            sx={{
-              mb: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #9C27B0 30%, #E1BEE7 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
+            sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 2, color: 'secondary.main', fontWeight: 'bold' }}
           >
             <SettingsIcon sx={{ fontSize: 32, color: "secondary.main" }} />
             Settings

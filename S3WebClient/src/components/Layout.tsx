@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
-  const [bucketLabel, setBucketLabel] = React.useState<string>("");
+  const [bucketLabel, setBucketLabel] = React.useState<string | null>(null);
 
   const theme = useTheme();
   const navigate = useNavigate();
@@ -55,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const match = location.pathname.match(/^\/bucket\/(\d+)/);
     if (match) {
       const id = match[1];
+      setBucketLabel(null); // avoid placeholder flicker
       (async () => {
         try {
           const conn = await connectionRepository.get(id);
@@ -64,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
       })();
     } else {
-      setBucketLabel("");
+      setBucketLabel(null);
     }
   }, [location.pathname]);
   const { notifications } = useNotifications();
@@ -233,11 +234,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Buckets
                   </MUILink>
                 );
-                items.push(
-                  <Typography key="bucket-name" color="text.primary" sx={{ display: "inline-flex", alignItems: "center", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: 'nowrap' }}>
-                    {bucketLabel || 'Bucket'}
-                  </Typography>
-                );
+                if (bucketLabel !== null) {
+                  items.push(
+                    <Typography key="bucket-name" color="text.primary" sx={{ display: "inline-flex", alignItems: "center", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: 'nowrap' }}>
+                      {bucketLabel}
+                    </Typography>
+                  );
+                }
               }
               if (location.pathname === "/settings") items.push(<Typography key="settings" color="text.primary">Settings</Typography>);
               if (location.pathname === "/profile") items.push(<Typography key="profile" color="text.primary">Profile</Typography>);

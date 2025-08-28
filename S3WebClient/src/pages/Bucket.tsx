@@ -92,17 +92,7 @@ export default function Bucket() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{
-                mb: 1,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontWeight: "bold",
-              }}
+              sx={{ mb: 1, display: "flex", alignItems: "center", gap: 2, color: 'primary.main', fontWeight: 'bold' }}
             >
               <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
               {connection.displayName}

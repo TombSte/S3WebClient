@@ -163,17 +163,7 @@ export default function Profile() {
           <Typography
             variant="h5"
             component="h1"
-            sx={{
-              mb: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #FF6B6B 30%, #FFE66D 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
+            sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 2, color: 'error.main', fontWeight: 'bold' }}
           >
             <PersonIcon sx={{ fontSize: 32, color: "error.main" }} />
             User Profile
