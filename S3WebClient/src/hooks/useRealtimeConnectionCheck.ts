@@ -55,14 +55,44 @@ export function useRealtimeConnectionCheck(
 ) {
   useEffect(() => {
     if (!enabled) return;
-    const interval = setInterval(async () => {
+    let timer: number | undefined;
+
+    const tick = async () => {
+      // Avoid background activity and CORS noise when tab is hidden
+      if (typeof document !== 'undefined' && document.hidden) return;
       const connections = await connectionRepository.getAll();
       for (const conn of connections) {
+        // Skip inactive connections to reduce unnecessary traffic
+        if ((conn.isActive ?? 1) !== 1) continue;
         const result = await performTest(conn);
         await connectionRepository.test(conn.id, result);
       }
-    }, Math.max(1, intervalSeconds) * 1000);
-    return () => clearInterval(interval);
+    };
+
+    const start = () => {
+      // Run once immediately when visible
+      void tick();
+      timer = window.setInterval(tick, Math.max(1, intervalSeconds) * 1000);
+    };
+    const stop = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    const onVisChange = () => {
+      if (document.hidden) stop();
+      else {
+        stop();
+        start();
+      }
+    };
+
+    start();
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisChange);
+    };
   }, [enabled, intervalSeconds]);
 }
 

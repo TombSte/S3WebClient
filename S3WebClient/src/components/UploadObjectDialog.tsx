@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,12 +13,14 @@ import {
   Typography,
   Snackbar,
   Alert,
+  LinearProgress,
 } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectService } from "../repositories";
+import { useNotifications } from "../contexts/NotificationsContext";
 import NameConflictDialog from "./NameConflictDialog";
 import { getAvailableName } from "../utils/naming";
 
@@ -39,6 +41,10 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
     existing: Set<string>;
   } | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "error" | "success" | "warning" | "info" }>({ open: false, message: "", severity: "error" });
+  const { addNotification } = useNotifications();
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const loadFolders = useCallback(
     async (prefix: string) => {
@@ -67,6 +73,8 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
   const handleUpload = async () => {
     if (!file || selected === null) return;
     try {
+      setUploading(true);
+      setProgress(0);
       const existing = await objectService.fetchChildren(connection, selected);
       const names = new Set(
         existing
@@ -75,13 +83,56 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
       );
       if (names.has(file.name)) {
         setConflict({ prefix: selected, file, existing: names });
+        setUploading(false);
+        setProgress(null);
         return;
       }
-      await objectService.upload(connection, `${selected}${file.name}`, file);
+      const key = `${selected}${file.name}`;
+      // Presign PUT URL and upload via XHR to track progress
+      const url = await objectService.presignUpload(
+        connection,
+        key,
+        new Date(Date.now() + 5 * 60 * 1000),
+        file.type || 'application/octet-stream'
+      );
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
+        xhr.open("PUT", url);
+        try {
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        } catch {}
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+          else setProgress(null);
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed with status ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.onabort = () => reject(new Error("Upload aborted"));
+        xhr.send(file);
+      });
       await onUploaded();
+      addNotification(`Uploaded ${file.name} to ${selected || '/'}`);
       onClose();
-    } catch {
-      setSnackbar({ open: true, message: "Error during upload", severity: "error" });
+    } catch (err) {
+      // Fallback: try SDK upload if presigned PUT fails (e.g., CORS or policy)
+      try {
+        if (!file) throw err;
+        const key = `${selected}${file.name}`;
+        await objectService.upload(connection, key, file);
+        await onUploaded();
+        addNotification(`Uploaded ${file.name} to ${selected || '/'}`);
+        onClose();
+      } catch {
+        setSnackbar({ open: true, message: "Error during upload", severity: "error" });
+      }
+    } finally {
+      setUploading(false);
+      setProgress(null);
+      xhrRef.current = null;
     }
   };
 
@@ -98,12 +149,54 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
         ? getAvailableName(conflict.file.name, conflict.existing)
         : conflict.file.name;
     try {
-      await objectService.upload(connection, `${conflict.prefix}${name}`, conflict.file);
+      setUploading(true);
+      setProgress(0);
+      const key = `${conflict.prefix}${name}`;
+      const url = await objectService.presignUpload(
+        connection,
+        key,
+        new Date(Date.now() + 5 * 60 * 1000),
+        conflict.file.type || 'application/octet-stream'
+      );
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
+        xhr.open("PUT", url);
+        try {
+          xhr.setRequestHeader('Content-Type', conflict.file.type || 'application/octet-stream');
+        } catch {}
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+          else setProgress(null);
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed with status ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.onabort = () => reject(new Error("Upload aborted"));
+        xhr.send(conflict.file);
+      });
       await onUploaded();
+      addNotification(`Uploaded ${name} to ${conflict.prefix || '/'}`);
       setConflict(null);
       onClose();
-    } catch {
-      setSnackbar({ open: true, message: "Error during upload", severity: "error" });
+    } catch (err) {
+      // Fallback to SDK upload
+      try {
+        const key = `${conflict.prefix}${name}`;
+        await objectService.upload(connection, key, conflict.file);
+        await onUploaded();
+        addNotification(`Uploaded ${name} to ${conflict.prefix || '/'}`);
+        setConflict(null);
+        onClose();
+      } catch {
+        setSnackbar({ open: true, message: "Error during upload", severity: "error" });
+      }
+    } finally {
+      setUploading(false);
+      setProgress(null);
+      xhrRef.current = null;
     }
   };
 
@@ -140,18 +233,28 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
             />
           ))}
         </List>
-        <Button
-          variant="outlined"
-          component="label"
-          disabled={selected === null}
-        >
-          Choose file
-          <input
-            type="file"
-            hidden
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-        </Button>
+        {uploading && (
+          <>
+            <Typography variant="body2" sx={{ mt: 2 }}>
+              Uploading... {progress !== null ? `${progress}%` : ""}
+            </Typography>
+            <LinearProgress variant={progress !== null ? "determinate" : "indeterminate"} value={progress ?? undefined} sx={{ mt: 1 }} />
+          </>
+        )}
+        {!uploading && (
+          <Button
+            variant="outlined"
+            component="label"
+            disabled={selected === null}
+          >
+            Choose file
+            <input
+              type="file"
+              hidden
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+          </Button>
+        )}
         {file && (
           <Typography variant="body2" sx={{ mt: 1 }}>
             {file.name}
@@ -159,14 +262,26 @@ export default function UploadObjectDialog({ open, connection, onClose, onUpload
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={handleUpload}
-          variant="contained"
-          disabled={!file || selected === null}
-        >
-          Upload
-        </Button>
+        <Button onClick={() => {
+          if (uploading && xhrRef.current) {
+            try { xhrRef.current.abort(); } catch {}
+            setUploading(false);
+            setProgress(null);
+            setConflict(null);
+            setSnackbar({ open: true, message: "Upload canceled", severity: "info" });
+          } else {
+            onClose();
+          }
+        }}>Cancel</Button>
+        {!uploading && (
+          <Button
+            onClick={handleUpload}
+            variant="contained"
+            disabled={!file || selected === null}
+          >
+            Upload
+          </Button>
+        )}
       </DialogActions>
       </Dialog>
       <NameConflictDialog

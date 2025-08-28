@@ -50,6 +50,7 @@ import type {
   S3ConnectionForm,
   ConnectionTestResult,
 } from "../types/s3";
+import { useEnvironments } from "../contexts/EnvironmentsContext";
 
 const Buckets: React.FC = () => {
   const {
@@ -68,6 +69,8 @@ const Buckets: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useMediaQuery("(max-width:600px)");
+  const { environments } = useEnvironments();
+  const hasEnvironments = environments.length > 0;
 
   const initialStatus = (() => {
     const v = searchParams.get("status");
@@ -79,9 +82,10 @@ const Buckets: React.FC = () => {
   })();
   const initialEnv = (() => {
     const v = searchParams.get("env");
-    return v === "dev" || v === "test" || v === "prod" || v === "custom"
-      ? v
-      : "all";
+    if (!v) return "all";
+    // only accept environment if currently visible
+    const exists = environments.some((e) => e.key === v);
+    return exists ? v : "all";
   })();
   const initialQuery = searchParams.get("q") ?? "";
 
@@ -95,9 +99,7 @@ const Buckets: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<
     "all" | "active" | "inactive"
   >(initialActive);
-  const [environmentFilter, setEnvironmentFilter] = useState<
-    "all" | "dev" | "test" | "prod" | "custom"
-  >(initialEnv);
+  const [environmentFilter, setEnvironmentFilter] = useState<"all" | string>(initialEnv);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingConnection, setEditingConnection] =
     useState<S3Connection | null>(null);
@@ -114,9 +116,37 @@ const Buckets: React.FC = () => {
   const [pendingActiveFilter, setPendingActiveFilter] = useState<
     "all" | "active" | "inactive"
   >(activeFilter);
-  const [pendingEnvironmentFilter, setPendingEnvironmentFilter] = useState<
-    "all" | "dev" | "test" | "prod" | "custom"
-  >(environmentFilter);
+  const [pendingEnvironmentFilter, setPendingEnvironmentFilter] = useState<"all" | string>(environmentFilter);
+
+  const envDisplayName = React.useCallback((key: string) => {
+    const env = environments.find((e) => e.key === key);
+    return env?.name ?? key;
+  }, [environments]);
+
+  const renderEnvironmentFilterChip = (key: string) => {
+    const env = environments.find((e) => e.key === key);
+    const label = `Env: ${env?.name ?? key}`;
+    if (env?.colorHex) {
+      return (
+        <Chip
+          label={label}
+          onDelete={() => setEnvironmentFilter("all")}
+          size="small"
+          variant="outlined"
+          sx={{ mr: 1, mb: 0.5, color: env.colorHex, borderColor: env.colorHex }}
+        />
+      );
+    }
+    return (
+      <Chip
+        label={label}
+        onDelete={() => setEnvironmentFilter("all")}
+        size="small"
+        color={(env?.color ?? "default") as any}
+        sx={{ mr: 1, mb: 0.5 }}
+      />
+    );
+  };
 
   const connectionNames = React.useMemo(
     () => Array.from(new Set(connections.map((c) => c.displayName))),
@@ -170,7 +200,20 @@ const Buckets: React.FC = () => {
     environmentFilter,
   ]);
 
+  // Ensure URL env param is honored after environments load
+  React.useEffect(() => {
+    const v = searchParams.get("env");
+    if (v && environmentFilter === "all" && environments.some((e) => e.key === v)) {
+      setEnvironmentFilter(v);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [environments]);
+
   const handleOpenDialog = (connection?: S3Connection) => {
+    if (!hasEnvironments) {
+      setSnackbar({ open: true, message: "No environments found. Create one first.", severity: "error" });
+      return;
+    }
     setEditingConnection(connection || null);
     setOpenDialog(true);
   };
@@ -366,6 +409,19 @@ const Buckets: React.FC = () => {
             })()}
           </Box>
 
+          {/* Warning: no environments */}
+          {!hasEnvironments && (
+            <Alert severity="warning" sx={{ mt: 1 }}
+              action={
+                <Button color="inherit" size="small" onClick={() => navigate('/environments')}>
+                  Open Environments
+                </Button>
+              }
+            >
+              No environments found. Create at least one environment to add or edit connections.
+            </Alert>
+          )}
+
           {/* Active filters summary chips */}
           {(
             statusFilter !== "all" ||
@@ -403,14 +459,7 @@ const Buckets: React.FC = () => {
                   sx={{ mr: 1, mb: 0.5 }}
                 />
               )}
-              {environmentFilter !== "all" && (
-                <Chip
-                  label={`Env: ${environmentFilter}`}
-                  onDelete={() => setEnvironmentFilter("all")}
-                  size="small"
-                  sx={{ mr: 1, mb: 0.5 }}
-                />
-              )}
+              {environmentFilter !== "all" && renderEnvironmentFilterChip(environmentFilter)}
               <Button
                 size="small"
                 onClick={() => {
@@ -509,10 +558,9 @@ const Buckets: React.FC = () => {
                   }
                 >
                   <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="dev">Dev</MenuItem>
-                  <MenuItem value="test">Test</MenuItem>
-                  <MenuItem value="prod">Prod</MenuItem>
-                  <MenuItem value="custom">Custom</MenuItem>
+                  {environments.map((env) => (
+                    <MenuItem key={env.key} value={env.key}>{env.name}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -747,36 +795,42 @@ const Buckets: React.FC = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="Duplicate">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicate(connection.id);
-                        }}
-                        sx={{
-                          color: "info.main",
-                          "&:hover": { bgcolor: "info.50" },
-                        }}
-                      >
-                        <ContentCopy />
-                      </IconButton>
+                    <Tooltip title={hasEnvironments ? "Duplicate" : "Duplicate (disabled: no environments)"}>
+                      <span style={{ display: 'inline-flex' }}>
+                        <IconButton
+                          size="small"
+                          disabled={!hasEnvironments}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDuplicate(connection.id);
+                          }}
+                          sx={{
+                            color: "info.main",
+                            "&:hover": { bgcolor: "info.50" },
+                          }}
+                        >
+                          <ContentCopy />
+                        </IconButton>
+                      </span>
                     </Tooltip>
 
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenDialog(connection);
-                        }}
-                        sx={{
-                          color: "primary.main",
-                          "&:hover": { bgcolor: "primary.50" },
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
+                    <Tooltip title={hasEnvironments ? "Edit" : "Edit (disabled: no environments)"}>
+                      <span style={{ display: 'inline-flex' }}>
+                        <IconButton
+                          size="small"
+                          disabled={!hasEnvironments}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDialog(connection);
+                          }}
+                          sx={{
+                            color: "primary.main",
+                            "&:hover": { bgcolor: "primary.50" },
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      </span>
                     </Tooltip>
 
                     <Tooltip title="Delete">
@@ -806,6 +860,7 @@ const Buckets: React.FC = () => {
           color="primary"
           aria-label="add"
           onClick={() => handleOpenDialog()}
+          disabled={!hasEnvironments}
           sx={{
             position: "fixed",
             bottom: 24,

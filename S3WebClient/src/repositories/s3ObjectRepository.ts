@@ -27,6 +27,7 @@ export class S3ObjectRepository {
     const client = createClient(connection);
     const folders: S3ObjectEntity[] = [];
     const files: S3ObjectEntity[] = [];
+    const seenPrefixes = new Set<string>();
     let token: string | undefined;
     do {
       const res = await client.send(
@@ -39,6 +40,8 @@ export class S3ObjectRepository {
       );
       (res.CommonPrefixes ?? []).forEach((p) => {
         if (!p.Prefix) return;
+        if (seenPrefixes.has(p.Prefix)) return;
+        seenPrefixes.add(p.Prefix);
         folders.push({
           connectionId: connection.id,
           key: p.Prefix,
@@ -49,6 +52,8 @@ export class S3ObjectRepository {
       });
       (res.Contents ?? []).forEach((o) => {
         if (!o.Key || o.Key === prefix) return;
+        // skip folder marker objects (ending with '/') to avoid duplicates with CommonPrefixes
+        if (o.Key.endsWith("/")) return;
         files.push({
           connectionId: connection.id,
           key: o.Key,
@@ -264,6 +269,23 @@ export class S3ObjectRepository {
       1,
       Math.floor((expires.getTime() - Date.now()) / 1000)
     );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return await getSignedUrl(client as any, command as any, { expiresIn });
+  }
+
+  async presignUpload(
+    connection: S3Connection,
+    key: string,
+    expires: Date,
+    contentType?: string
+  ): Promise<string> {
+    const client = createClient(connection);
+    const command = new PutObjectCommand({
+      Bucket: connection.bucketName,
+      Key: key,
+      ContentType: contentType,
+    });
+    const expiresIn = Math.max(1, Math.floor((expires.getTime() - Date.now()) / 1000));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await getSignedUrl(client as any, command as any, { expiresIn });
   }

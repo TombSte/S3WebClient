@@ -32,6 +32,8 @@ import {
   CloudQueue,
   NotificationsNone,
 } from "@mui/icons-material";
+import { ClearAll } from "@mui/icons-material";
+import { Tune } from "@mui/icons-material";
 import { useNotifications } from "../contexts/NotificationsContext";
 import { connectionRepository } from "../repositories";
 
@@ -68,7 +70,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setBucketLabel(null);
     }
   }, [location.pathname]);
-  const { notifications } = useNotifications();
+  const { notifications, unreadCount, markAllRead, clearAll } = useNotifications();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -77,6 +79,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard />, path: "/" },
     { text: "Buckets", icon: <Storage />, path: "/buckets" },
+    { text: "Environments", icon: <Tune />, path: "/environments" },
     { text: "Settings", icon: <Settings />, path: "/settings" },
     { text: "Profile", icon: <AccountCircle />, path: "/profile" },
   ];
@@ -243,6 +246,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 }
               }
               if (location.pathname === "/settings") items.push(<Typography key="settings" color="text.primary">Settings</Typography>);
+              if (location.pathname === "/environments") items.push(<Typography key="environments" color="text.primary">Environments</Typography>);
               if (location.pathname === "/profile") items.push(<Typography key="profile" color="text.primary">Profile</Typography>);
               if (location.pathname === "/notifications") items.push(<Typography key="notifications" color="text.primary">Notifications</Typography>);
               if (items.length === 0) return null;
@@ -256,9 +260,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <IconButton
             color="inherit"
             aria-label="notifications"
-            onClick={() => setNotifOpen(true)}
+            onClick={() => { setNotifOpen(true); markAllRead(); }}
           >
-            <Badge badgeContent={notifications.length} color="primary">
+            <Badge badgeContent={unreadCount} color="primary">
               <NotificationsNone />
             </Badge>
           </IconButton>
@@ -348,24 +352,46 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         anchor="right"
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
-        sx={{ "& .MuiDrawer-paper": { width: 320 } }}
+        sx={{ "& .MuiDrawer-paper": { width: 320, display: 'flex', flexDirection: 'column' } }}
       >
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        <Toolbar sx={{ gap: 1 }}>
+          <NotificationsNone />
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
             Notifications
           </Typography>
+          {notifications.length > 0 && (
+            <Tooltip title="Clear all">
+              <IconButton size="small" onClick={() => clearAll()}>
+                <ClearAll fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Toolbar>
         <Divider />
-        <List>
-          {notifications.slice(0, 10).map((n) => (
-            <ListItem key={n.id}>
-              <ListItemText
-                primary={n.message}
-                secondary={n.date.toLocaleString()}
-              />
-            </ListItem>
-          ))}
-        </List>
+        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          <List sx={{ py: 0 }}>
+            {notifications.length === 0 ? (
+              <ListItem>
+                <ListItemText primary={<Typography color="text.secondary">No notifications yet</Typography>} />
+              </ListItem>
+            ) : (
+              notifications.slice(0, 10).map((n, idx) => (
+                <React.Fragment key={n.id}>
+          <ListItem sx={{ alignItems: 'flex-start', px: 2, py: 1.25, '&:hover': { bgcolor: 'action.hover' } }}>
+            <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+              <NotificationsNone sx={{ color: 'primary.main' }} />
+            </ListItemIcon>
+            <ListItemText
+              primary={<Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>{n.message}</Typography>}
+              secondary={<Typography variant="caption" color="text.secondary">{n.date.toLocaleString()}</Typography>}
+            />
+          </ListItem>
+                  {idx < Math.min(10, notifications.length) - 1 && <Divider />}
+                </React.Fragment>
+              ))
+            )}
+          </List>
+        </Box>
         <Divider />
         <List>
           <ListItem disablePadding>
@@ -375,7 +401,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 setNotifOpen(false);
               }}
             >
-              <ListItemText primary="View all" />
+              <ListItemText primary={<Typography sx={{ fontWeight: 600 }}>View all</Typography>} />
             </ListItemButton>
           </ListItem>
         </List>

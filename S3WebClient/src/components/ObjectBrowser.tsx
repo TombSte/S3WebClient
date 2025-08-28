@@ -5,7 +5,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { Box, Typography, Snackbar, Alert } from "@mui/material";
+import { Box, Typography, Snackbar, Alert, LinearProgress, Paper } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
 import { objectRepository, objectService } from "../repositories";
@@ -18,6 +18,7 @@ import DuplicateObjectDialog from "./DuplicateObjectDialog";
 import ShareObjectDialog from "./ShareObjectDialog";
 import MoveObjectDialog from "./MoveObjectDialog";
 import { shareRepository } from "../repositories";
+import { useNotifications } from "../contexts/NotificationsContext";
 import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
@@ -49,6 +50,22 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
   const [moveItem, setMoveItem] = useState<S3ObjectEntity | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "error" | "success" | "warning" | "info" }>({ open: false, message: "", severity: "error" });
   const [confirmDelete, setConfirmDelete] = useState<S3ObjectEntity | null>(null);
+  const { addNotification } = useNotifications();
+  const [dlName, setDlName] = useState<string>("");
+  const [dlProgress, setDlProgress] = useState<number | null>(null);
+  const [dlOpen, setDlOpen] = useState(false);
+  const [dlLoaded, setDlLoaded] = useState<number>(0);
+  const [dlTotal, setDlTotal] = useState<number | null>(null);
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    const mb = kb / 1024;
+    if (mb < 1024) return `${mb.toFixed(1)} MB`;
+    const gb = mb / 1024;
+    return `${gb.toFixed(2)} GB`;
+  };
 
   const fetchChildren = useCallback(
     async (prefix: string) => {
@@ -128,19 +145,75 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
 
   const handleDownload = async (item: S3ObjectEntity) => {
     try {
-      const body = await objectService.download(connection, item.key);
-      if (!body) return;
-      const blob = new Blob([body]);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = item.key.split("/").pop() || item.key;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const LARGE_BYTES = 50 * 1024 * 1024; // 50MB threshold
+      const isLarge = (item.size ?? 0) >= LARGE_BYTES;
+      const filename = item.key.split("/").pop() || item.key;
+      if (isLarge) {
+        // Use a short-lived presigned URL to let the browser stream the download without buffering in memory
+        const url = await objectService.share(
+          connection,
+          item.key,
+          new Date(Date.now() + 60 * 1000)
+        );
+        addNotification(`Starting download: ${filename}`);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        // Small/medium files: download with XHR to get progress
+        setDlName(filename);
+        setDlOpen(true);
+        setDlLoaded(0);
+        setDlTotal(null);
+        setDlProgress(0);
+        const url = await objectService.share(
+          connection,
+          item.key,
+          new Date(Date.now() + 60 * 1000)
+        );
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", url);
+          xhr.responseType = "blob";
+          xhr.onprogress = (e) => {
+            setDlLoaded(e.loaded);
+            if (e.lengthComputable) {
+              setDlTotal(e.total);
+              setDlProgress(Math.round((e.loaded / e.total) * 100));
+            } else {
+              setDlTotal(null);
+              setDlProgress(null);
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const blob = xhr.response as Blob;
+              const durl = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = durl;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(durl);
+              resolve();
+            } else {
+              reject(new Error(`Download failed: ${xhr.status}`));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Network error during download"));
+          xhr.onabort = () => reject(new Error("Download aborted"));
+          xhr.send();
+        });
+        addNotification(`Downloaded ${filename}`);
+        setDlOpen(false);
+      }
     } catch {
       setSnackbar({ open: true, message: "Error downloading", severity: "error" });
+      setDlOpen(false);
     }
   };
 
@@ -349,6 +422,26 @@ const ObjectBrowser = forwardRef<ObjectBrowserHandle, Props>(
         onCancel={() => setConfirmDelete(null)}
         onConfirm={confirmDeleteAction}
       />
+      {dlOpen && (
+        <Paper sx={{ position: 'fixed', bottom: 16, right: 16, p: 2, minWidth: 260, boxShadow: 6 }}>
+          {dlProgress !== null ? (
+            <>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Downloading {dlName} {dlProgress}%
+                {dlTotal ? ` (${formatBytes(dlLoaded)} / ${formatBytes(dlTotal)})` : ''}
+              </Typography>
+              <LinearProgress variant="determinate" value={dlProgress} />
+            </>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Downloading {dlName}
+              </Typography>
+              <LinearProgress variant="indeterminate" />
+            </>
+          )}
+        </Paper>
+      )}
     </Box>
   );
 });
