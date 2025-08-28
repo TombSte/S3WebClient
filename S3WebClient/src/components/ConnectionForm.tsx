@@ -34,6 +34,7 @@ import type {
   S3ConnectionForm,
   ConnectionTestResult,
 } from "../types/s3";
+import { useEnvironments } from "../contexts/EnvironmentsContext";
 
 interface ConnectionFormProps {
   open: boolean;
@@ -50,6 +51,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   onTest,
   editingConnection,
 }) => {
+  const { environments } = useEnvironments();
   const [formData, setFormData] = React.useState<S3ConnectionForm>({
     displayName: "",
     environment: "dev",
@@ -85,9 +87,11 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
         metadata: { ...editingConnection.metadata },
       });
     } else {
+      // pick first visible env if available, fallback to 'dev'
+      const defaultEnv = environments[0]?.key ?? "dev";
       setFormData({
         displayName: "",
-        environment: "dev",
+        environment: defaultEnv,
         endpoint: "",
         region: undefined,
         accessKeyId: "",
@@ -99,7 +103,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     }
     setErrors({});
     setSnackbar({ open: false, message: "", severity: "success" });
-  }, [editingConnection, open]);
+  }, [editingConnection, open, environments]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -269,47 +273,26 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          environment: e.target.value as S3ConnectionForm["environment"],
+                          environment: e.target.value as string,
                         })
                       }
                     label="Environment"
                   >
-                    <MenuItem value="dev">
-                      <Chip
-                        label="DEV"
-                        size="small"
-                        color="success"
-                        sx={{ mr: 1 }}
-                      />
-                      Development
-                    </MenuItem>
-                    <MenuItem value="test">
-                      <Chip
-                        label="TEST"
-                        size="small"
-                        color="warning"
-                        sx={{ mr: 1 }}
-                      />
-                      Test
-                    </MenuItem>
-                    <MenuItem value="prod">
-                      <Chip
-                        label="PROD"
-                        size="small"
-                        color="error"
-                        sx={{ mr: 1 }}
-                      />
-                      Production
-                    </MenuItem>
-                    <MenuItem value="custom">
-                      <Chip
-                        label="CUSTOM"
-                        size="small"
-                        color="info"
-                        sx={{ mr: 1 }}
-                      />
-                      Custom
-                    </MenuItem>
+                    {environments.map((env) => (
+                      <MenuItem key={env.key} value={env.key}>
+                        {env.colorHex ? (
+                          <Chip
+                            label={env.name}
+                            size="small"
+                            sx={{ mr: 1, color: env.colorHex, borderColor: env.colorHex }}
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Chip label={env.name} size="small" color={env.color} sx={{ mr: 1 }} />
+                        )}
+                        {env.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Box>

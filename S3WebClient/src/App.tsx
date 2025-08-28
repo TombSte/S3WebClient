@@ -6,6 +6,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Bucket from "./pages/Bucket";
 import Notifications from "./pages/Notifications";
+import Environments from "./pages/Environments";
 import styles from "./App.module.scss";
 import { useSettings } from "./contexts/SettingsContext";
 import useRealtimeConnectionCheck from "./hooks/useRealtimeConnectionCheck";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/buckets" element={<Buckets />} />
           <Route path="/bucket/:id" element={<Bucket />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/environments" element={<Environments />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>

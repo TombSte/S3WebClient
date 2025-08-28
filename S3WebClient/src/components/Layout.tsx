@@ -32,6 +32,7 @@ import {
   CloudQueue,
   NotificationsNone,
 } from "@mui/icons-material";
+import { Tune } from "@mui/icons-material";
 import { useNotifications } from "../contexts/NotificationsContext";
 import { connectionRepository } from "../repositories";
 
@@ -77,6 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = [
     { text: "Dashboard", icon: <Dashboard />, path: "/" },
     { text: "Buckets", icon: <Storage />, path: "/buckets" },
+    { text: "Environments", icon: <Tune />, path: "/environments" },
     { text: "Settings", icon: <Settings />, path: "/settings" },
     { text: "Profile", icon: <AccountCircle />, path: "/profile" },
   ];
@@ -243,6 +245,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 }
               }
               if (location.pathname === "/settings") items.push(<Typography key="settings" color="text.primary">Settings</Typography>);
+              if (location.pathname === "/environments") items.push(<Typography key="environments" color="text.primary">Environments</Typography>);
               if (location.pathname === "/profile") items.push(<Typography key="profile" color="text.primary">Profile</Typography>);
               if (location.pathname === "/notifications") items.push(<Typography key="notifications" color="text.primary">Notifications</Typography>);
               if (items.length === 0) return null;

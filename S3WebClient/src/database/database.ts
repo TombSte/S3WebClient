@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import type { S3Connection, S3ObjectEntity } from "../types/s3";
+import type { Environment } from "../types/env";
 import type { UserProfile } from "../types/profile";
 
 export interface Preferences {
@@ -42,6 +43,7 @@ export class S3WebClientDatabase extends Dexie {
   objects!: Dexie.Table<S3ObjectEntity>;
   shares!: Dexie.Table<ShareLink>;
   profiles!: Dexie.Table<UserProfile>;
+  environments!: Dexie.Table<Environment>;
 
   constructor() {
     super("S3WebClientDatabase");
@@ -97,6 +99,51 @@ export class S3WebClientDatabase extends Dexie {
       shares: "++id, connectionId, key, expires",
       profiles: "++id, name, email",
     });
+
+    // v7: Environments table with defaults and seeding
+    this.version(7)
+      .stores({
+        connections:
+          "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+        preferences: "++id, theme, language, encryptionEnabled",
+        recentLocations: "++id, connectionId, prefix, timestamp",
+        activities: "++id, type, message, timestamp",
+        objects: "++id, connectionId, parent, key, isFolder",
+        shares: "++id, connectionId, key, expires",
+        profiles: "++id, name, email",
+        environments: "++id, key, name, hidden, order, builtIn",
+      })
+      .upgrade(async (tx) => {
+        const envs = tx.table<Environment>("environments");
+        const existing = await envs.count();
+        if (existing === 0) {
+          // Seed default environments
+          const defaults: Environment[] = [
+            { key: "dev", name: "Development", color: "success", hidden: 0, order: 1, builtIn: 1 },
+            { key: "test", name: "Testing", color: "warning", hidden: 0, order: 2, builtIn: 1 },
+            { key: "preprod", name: "Pre Production", color: "info", hidden: 0, order: 3, builtIn: 1 },
+            { key: "prod", name: "Production", color: "error", hidden: 0, order: 4, builtIn: 1 },
+          ];
+          await envs.bulkAdd(defaults);
+        }
+      });
+
+    // v8: add colorHex to environments
+    this.version(8)
+      .stores({
+        connections:
+          "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+        preferences: "++id, theme, language, encryptionEnabled",
+        recentLocations: "++id, connectionId, prefix, timestamp",
+        activities: "++id, type, message, timestamp",
+        objects: "++id, connectionId, parent, key, isFolder",
+        shares: "++id, connectionId, key, expires",
+        profiles: "++id, name, email",
+        environments: "++id, key, name, hidden, order, builtIn, colorHex",
+      })
+      .upgrade(async () => {
+        // no data migration needed; colorHex optional
+      });
   }
 }
 

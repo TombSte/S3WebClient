@@ -1,7 +1,8 @@
 export interface S3Connection {
   id: string;
   displayName: string;
-  environment: "dev" | "test" | "prod" | "custom";
+  // Environment key (e.g. "dev", "test", "preprod", "prod")
+  environment: string;
   endpoint: string;
   region?: string; // Optional for S3-compatible storage like MinIO
   accessKeyId: string;
@@ -18,7 +19,8 @@ export interface S3Connection {
 
 export interface S3ConnectionForm {
   displayName: string;
-  environment: "dev" | "test" | "prod" | "custom";
+  // Environment key (e.g. "dev", "test", "preprod", "prod")
+  environment: string;
   endpoint: string;
   region?: string; // Optional for S3-compatible storage like MinIO
   accessKeyId: string;
