@@ -106,6 +106,26 @@ export class ActivityObjectService {
     }
   }
 
+  async presignUpload(
+    connection: S3Connection,
+    key: string,
+    expires: Date,
+    contentType?: string
+  ) {
+    try {
+      const url = await this.inner.presignUpload(connection, key, expires, contentType);
+      try {
+        await this.activity.add("info", `Prepared upload for ${key}`);
+      } catch {}
+      return url;
+    } catch (e) {
+      try {
+        await this.activity.add("error", `Error preparing upload for ${key}`);
+      } catch {}
+      throw e;
+    }
+  }
+
   async upload(connection: S3Connection, key: string, file: File) {
     try {
       await this.inner.upload(connection, key, file);
