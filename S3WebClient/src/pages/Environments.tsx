@@ -14,16 +14,19 @@ import {
   Button,
   Alert,
   Popover,
+  Tooltip,
 } from "@mui/material";
 import { Tune, Add, Edit, Delete, Save, Close } from "@mui/icons-material";
 import { useEnvironments } from "../contexts/EnvironmentsContext";
 // no explicit EnvColor usage in this page
-import { slugify } from "../utils/slug";
+import { envKeyFromName } from "../utils/slug";
+import { connectionRepository } from "../repositories";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function EnvironmentsPage() {
-  const { allEnvironments, setHidden, add } = useEnvironments();
+  const { allEnvironments, setHidden, add, refresh } = useEnvironments();
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [colorHex, setColorHex] = useState<string>("#2e7d32");
   const [error, setError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -32,27 +35,65 @@ export default function EnvironmentsPage() {
   const [editingColorHex, setEditingColorHex] = useState<string>("#2e7d32");
   const [addPickerAnchor, setAddPickerAnchor] = useState<HTMLElement | null>(null);
   const [editPickerAnchor, setEditPickerAnchor] = useState<HTMLElement | null>(null);
+  const [usage, setUsage] = useState<Record<string, number>>({});
 
-  const key = useMemo(() => slugify(name), [name]);
+  const key = useMemo(() => envKeyFromName(name), [name]);
 
   const handleAdd = async () => {
     setError(null);
-    if (!name.trim()) {
-      setError("Name is required");
+    setNameError(null);
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setNameError("Name is required");
       return;
     }
     if (!key.trim()) {
-      setError("Invalid key generated from name");
+      setNameError("Invalid name");
+      return;
+    }
+    // Friendly duplicate checks (by name or by computed key)
+    const lower = trimmed.toLowerCase();
+    const existsByName = allEnvironments.some((e) => e.name.trim().toLowerCase() === lower);
+    const existsByKey = allEnvironments.some((e) => e.key === key);
+    if (existsByName || existsByKey) {
+      setNameError(`${trimmed} already exists`);
       return;
     }
     try {
-      await add({ key, name, colorHex });
+      await add({ key, name: trimmed, colorHex });
       setName("");
       setColorHex("#2e7d32");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to add environment");
+      const msg = e instanceof Error ? e.message : "Unable to add environment";
+      // Show inline error if it's the duplicate-name case bubbled from context
+      if (/already exists/i.test(msg)) {
+        setNameError(`${trimmed} already exists`);
+      } else {
+        setError(msg);
+      }
     }
   };
+
+  // Compute usage counts whenever env list changes
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          allEnvironments.map(async (env) => {
+            const list = await connectionRepository.getByEnvironment(env.key);
+            return [env.key, list.length] as const;
+          })
+        );
+        if (!cancelled) setUsage(Object.fromEntries(entries));
+      } catch {
+        if (!cancelled) setUsage({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [allEnvironments]);
 
   return (
     <Box sx={{ width: "100%", minWidth: "100%", display: "flex", flexDirection: "column", flex: 1, textAlign: "left", alignItems: "flex-start" }}>
@@ -85,10 +126,19 @@ export default function EnvironmentsPage() {
                   <ListItem sx={{ px: 0, py: 1 }}
                     secondaryAction={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {env.builtIn === 0 && editingKey !== env.key && (
+                        {editingKey !== env.key && (
                           <>
                             <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => { setEditingKey(env.key); setEditingName(env.name); setEditingColorHex(env.colorHex || '#2e7d32'); }}>Edit</Button>
-                            <Button size="small" color="error" variant="outlined" startIcon={<Delete />} onClick={() => setConfirmDelete(env.key)}>Delete</Button>
+                            <Tooltip title={(usage[env.key] ?? 0) > 0 ? "Cannot delete: environment in use" : "Delete"}>
+                              <span>
+                                <Button size="small" color="error" variant="outlined" startIcon={<Delete />}
+                                  disabled={(usage[env.key] ?? 0) > 0}
+                                  onClick={() => setConfirmDelete(env.key)}
+                                >
+                                  Delete
+                                </Button>
+                              </span>
+                            </Tooltip>
                           </>
                         )}
                         <Switch
@@ -102,6 +152,9 @@ export default function EnvironmentsPage() {
                     {editingKey === env.key ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
                         <TextField size="small" label="Name" value={editingName} onChange={(e) => setEditingName(e.target.value)} sx={{ maxWidth: 320 }} />
+                        {env.builtIn === 1 && (
+                          <Chip label="default" size="small" variant="outlined" />
+                        )}
                         <Box sx={{ position: 'relative', width: 160 }}>
                           <Box
                             sx={{
@@ -121,7 +174,6 @@ export default function EnvironmentsPage() {
                           </Box>
                           {/* Color popover anchored via editPickerAnchor */}
                         </Box>
-                        <Chip label={env.key} size="small" variant="outlined" />
                         <Button size="small" startIcon={<Save />} variant="contained" onClick={async () => {
                           const trimmed = editingName.trim();
                           if (!trimmed) return;
@@ -129,6 +181,7 @@ export default function EnvironmentsPage() {
                             // only update display name
                             const { environmentRepository } = await import("../repositories");
                             await environmentRepository.updateByKey(env.key, { name: trimmed, colorHex: editingColorHex });
+                            await refresh();
                             setEditingKey(null);
                           } catch (e) {
                             setError(e instanceof Error ? e.message : "Unable to update environment");
@@ -145,10 +198,10 @@ export default function EnvironmentsPage() {
                             ) : (
                               <Chip label={env.name} color={env.color} size="small" />
                             )}
-                            <Typography variant="body2" color="text.secondary">{env.key}</Typography>
                             {env.builtIn === 1 && (
                               <Chip label="default" size="small" variant="outlined" />
                             )}
+                            <Chip label={`connections: ${usage[env.key] ?? 0}`} size="small" variant="outlined" />
                           </Box>
                         }
                         secondary={
@@ -169,8 +222,10 @@ export default function EnvironmentsPage() {
               <TextField
                 label="Name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => { setName(e.target.value); setNameError(null); setError(null); }}
                 size="small"
+                error={Boolean(nameError)}
+                helperText={nameError ?? ""}
               />
               <Box sx={{ position: 'relative', width: '100%' }}>
                 <Box
@@ -215,6 +270,7 @@ export default function EnvironmentsPage() {
               return;
             }
             await environmentRepository.deleteByKey(confirmDelete);
+            await refresh();
           } catch (e) {
             setError(e instanceof Error ? e.message : "Unable to delete environment");
           } finally {

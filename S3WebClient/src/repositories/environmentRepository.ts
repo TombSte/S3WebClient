@@ -25,7 +25,15 @@ export class DexieEnvironmentRepository implements EnvironmentRepository {
     const includeHidden = options?.includeHidden ?? true;
     const all = await this.db.environments.toArray();
     const filtered = includeHidden ? all : all.filter((e) => e.hidden === 0);
-    return filtered.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    // Be defensive: handle possible undefined fields in older records
+    return filtered.sort((a, b) => {
+      const ao = typeof a.order === 'number' ? a.order : 0;
+      const bo = typeof b.order === 'number' ? b.order : 0;
+      if (ao !== bo) return ao - bo;
+      const an = (a.name ?? '').toString();
+      const bn = (b.name ?? '').toString();
+      return an.localeCompare(bn);
+    });
   }
 
   async getVisible(): Promise<Environment[]> {

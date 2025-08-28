@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -10,6 +11,8 @@ import {
   ListItemText,
   Chip,
   TextField,
+  Button,
+  Alert,
 } from "@mui/material";
 import {
   Settings as SettingsIcon,
@@ -19,9 +22,17 @@ import {
   Info,
 } from "@mui/icons-material";
 import { useSettings } from "../contexts/SettingsContext";
+import { adminRepository } from "../repositories";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useEnvironments } from "../contexts/EnvironmentsContext";
 
 export default function Settings() {
   const { settings, setSetting } = useSettings();
+  const { refresh: refreshEnvs } = useEnvironments();
+  const [dangerDeleteConnections, setDangerDeleteConnections] = useState(false);
+  const [dangerAlsoEnvs, setDangerAlsoEnvs] = useState(false);
+  const [confirmDanger, setConfirmDanger] = useState(false);
+  const [dangerSuccess, setDangerSuccess] = useState<string | null>(null);
 
   const handleSettingChange = <K extends keyof typeof settings>(
     setting: K,
@@ -295,8 +306,90 @@ export default function Settings() {
           </Card>
         </Box>
 
+        {/* Danger Zone */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: "error.main", fontWeight: "bold" }}>
+            Danger Zone
+          </Typography>
+          <Card sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Remove local data from this device. This does not affect your S3 storages.
+              </Typography>
+              <List>
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText
+                    primary="Delete all connections"
+                    secondary="Also removes related cached files, shares and recent locations."
+                  />
+                  <Switch
+                    color="error"
+                    checked={dangerDeleteConnections}
+                    onChange={(e) => setDangerDeleteConnections(e.target.checked)}
+                  />
+                </ListItem>
+                <Divider />
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText
+                    primary="Also delete environments"
+                    secondary="Remove all environments from local DB."
+                  />
+                  <Switch
+                    color="error"
+                    checked={dangerAlsoEnvs}
+                    onChange={(e) => setDangerAlsoEnvs(e.target.checked)}
+                    disabled={!dangerDeleteConnections}
+                  />
+                </ListItem>
+              </List>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  disabled={!dangerDeleteConnections}
+                  onClick={() => setConfirmDanger(true)}
+                >
+                  Delete Selected Data
+                </Button>
+              </Box>
+              {dangerSuccess && (
+                <Alert severity="success" sx={{ mt: 2 }} onClose={() => setDangerSuccess(null)}>
+                  {dangerSuccess}
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
+
         {/* Options apply immediately on toggle; no action buttons */}
       </Box>
+
+      <ConfirmDialog
+        open={confirmDanger}
+        title="Confirm deletion"
+        message={`This will delete ${dangerDeleteConnections ? 'all connections and related cached data' : ''}${dangerDeleteConnections && dangerAlsoEnvs ? ' and ' : ''}${dangerAlsoEnvs ? 'all environments' : ''}. No changes will be made to your S3 storages. Continue?`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmDanger(false)}
+        onConfirm={async () => {
+          try {
+            if (dangerDeleteConnections) {
+              await adminRepository.clearConnections(true);
+            }
+            if (dangerDeleteConnections && dangerAlsoEnvs) {
+              await adminRepository.clearEnvironments();
+            }
+            await refreshEnvs();
+            setDangerSuccess('Local data deleted successfully.');
+          } catch (e) {
+            setDangerSuccess('An error occurred while deleting data.');
+          } finally {
+            setConfirmDanger(false);
+            setDangerDeleteConnections(false);
+            setDangerAlsoEnvs(false);
+          }
+        }}
+      />
     </Box>
   );
 }

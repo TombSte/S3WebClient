@@ -144,6 +144,48 @@ export class S3WebClientDatabase extends Dexie {
       .upgrade(async () => {
         // no data migration needed; colorHex optional
       });
+
+    // v9: deduplicate environments by key if any duplicates exist
+    this.version(9)
+      .stores({
+        connections:
+          "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+        preferences: "++id, theme, language, encryptionEnabled",
+        recentLocations: "++id, connectionId, prefix, timestamp",
+        activities: "++id, type, message, timestamp",
+        objects: "++id, connectionId, parent, key, isFolder",
+        shares: "++id, connectionId, key, expires",
+        profiles: "++id, name, email",
+        environments: "++id, key, name, hidden, order, builtIn, colorHex",
+      })
+      .upgrade(async (tx) => {
+        const envs = tx.table<Environment>("environments");
+        const all = await envs.toArray();
+        const seen = new Set<string>();
+        for (const e of all.sort((a, b) => Number(a.id ?? 0) - Number(b.id ?? 0))) {
+          if (!e.key) continue;
+          const k = e.key;
+          if (seen.has(k) && e.id != null) {
+            await envs.delete(e.id);
+          } else {
+            seen.add(k);
+          }
+        }
+      });
+
+    // v10: enforce unique index on environment key to avoid future duplicates
+    this.version(10)
+      .stores({
+        connections:
+          "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+        preferences: "++id, theme, language, encryptionEnabled",
+        recentLocations: "++id, connectionId, prefix, timestamp",
+        activities: "++id, type, message, timestamp",
+        objects: "++id, connectionId, parent, key, isFolder",
+        shares: "++id, connectionId, key, expires",
+        profiles: "++id, name, email",
+        environments: "++id, &key, name, hidden, order, builtIn, colorHex",
+      });
   }
 }
 

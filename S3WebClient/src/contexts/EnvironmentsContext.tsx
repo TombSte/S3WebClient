@@ -26,8 +26,23 @@ export const EnvironmentsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [allEnvironments, setAllEnvironments] = useState<Environment[]>([]);
 
   const load = async () => {
-    const visible = await environmentRepository.getVisible();
-    const all = await environmentRepository.getAll({ includeHidden: true });
+    let all = await environmentRepository.getAll({ includeHidden: true });
+    if (all.length === 0) {
+      try {
+        await environmentRepository.add({
+          key: "dev",
+          name: "Development",
+          color: "success",
+          colorHex: "#2e7d32",
+          hidden: 0,
+        });
+        all = await environmentRepository.getAll({ includeHidden: true });
+      } catch {
+        // ignore if already created by a concurrent call due to unique index
+        all = await environmentRepository.getAll({ includeHidden: true });
+      }
+    }
+    const visible = all.filter((e) => e.hidden === 0);
     setEnvironments(visible);
     setAllEnvironments(all);
   };
@@ -36,26 +51,9 @@ export const EnvironmentsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     load();
   }, []);
 
-  // Ensure at least one environment exists on startup
+  // Initial load
   useEffect(() => {
-    (async () => {
-      try {
-        const all = await environmentRepository.getAll({ includeHidden: true });
-        if (all.length === 0) {
-          await environmentRepository.add({
-            key: "dev",
-            name: "Development",
-            color: "success",
-            colorHex: "#2e7d32",
-            hidden: 0,
-          });
-          await load();
-        }
-      } catch {
-        // ignore
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load();
   }, []);
 
   const refresh = async () => {
@@ -63,6 +61,12 @@ export const EnvironmentsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const add: EnvironmentsContextValue["add"] = async (env) => {
+    // Prevent duplicate by display name (case-insensitive)
+    const existing = await environmentRepository.getAll({ includeHidden: true });
+    const targetName = env.name.trim().toLowerCase();
+    if (existing.some((e) => e.name.trim().toLowerCase() === targetName)) {
+      throw new Error("An environment with this name already exists");
+    }
     await environmentRepository.add({ ...env, color: env.color ?? "info", hidden: 0 });
     await load();
   };
