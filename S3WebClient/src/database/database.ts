@@ -186,6 +186,34 @@ export class S3WebClientDatabase extends Dexie {
         profiles: "++id, name, email",
         environments: "++id, &key, name, hidden, order, builtIn, colorHex",
       });
+
+    // v11: add unique compound index to avoid duplicate objects for the same key
+    this.version(11)
+      .stores({
+        connections:
+          "++id, displayName, environment, endpoint, bucketName, isActive, testStatus, createdAt, *metadata",
+        preferences: "++id, theme, language, encryptionEnabled",
+        recentLocations: "++id, connectionId, prefix, timestamp",
+        activities: "++id, type, message, timestamp",
+        objects: "++id, &[connectionId+key], connectionId, parent, key, isFolder",
+        shares: "++id, connectionId, key, expires",
+        profiles: "++id, name, email",
+        environments: "++id, &key, name, hidden, order, builtIn, colorHex",
+      })
+      .upgrade(async (tx) => {
+        const table = tx.table<S3ObjectEntity>("objects");
+        // Deduplicate by (connectionId, key) keeping the lowest id
+        const all = await table.toArray();
+        const seen = new Set<string>();
+        for (const o of all.sort((a, b) => Number(a.id ?? 0) - Number(b.id ?? 0))) {
+          const k = `${o.connectionId}::${o.key}`;
+          if (seen.has(k) && o.id != null) {
+            await table.delete(o.id);
+          } else {
+            seen.add(k);
+          }
+        }
+      });
   }
 }
 

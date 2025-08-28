@@ -46,7 +46,16 @@ export class DexieObjectRepository implements ObjectRepository {
 
   async save(objects: S3ObjectEntity[]): Promise<void> {
     if (objects.length === 0) return;
-    await this.db.objects.bulkPut(objects);
+    // Upsert by (connectionId, key) using compound unique index
+    await this.db.transaction('rw', this.db.objects, async () => {
+      const pairs = objects.map((o) => [o.connectionId, o.key] as [string, string]);
+      // Delete any existing rows with same (connectionId, key) to avoid duplicates
+      await this.db.objects
+        .where('[connectionId+key]')
+        .anyOf(pairs)
+        .delete();
+      await this.db.objects.bulkAdd(objects);
+    });
   }
 
   async replaceAll(
