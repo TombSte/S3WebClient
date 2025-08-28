@@ -5,6 +5,8 @@ import {
   CardContent,
   Paper,
   Chip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   Storage,
@@ -18,6 +20,10 @@ import {
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { connectionRepository, activityRepository } from "../repositories";
+import { useS3Connections } from "../hooks/useS3Connections";
+import ConnectionForm from "../components/ConnectionForm";
+import type { S3ConnectionForm, ConnectionTestResult } from "../types/s3";
+import { useNavigate } from "react-router-dom";
 
 interface Activity {
   type: string;
@@ -26,6 +32,8 @@ interface Activity {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { connections, addConnection, testConnection, testConnectionConfig } = useS3Connections();
   const [stats, setStats] = useState({
     totalConnections: 0,
     activeConnections: 0,
@@ -36,6 +44,8 @@ export default function Dashboard() {
   });
 
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" | "warning" }>({ open: false, message: "", severity: "success" });
 
   const formatTimeAgo = (date: Date): string => {
     const diff = Date.now() - date.getTime();
@@ -366,6 +376,7 @@ export default function Dashboard() {
                   bgcolor: "primary.50",
                 },
               }}
+              onClick={() => setOpenDialog(true)}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
                 <Storage
@@ -397,6 +408,15 @@ export default function Dashboard() {
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "success.50",
                 },
+              }}
+              onClick={async () => {
+                let ok = 0;
+                let fail = 0;
+                for (const c of connections) {
+                  const res = await testConnection(c.id);
+                  res.success ? ok++ : fail++;
+                }
+                setSnackbar({ open: true, message: `Tested ${connections.length} connections: ${ok} connected, ${fail} failed`, severity: fail ? "warning" : "success" });
               }}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
@@ -430,6 +450,7 @@ export default function Dashboard() {
                   bgcolor: "info.50",
                 },
               }}
+              onClick={() => navigate('/settings')}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
                 <Security sx={{ fontSize: 32, color: "info.main", mb: 1.5 }} />
@@ -452,6 +473,33 @@ export default function Dashboard() {
           </Box>
         </Box>
       </Box>
+      <ConnectionForm
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onSubmit={async (form: S3ConnectionForm) => {
+          try {
+            await addConnection(form);
+            setOpenDialog(false);
+            setSnackbar({ open: true, message: 'Connection created', severity: 'success' });
+          } catch (e) {
+            setSnackbar({ open: true, message: 'Error creating connection', severity: 'error' });
+          }
+        }}
+        onTest={async (form: S3ConnectionForm): Promise<ConnectionTestResult> => {
+          return await testConnectionConfig(form);
+        }}
+        editingConnection={null}
+      />
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

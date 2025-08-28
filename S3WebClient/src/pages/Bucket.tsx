@@ -130,7 +130,7 @@ export default function Bucket() {
         <Card
           sx={{
             boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-            mt: 3,
+            mt: 1,
             width: "100%",
             display: "flex",
             flexDirection: "column",

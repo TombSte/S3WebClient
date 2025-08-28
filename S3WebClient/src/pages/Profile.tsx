@@ -517,7 +517,7 @@ export default function Profile() {
               variant="h6"
               sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
             >
-              Informazioni di Contatto
+              Contact Information
             </Typography>
             <Card
               sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}

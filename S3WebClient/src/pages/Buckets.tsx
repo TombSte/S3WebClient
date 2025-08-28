@@ -394,7 +394,7 @@ const Buckets: React.FC = () => {
                 <Chip
                   label={`Status: ${
                     statusFilter === "success"
-                      ? "OK"
+                      ? "Connected"
                       : statusFilter === "failed"
                       ? "Error"
                       : "Not tested"
@@ -485,7 +485,7 @@ const Buckets: React.FC = () => {
                   }
                 >
                   <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="success">OK</MenuItem>
+                  <MenuItem value="success">Connected</MenuItem>
                   <MenuItem value="failed">Error</MenuItem>
                   <MenuItem value="untested">Not tested</MenuItem>
                 </Select>
