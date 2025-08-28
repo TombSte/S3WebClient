@@ -124,7 +124,7 @@ export default function MoveObjectDialog({ open, connection, sourceKey, onClose,
             disablePadding
             sx={{ maxHeight: 240, overflowY: "auto", mb: 2, bgcolor: "background.paper", borderRadius: 1, boxShadow: 1 }}
           >
-            <ListItemButton selected={selected === ""} onClick={() => setSelected("")} sx={{ pl: 2 }}>
+            <ListItemButton selected={selected === ""} onClick={() => setSelected("")} sx={{ pl: 2, borderRadius: 0 }}>
               <ListItemIcon sx={{ minWidth: 32 }}>
                 <FolderIcon sx={{ color: "primary.main" }} />
               </ListItemIcon>
@@ -193,7 +193,7 @@ function FolderNode({ item, depth, selected, onSelect, loadFolders }: FolderNode
 
   return (
     <>
-      <ListItemButton onClick={toggle} selected={selected === item.key} sx={{ pl: depth * 2 + 2 }}>
+      <ListItemButton onClick={toggle} selected={selected === item.key} sx={{ pl: depth * 2 + 2, borderRadius: 0 }}>
         <ListItemIcon sx={{ minWidth: 32 }}>
           <FolderIcon sx={{ color: "primary.main" }} />
         </ListItemIcon>

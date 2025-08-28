@@ -599,14 +599,7 @@ const Buckets: React.FC = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    bgcolor: "primary.50",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-                    transition: "all 0.3s ease",
                     cursor: "pointer",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                    },
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1, p: 2.5 }}>

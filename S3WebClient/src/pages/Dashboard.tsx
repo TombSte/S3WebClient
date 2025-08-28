@@ -172,11 +172,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(102, 126, 234, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -193,12 +191,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Total Connections
                     </Typography>
                   </Box>
-                  <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Storage sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -207,11 +205,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(240, 147, 251, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -228,12 +224,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Connected Buckets
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <CheckCircle sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -242,11 +238,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(79, 172, 254, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -263,12 +257,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Total Buckets
                     </Typography>
                   </Box>
-                  <Cloud sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Cloud sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -277,11 +271,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(67, 233, 123, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -298,12 +290,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Last Activity
                     </Typography>
                   </Box>
-                  <TrendingUp sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <TrendingUp sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -318,7 +310,7 @@ export default function Dashboard() {
           >
             Recent Activity
           </Typography>
-          <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+          <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             {recentActivity.map((activity, index) => (
               <Box
                 key={index}

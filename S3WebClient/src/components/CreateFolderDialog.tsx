@@ -90,7 +90,7 @@ export default function CreateFolderDialog({
           <ListItemButton
             selected={selected === ""}
             onClick={() => setSelected("")}
-            sx={{ pl: 2 }}
+            sx={{ pl: 2, borderRadius: 0 }}
           >
             <ListItemIcon sx={{ minWidth: 32 }}>
               <FolderIcon sx={{ color: "primary.main" }} />
@@ -166,7 +166,7 @@ function FolderNode({ item, depth, selected, onSelect, loadFolders }: FolderNode
 
   return (
     <>
-      <ListItemButton onClick={toggle} selected={selected === item.key} sx={{ pl: depth * 2 + 2 }}>
+      <ListItemButton onClick={toggle} selected={selected === item.key} sx={{ pl: depth * 2 + 2, borderRadius: 0 }}>
         <ListItemIcon sx={{ minWidth: 32 }}>
           <FolderIcon sx={{ color: "primary.main" }} />
         </ListItemIcon>

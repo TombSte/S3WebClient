@@ -7,6 +7,7 @@ import {
   Divider,
   Drawer,
   IconButton,
+  Tooltip,
   List,
   ListItem,
   ListItemButton,
@@ -17,9 +18,13 @@ import {
   alpha,
   useTheme,
   Badge,
+  Breadcrumbs,
+  Link as MUILink,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
+  ChevronLeft,
+  ChevronRight,
   Dashboard,
   Storage,
   Settings,
@@ -28,8 +33,10 @@ import {
   NotificationsNone,
 } from "@mui/icons-material";
 import { useNotifications } from "../contexts/NotificationsContext";
+import { connectionRepository } from "../repositories";
 
-const drawerWidth = 252;
+const expandedWidth = 252;
+const collapsedWidth = 72;
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -38,9 +45,28 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(false);
+  const [bucketLabel, setBucketLabel] = React.useState<string>("");
+
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  React.useEffect(() => {
+    const match = location.pathname.match(/^\/bucket\/(\d+)/);
+    if (match) {
+      const id = match[1];
+      (async () => {
+        try {
+          const conn = await connectionRepository.get(id);
+          setBucketLabel(conn?.displayName || conn?.bucketName || id);
+        } catch {
+          setBucketLabel(id);
+        }
+      })();
+    } else {
+      setBucketLabel("");
+    }
+  }, [location.pathname]);
   const { notifications } = useNotifications();
 
   const handleDrawerToggle = () => {
@@ -60,47 +86,57 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const drawer = (
-    <Box height="100%">
+    <Box height="100%" sx={{ display: 'flex', flexDirection: 'column' }}>
       <Toolbar
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-          color: theme.palette.primary.contrastText,
+          bgcolor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <CloudQueue sx={{ mr: 1 }} />
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: "bold" }}>
-            S3 Web Client
-          </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", width: "100%", justifyContent: collapsed ? "center" : "flex-start" }}>
+          <CloudQueue sx={{ mr: collapsed ? 0 : 1, color: theme.palette.primary.main }} />
+          {!collapsed && (
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ fontWeight: 700, letterSpacing: 0.2, color: theme.palette.primary.main }}
+            >
+              S3 Web Client
+            </Typography>
+          )}
         </Box>
       </Toolbar>
-      <Divider />
       <List sx={{ mt: 1 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
+            <Tooltip title={item.text} placement="right" disableHoverListener={!collapsed}>
             <ListItemButton
               onClick={() => handleMenuClick(item.path)}
               selected={location.pathname === item.path}
               sx={{
                 position: "relative",
-                mx: 1,
-                mb: 0.5,
-                borderRadius: 2,
+                mx: collapsed ? 0.5 : 1,
+                mb: 0.25,
+                borderRadius: 1.5,
+                transition: "background-color 120ms ease",
+                justifyContent: collapsed ? "center" : "flex-start",
                 "&:hover": {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  backgroundColor: alpha(theme.palette.primary.main, 0.06),
                 },
                 "&.Mui-selected": {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
                   "& .MuiListItemIcon-root": {
                     color: theme.palette.primary.main,
                   },
                   "&:before": {
                     content: '""',
                     position: "absolute",
-                    left: 0,
+                    left: collapsed ? -9999 : 0,
                     top: 0,
                     bottom: 0,
-                    width: 4,
+                    width: 3,
                     borderTopLeftRadius: 2,
                     borderBottomLeftRadius: 2,
                     backgroundColor: theme.palette.primary.main,
@@ -114,23 +150,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     location.pathname === item.path
                       ? theme.palette.primary.main
                       : theme.palette.text.secondary,
+                  minWidth: collapsed ? 0 : 32,
+                  mr: collapsed ? 0 : 1,
                 }}
               >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                sx={{
-                  "& .MuiTypography-root": {
-                    fontWeight: 500,
-                    fontSize: "0.95rem",
-                  },
-                }}
-              />
+              {!collapsed && (
+                <ListItemText
+                  primary={item.text}
+                  sx={{
+                    "& .MuiTypography-root": {
+                      fontWeight: 600,
+                      fontSize: "0.95rem",
+                      letterSpacing: 0.2,
+                    },
+                  }}
+                />
+              )}
             </ListItemButton>
+            </Tooltip>
           </ListItem>
         ))}
       </List>
+      <Box sx={{ flexGrow: 1 }} />
+      {/* Collapse/Expand toggle at bottom (desktop only) */}
+      <Box sx={{ p: 1, display: { xs: 'none', sm: 'flex' }, justifyContent: collapsed ? 'center' : 'flex-end' }}>
+        <Tooltip title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
+          <IconButton aria-label="toggle sidebar" onClick={() => setCollapsed((v) => !v)} size="small">
+            {collapsed ? <ChevronRight /> : <ChevronLeft />}
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 
@@ -150,10 +201,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          width: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
+          minWidth: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
+          ml: { sm: `${collapsed ? collapsedWidth : expandedWidth}px` },
           backgroundColor: theme.palette.background.default,
           color: theme.palette.text.primary,
           boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
@@ -170,11 +221,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-            <CloudQueue sx={{ mr: 1 }} />
-            <Typography variant="h6" noWrap component="div">
-              S3 Web Client
-            </Typography>
+          {/* Toggle moved to sidebar bottom on desktop */}
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1, minWidth: 0 }}>
+            {location.pathname !== "/" && (() => {
+              const items: JSX.Element[] = [];
+              if (location.pathname.startsWith("/buckets")) {
+                items.push(<Typography key="buckets" color="text.primary">Buckets</Typography>);
+              }
+              if (location.pathname.startsWith("/bucket/")) {
+                items.push(
+                  <MUILink key="buckets-link" underline="hover" color="inherit" onClick={() => navigate("/buckets")} sx={{ cursor: "pointer" }}>
+                    Buckets
+                  </MUILink>
+                );
+                items.push(
+                  <Typography key="bucket-name" color="text.primary" sx={{ display: "inline-flex", alignItems: "center", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: 'nowrap' }}>
+                    {bucketLabel || 'Bucket'}
+                  </Typography>
+                );
+              }
+              if (location.pathname === "/settings") items.push(<Typography key="settings" color="text.primary">Settings</Typography>);
+              if (location.pathname === "/profile") items.push(<Typography key="profile" color="text.primary">Profile</Typography>);
+              if (location.pathname === "/notifications") items.push(<Typography key="notifications" color="text.primary">Notifications</Typography>);
+              if (items.length === 0) return null;
+              return (
+                <Breadcrumbs aria-label="breadcrumb" sx={{ color: theme.palette.text.secondary, whiteSpace: 'nowrap', overflow: 'hidden', '& .MuiBreadcrumbs-ol': { flexWrap: 'nowrap' } }}>
+                  {items}
+                </Breadcrumbs>
+              );
+            })()}
           </Box>
           <IconButton
             color="inherit"
@@ -191,7 +266,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Right Sidebar Drawer */}
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{ width: { sm: collapsed ? collapsedWidth : expandedWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
         {/* Mobile drawer */}
@@ -206,11 +281,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             display: { xs: "block", sm: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: collapsed ? collapsedWidth : expandedWidth,
               background: theme.palette.background.paper,
-              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
-              borderRight: "none",
-              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
+              borderRight: `1px solid ${theme.palette.divider}`,
+              boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
             },
           }}
         >
@@ -224,11 +298,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             display: { xs: "none", sm: "block" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: collapsed ? collapsedWidth : expandedWidth,
               background: theme.palette.background.paper,
-              backgroundImage: `linear-gradient(to bottom, ${theme.palette.background.paper}, ${alpha(theme.palette.primary.light, 0.05)})`,
-              borderRight: "none",
-              boxShadow: "2px 0 8px rgba(0,0,0,0.05)",
+              borderRight: `1px solid ${theme.palette.divider}`,
+              boxShadow: "none",
             },
           }}
           open
@@ -242,9 +315,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          minWidth: { sm: `calc(100% - ${drawerWidth}px)` },
-          maxWidth: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
+          minWidth: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
+          maxWidth: { sm: `calc(100% - ${collapsed ? collapsedWidth : expandedWidth}px)` },
           minHeight: "100vh",
           backgroundColor: theme.palette.background.default,
           display: "flex",

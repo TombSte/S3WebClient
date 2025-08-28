@@ -184,20 +184,9 @@ export default function Profile() {
         </Box>
 
         {/* Profile Card */}
-        <Card
-          sx={{
-            mb: 3,
-            borderRadius: 3,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-            overflow: "hidden",
-          }}
-        >
+        <Card sx={{ mb: 3, borderRadius: 3, overflow: "hidden" }}>
           <Box
-            sx={{
-              height: 100,
-              background: "linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%)",
-              position: "relative",
-            }}
+            sx={{ height: 100, bgcolor: "background.paper", position: "relative", borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
           />
           <CardContent sx={{ p: 3, pt: 0 }}>
             <Box
