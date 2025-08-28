@@ -84,7 +84,7 @@ export default function ObjectItemRow({
       <ListItemButton
         onClick={onClick}
         selected={selected}
-        sx={{ pl: depth * 2 + 2, borderBottom: "1px solid", borderColor: "divider" }}
+        sx={{ pl: depth * 2 + 2, borderBottom: "1px solid", borderColor: "divider", borderRadius: 0 }}
       >
         <ListItemIcon sx={{ minWidth: 32 }}>
           {item.isFolder ? (

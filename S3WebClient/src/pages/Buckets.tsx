@@ -284,18 +284,7 @@ const Buckets: React.FC = () => {
             <Typography
               variant="h5"
               component="h1"
-              sx={{
-                mb: 1,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                background:
-                  "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontWeight: "bold",
-              }}
+              sx={{ mb: 1, display: "flex", alignItems: "center", gap: 2, color: 'primary.main', fontWeight: 'bold' }}
             >
               <StorageIcon sx={{ fontSize: 32, color: "primary.main" }} />
               S3 Connections
@@ -316,6 +305,8 @@ const Buckets: React.FC = () => {
               bgcolor: "primary.main",
               color: "primary.contrastText",
               boxShadow: 1,
+              px: 1.5,
+              height: 28,
               "& .MuiChip-icon": { color: "inherit" },
             }}
           />
@@ -394,7 +385,7 @@ const Buckets: React.FC = () => {
                 <Chip
                   label={`Status: ${
                     statusFilter === "success"
-                      ? "OK"
+                      ? "Connected"
                       : statusFilter === "failed"
                       ? "Error"
                       : "Not tested"
@@ -485,7 +476,7 @@ const Buckets: React.FC = () => {
                   }
                 >
                   <MenuItem value="all">All</MenuItem>
-                  <MenuItem value="success">OK</MenuItem>
+                  <MenuItem value="success">Connected</MenuItem>
                   <MenuItem value="failed">Error</MenuItem>
                   <MenuItem value="untested">Not tested</MenuItem>
                 </Select>
@@ -599,14 +590,7 @@ const Buckets: React.FC = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    bgcolor: "primary.50",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-                    transition: "all 0.3s ease",
                     cursor: "pointer",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                    },
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1, p: 2.5 }}>

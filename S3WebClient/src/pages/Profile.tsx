@@ -163,17 +163,7 @@ export default function Profile() {
           <Typography
             variant="h5"
             component="h1"
-            sx={{
-              mb: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #FF6B6B 30%, #FFE66D 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
+            sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 2, color: 'error.main', fontWeight: 'bold' }}
           >
             <PersonIcon sx={{ fontSize: 32, color: "error.main" }} />
             User Profile
@@ -184,20 +174,9 @@ export default function Profile() {
         </Box>
 
         {/* Profile Card */}
-        <Card
-          sx={{
-            mb: 3,
-            borderRadius: 3,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-            overflow: "hidden",
-          }}
-        >
+        <Card sx={{ mb: 3, borderRadius: 3, overflow: "hidden" }}>
           <Box
-            sx={{
-              height: 100,
-              background: "linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%)",
-              position: "relative",
-            }}
+            sx={{ height: 56, bgcolor: "background.paper", position: "relative", borderBottom: (theme) => `1px solid ${theme.palette.divider}` }}
           />
           <CardContent sx={{ p: 3, pt: 0 }}>
             <Box
@@ -219,7 +198,7 @@ export default function Profile() {
                   border: "4px solid white",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "primary.main",
-                  mt: { xs: -40, sm: -50 },
+                  mt: { xs: -28, sm: -36 },
                 }}
               >
                 {initials}
@@ -489,7 +468,7 @@ export default function Profile() {
           >
             Recent Activity
           </Typography>
-          <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+          <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <List>
               {recentActivity.map((activity, index) => (
                 <Box key={index}>
@@ -528,7 +507,7 @@ export default function Profile() {
               variant="h6"
               sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
             >
-              Informazioni di Contatto
+              Contact Information
             </Typography>
             <Card
               sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}

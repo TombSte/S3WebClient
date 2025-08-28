@@ -5,6 +5,8 @@ import {
   CardContent,
   Paper,
   Chip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   Storage,
@@ -18,6 +20,10 @@ import {
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { connectionRepository, activityRepository } from "../repositories";
+import { useS3Connections } from "../hooks/useS3Connections";
+import ConnectionForm from "../components/ConnectionForm";
+import type { S3ConnectionForm, ConnectionTestResult } from "../types/s3";
+import { useNavigate } from "react-router-dom";
 
 interface Activity {
   type: string;
@@ -26,6 +32,8 @@ interface Activity {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { connections, addConnection, testConnection, testConnectionConfig } = useS3Connections();
   const [stats, setStats] = useState({
     totalConnections: 0,
     activeConnections: 0,
@@ -36,6 +44,8 @@ export default function Dashboard() {
   });
 
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" | "warning" }>({ open: false, message: "", severity: "success" });
 
   const formatTimeAgo = (date: Date): string => {
     const diff = Date.now() - date.getTime();
@@ -133,17 +143,7 @@ export default function Dashboard() {
           <Typography
             variant="h5"
             component="h1"
-            sx={{
-              mb: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
+            sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 2, color: 'primary.main', fontWeight: 'bold' }}
           >
             <Storage sx={{ fontSize: 32, color: "primary.main" }} />
             Dashboard
@@ -172,11 +172,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(102, 126, 234, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -193,12 +191,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Total Connections
                     </Typography>
                   </Box>
-                  <Storage sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Storage sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -207,11 +205,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(240, 147, 251, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -228,12 +224,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Connected Buckets
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <CheckCircle sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -242,11 +238,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(79, 172, 254, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -263,12 +257,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Total Buckets
                     </Typography>
                   </Box>
-                  <Cloud sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Cloud sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -277,11 +271,9 @@ export default function Dashboard() {
               sx={{
                 background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
                 color: "white",
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 6px 20px rgba(67, 233, 123, 0.4)",
-                },
+                border: 'none',
+                transition: "transform 0.2s ease",
+                "&:hover": { transform: "translateY(-2px)" },
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
@@ -298,12 +290,12 @@ export default function Dashboard() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ opacity: 0.9, fontSize: "0.875rem" }}
+                      sx={{ opacity: 0.9, fontSize: "0.875rem", color: 'inherit' }}
                     >
                       Last Activity
                     </Typography>
                   </Box>
-                  <TrendingUp sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <TrendingUp sx={{ fontSize: 40, opacity: 0.8, color: 'inherit' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -318,7 +310,7 @@ export default function Dashboard() {
           >
             Recent Activity
           </Typography>
-          <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+          <Paper sx={{ p: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             {recentActivity.map((activity, index) => (
               <Box
                 key={index}
@@ -374,6 +366,7 @@ export default function Dashboard() {
                   bgcolor: "primary.50",
                 },
               }}
+              onClick={() => setOpenDialog(true)}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
                 <Storage
@@ -405,6 +398,15 @@ export default function Dashboard() {
                   boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                   bgcolor: "success.50",
                 },
+              }}
+              onClick={async () => {
+                let ok = 0;
+                let fail = 0;
+                for (const c of connections) {
+                  const res = await testConnection(c.id);
+                  res.success ? ok++ : fail++;
+                }
+                setSnackbar({ open: true, message: `Tested ${connections.length} connections: ${ok} connected, ${fail} failed`, severity: fail ? "warning" : "success" });
               }}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
@@ -438,6 +440,7 @@ export default function Dashboard() {
                   bgcolor: "info.50",
                 },
               }}
+              onClick={() => navigate('/settings')}
             >
               <CardContent sx={{ textAlign: "center", py: 2.5 }}>
                 <Security sx={{ fontSize: 32, color: "info.main", mb: 1.5 }} />
@@ -460,6 +463,33 @@ export default function Dashboard() {
           </Box>
         </Box>
       </Box>
+      <ConnectionForm
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onSubmit={async (form: S3ConnectionForm) => {
+          try {
+            await addConnection(form);
+            setOpenDialog(false);
+            setSnackbar({ open: true, message: 'Connection created', severity: 'success' });
+          } catch (e) {
+            setSnackbar({ open: true, message: 'Error creating connection', severity: 'error' });
+          }
+        }}
+        onTest={async (form: S3ConnectionForm): Promise<ConnectionTestResult> => {
+          return await testConnectionConfig(form);
+        }}
+        editingConnection={null}
+      />
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

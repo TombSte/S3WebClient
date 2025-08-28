@@ -9,7 +9,6 @@ import {
   ListItem,
   ListItemText,
   Chip,
-  Button,
   TextField,
 } from "@mui/material";
 import {
@@ -115,17 +114,7 @@ export default function Settings() {
           <Typography
             variant="h5"
             component="h1"
-            sx={{
-              mb: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              background: "linear-gradient(45deg, #9C27B0 30%, #E1BEE7 90%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
+            sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 2, color: 'secondary.main', fontWeight: 'bold' }}
           >
             <SettingsIcon sx={{ fontSize: 32, color: "secondary.main" }} />
             Settings
@@ -255,7 +244,7 @@ export default function Settings() {
             variant="h6"
             sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
-            Informazioni Sistema
+            System Information
           </Typography>
           <Card
             sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
@@ -305,31 +294,7 @@ export default function Settings() {
           </Card>
         </Box>
 
-        {/* Action Buttons */}
-        <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
-          <Button
-            variant="outlined"
-            color="secondary"
-            sx={{ px: 3, py: 1, borderRadius: 2 }}
-          >
-            Restore Defaults
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            sx={{
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              background: "linear-gradient(45deg, #9C27B0 30%, #E1BEE7 90%)",
-              "&:hover": {
-                background: "linear-gradient(45deg, #7B1FA2 30%, #C2185B 90%)",
-              },
-            }}
-          >
-            Save Settings
-          </Button>
-        </Box>
+        {/* Options apply immediately on toggle; no action buttons */}
       </Box>
     </Box>
   );
